@@ -94,7 +94,7 @@ function _parseOptions(options) {
   options.db = ((bolt.isString(options.db) && options.app) ? options.app.dbs[options.db] : options.db);
   options.db = ((!options.db && options.app) ? options.app.db : options.db);
   options.session = options.session || (options.req ? options.req.session : {});
-  if (options.id) options.id = mongoId(options.id);
+  if (options.id) options.id = bolt.mongoId(options.id);
   if (Array.isArray(options.projection)) {
     let temp = {};
     options.projection.forEach(key=>{temp[key] = true;});
