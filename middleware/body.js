@@ -11,5 +11,5 @@ function init(app) {
   app.use(bodyParser.raw());
 };
 
-init.priority = 6;
+init.priority = 2;
 module.exports = init;

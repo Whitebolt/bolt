@@ -13,5 +13,5 @@ function init(app) {
   app.use(morgan('combined', {stream}));
 }
 
-init.priority = 7;
+init.priority = 50;
 module.exports = init;
