@@ -50,6 +50,14 @@ function queryStringToObject(queryString, splitter='&', defaultValue=undefined) 
   return obj;
 }
 
+function getUrlQueryObject(obj) {
+  let parts = url.split('?');
+  if (parts.length > 1) {
+    return queryStringToObject(parts[1]);
+  }
+  return {};
+}
+
 function addQueryObjectToUrl(url, obj) {
   let parts = url.split('?');
   if (parts.length > 1) {
@@ -63,5 +71,6 @@ function addQueryObjectToUrl(url, obj) {
 }
 
 module.exports = {
-  getPathFromRequest, getPathPartsFromRequest, objectToQueryString, queryStringToObject, addQueryObjectToUrl
+  getPathFromRequest, getPathPartsFromRequest, objectToQueryString, queryStringToObject,
+  addQueryObjectToUrl, getUrlQueryObject
 };

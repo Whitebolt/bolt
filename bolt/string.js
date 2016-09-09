@@ -1,5 +1,7 @@
 'use strict';
 
+const dateFormat = require('dateformat');
+
 /**
  * Replace the last string within a string.
  *
@@ -48,5 +50,5 @@ function splitAndTrim(value, splitter) {
 
 
 module.exports = {
-  replaceLast, randomString, splitAndTrim
+  replaceLast, randomString, splitAndTrim, dateFormat
 };
