@@ -101,6 +101,15 @@ function _getEventChannel(root, level, max) {
   return channel;
 }
 
+function _getPackageConfigs(roots) {
+  return bolt.makeArray(roots || []).map(root=>{
+    try {
+      let packageData = require(root+'package.json');
+      return packageData.config || {};
+    } catch(e) {return {};}
+  });
+}
+
 /**
  * Get a config object from package.json and the supplied config.
  *
@@ -109,12 +118,15 @@ function _getEventChannel(root, level, max) {
  * @returns {Object}        The new constructed config with default available.
  */
 function _getConfig(config) {
-  return Object.assign({
+  let packageConfigs = _getPackageConfigs(config.root);
+  packageConfigs.unshift({
     version: packageData.version,
     name: packageData.name,
     description: packageData.description,
     template: 'index'
-  }, packageData.config || {}, config);
+  });
+  packageConfigs.push(config);
+  return bolt.merge.apply(bolt, packageConfigs);
 }
 
 /**
@@ -126,6 +138,7 @@ function _getConfig(config) {
  */
 function _createApp(config) {
   const app = express();
+
   app.config = _getConfig(config);
   bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers']);
   return app;

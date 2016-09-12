@@ -3,7 +3,7 @@
 global.boltRootDir = __dirname;
 global.colour = require('colors');
 global.express = require('express');
-global.bolt = Object.assign(require('lodash'));
+global.bolt = require('lodash');
 
 let configDone = false;
 
