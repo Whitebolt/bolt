@@ -22,6 +22,19 @@ function getTypesArray(res) {
   return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
 }
 
+function tryModuleRoutes(modPaths) {
+  let mod;
+  modPaths.every(modPath=>{
+    try{
+      mod = require(modPath);
+      return false;
+    } catch(e) {
+      return true;
+    }
+  });
+  return mod;
+}
+
 function _proxyRouter(app, proxyConfig) {
   let config = {reqAsBuffer: true};
   if (proxyConfig.proxyParseForEjs) {
@@ -42,7 +55,8 @@ function _proxyRouter(app, proxyConfig) {
     };
   }
   if (proxyConfig.slugger) {
-    config.forwardPathAsync = bolt[proxyConfig.slugger](proxyConfig);
+    let slugger = tryModuleRoutes(app.config.root.map(root=>root+proxyConfig.slugger));
+    if (slugger) config.forwardPathAsync = slugger(proxyConfig);
   }
 
   return proxy(proxyConfig.forwardPath, config);
