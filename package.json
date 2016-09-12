@@ -159,21 +159,6 @@
         "description": "Bolt Server",
         "property": "<%= Date().toLocaleString(); %>",
         "propertyColour": "green"
-      },
-      {
-        "event": "webRockProxy",
-        "action": "webrock",
-        "description": "proxy path",
-        "propertyColour": "yellow",
-        "level": 4
-      },
-      {
-        "event": "webRockReroute",
-        "action": "webrock",
-        "description": "re-route <%= params[0] %> to",
-        "property": "<%= params[1] %>",
-        "propertyColour": "yellow",
-        "level": 4
       }
     ]
   }
