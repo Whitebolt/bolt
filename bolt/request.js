@@ -50,7 +50,7 @@ function queryStringToObject(queryString, splitter='&', defaultValue=undefined) 
   return obj;
 }
 
-function getUrlQueryObject(obj) {
+function getUrlQueryObject(url) {
   let parts = url.split('?');
   if (parts.length > 1) {
     return queryStringToObject(parts[1]);
@@ -58,14 +58,15 @@ function getUrlQueryObject(obj) {
   return {};
 }
 
-function addQueryObjectToUrl(url, obj) {
+function addQueryObjectToUrl(url, ...objs) {
+  let _obj = Object.assign.apply(Object, objs);
   let parts = url.split('?');
   if (parts.length > 1) {
-    parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), obj));
+    parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), _obj));
     return parts.join('?');
   }
   parts = url.split('#');
-  let queryString = objectToQueryString(obj);
+  let queryString = objectToQueryString(_obj);
   parts[0] += ((queryString.trim() !== '') ? '?'+queryString : '');
   return parts.join('#');
 }
