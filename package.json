@@ -34,7 +34,6 @@
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
     "lodash": "^4.13.1",
     "md5": "^2.2.1",
-    "messenger": "0.0.9",
     "mongo-sql": "^2.7.5",
     "mongodb": "^2.2.9",
     "morgan": "^1.7.0",

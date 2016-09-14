@@ -4,6 +4,7 @@ const Promise = require('bluebird');
 const proxy = require('express-http-proxy');
 const ejs = require('ejs');
 
+
 function contentIsType(type, matchType) {
   let matchTypes = bolt.makeArray(matchType);
   return ((type.filter(_type=>(bolt.indexOf(matchTypes, _type) !== -1))).length > 0);
@@ -36,7 +37,7 @@ function tryModuleRoutes(modPaths) {
 }
 
 function _proxyRouter(app, proxyConfig) {
-  let config = {reqAsBuffer: true};
+  let config = {reqAsBuffer: false};
   if (proxyConfig.proxyParseForEjs) {
     config.intercept = (rsp, data, req, res, callback)=>{
       let type = getTypesArray(res);
@@ -58,6 +59,11 @@ function _proxyRouter(app, proxyConfig) {
     let slugger = tryModuleRoutes(app.config.root.map(root=>root+proxyConfig.slugger));
     if (slugger) config.forwardPathAsync = slugger(proxyConfig);
   }
+
+  config.decorateRequest = (proxyReq, req)=>{
+    if (bolt.isPlainObject(proxyReq.bodyContent)) proxyReq.bodyContent = bolt.objectToQueryString(proxyReq.bodyContent);
+    return proxyReq;
+  };
 
   return proxy(proxyConfig.forwardPath, config);
 }
