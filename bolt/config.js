@@ -5,23 +5,8 @@
  */
 const configLoadPaths = [boltRootDir + '/server.json', '/etc/bolt/server.json'];
 if (process.env.BOLT_CONFIG) configLoadPaths.push(process.env.BOLT_CONFIG + '/server.json');
-const config = _tryModuleRoutes(configLoadPaths)
+const requireX = require('require-extra');
 
-/**
- * @todo Fix require-extra to do this.
- */
-function _tryModuleRoutes(modPaths) {
-  let mod;
-  modPaths.reverse().every(modPath=>{
-    try{
-      mod = require(modPath);
-      return false;
-    } catch(e) {
-      return true;
-    }
-  });
-  return mod;
-}
 
 function _templateLoop(config) {
   let configText = JSON.stringify(config);
@@ -43,7 +28,8 @@ function _parseConfig(config) {
 }
 
 function loadConfig(name) {
-  return bolt.loadMongo(config.db)
+  return requireX.getModule(configLoadPaths)
+    .then(config=>bolt.loadMongo(config.db))
     .then(db=>db.collection('configs').findOne({name}))
     .then(_parseConfig)
     .then(siteConfig=>{
