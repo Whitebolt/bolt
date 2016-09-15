@@ -7,4 +7,8 @@ const argv = require('yargs')
 if (!argv.development && argv.d) argv.development = argv.d;
 if (!argv.development && !argv.d) argv.development = false;
 
-module.exports = argv;
+argv.cmd = {};
+
+module.exports = require('require-extra')
+  .importDirectory('./cmd/', {merge: true, imports: argv.cmd})
+  .then(()=>argv);
