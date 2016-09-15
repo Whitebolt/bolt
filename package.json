@@ -31,6 +31,7 @@
     "express-http-proxy": "^0.10.0",
     "express-session": "^1.13.0",
     "ical-date-parser": "^3.1.1",
+    "iconv-lite": "^0.4.13",
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
     "lodash": "^4.13.1",
     "md5": "^2.2.1",

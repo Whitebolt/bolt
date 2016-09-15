@@ -3,6 +3,7 @@
 const Promise = require('bluebird');
 const proxy = require('express-http-proxy');
 const ejs = require('ejs');
+const iconv = require('iconv-lite');
 
 
 function contentIsType(type, matchType) {
@@ -42,7 +43,7 @@ function _proxyRouter(app, proxyConfig) {
     config.intercept = (rsp, data, req, res, callback)=>{
       let type = getTypesArray(res);
       if (contentIsType(type, proxyConfig.proxyParseForEjs)) {
-        let _data = data.toString(getEncodingOfType(type));
+        let _data = iconv.decode(data, getEncodingOfType(type));
         let options = {text:_data, filename:req.path, app};
         if (proxyConfig.delimiter) {
           options.options = options.options || {};
