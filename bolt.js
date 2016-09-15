@@ -16,7 +16,8 @@ function appLauncher(config) {
     configDone = true;
     return require('require-extra').importDirectory('./bolt/', {
       merge: true,
-      imports: bolt
+      imports: bolt,
+      excludes: ['pm2', 'system', 'config']
     }).then(bolt => {
       bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
       bolt.loadApplication(config);
@@ -29,7 +30,11 @@ function pm2Controller() {
    * @todo Add a filter here do not need entire object.
    */
   return require('require-extra')
-    .importDirectory('./bolt/', {merge: true, imports: bolt})
+    .importDirectory('./bolt/', {
+      merge: true,
+      imports: bolt,
+      includes: ['config', 'database', 'pm2', 'system']
+    })
     .then(()=>require('./cli'))
     .then(args=>{
       return Promise.all(args._.map(cmd=>{
