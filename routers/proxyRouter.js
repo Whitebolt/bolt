@@ -26,7 +26,7 @@ function getTypesArray(res) {
 
 function tryModuleRoutes(modPaths) {
   let mod;
-  modPaths.every(modPath=>{
+  modPaths.reverse().every(modPath=>{
     try{
       mod = require(modPath);
       return false;
