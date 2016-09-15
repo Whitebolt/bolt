@@ -5,14 +5,7 @@ global.boltRootDir = __dirname;
 global.bolt = require('lodash');
 
 const launcher = require('./server');
-
-
-const argv = require('yargs')
-  .command('start <name>', 'Start the server process.')
-  .argv;
-
-if (!argv.development && argv.d) argv.development = argv.d;
-if (!argv.development && !argv.d) argv.development = false;
+const args = require('./cli');
 
 
 function launchApp(siteConfig) {
@@ -28,15 +21,16 @@ return require('require-extra').importDirectory('./bolt/', {
   merge: true,
   imports: bolt
 }).then(()=>{
-  if (bolt.indexOf(argv._, 'start') !== -1) {
-    if (argv.hasOwnProperty('name')) {
-      bolt.loadConfig(argv.name).then(siteConfig=>{
+  if (bolt.indexOf(args._, 'start') !== -1) {
+    if (args.hasOwnProperty('name')) {
+      bolt.loadConfig(args.name).then(siteConfig=>{
         if (!process.env.SUDO_UID) siteConfig.development = true;
-        if (argv.development) siteConfig.development = true;
+        if (args.development) siteConfig.development = true;
+        return siteConfig;
+      }).then(siteConfig=>{
+        if (!siteConfig.development) return bolt.addUser(siteConfig).then(()=>siteConfig);
         return siteConfig;
       }).then(
-        siteConfig=>((!siteConfig.development) ? bolt.addUser(siteConfig) : siteConfig)
-      ).then(
         siteConfig=>((!siteConfig.development) ? bolt.pm2LaunchApp(siteConfig) : launchApp(siteConfig)),
         err=>console.log(err)
       ).then(app=>{
