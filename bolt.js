@@ -23,10 +23,23 @@ if (!argv.development && !argv.d) argv.development = false;
 
 require('./bolt/database').then(dbBolt=>{
 
+  function templateLoop(config) {
+    let configText = JSON.stringify(config);
+    let configTextOld = '';
+    let template = _.template(configText);
+    while (configText !== configTextOld) {
+      config = JSON.parse(template(config));
+      configTextOld = configText;
+      configText = JSON.stringify(config);
+      template = _.template(configText);
+    }
+
+    return config;
+  }
+
   function parseConfig(config) {
     config.script = __dirname + '/server.js';
-    let template = _.template(JSON.stringify(config));
-    return JSON.parse(template(config));
+    return templateLoop(config);
   }
 
   function loadConfig(name) {

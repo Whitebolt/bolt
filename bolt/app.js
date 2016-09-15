@@ -140,7 +140,7 @@ function _createApp(config) {
   const app = express();
 
   app.config = _getConfig(config);
-  bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers']);
+  bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers', 'controllerRoutes']);
   return app;
 }
 
