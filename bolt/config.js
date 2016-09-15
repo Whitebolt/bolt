@@ -5,7 +5,7 @@
  */
 const configLoadPaths = [boltRootDir + '/server.json', '/etc/bolt/server.json'];
 if (process.env.BOLT_CONFIG) configLoadPaths.push(process.env.BOLT_CONFIG + '/server.json');
-const config = _tryModuleRoutes(configLoadPaths);
+const config = _tryModuleRoutes(configLoadPaths)
 
 /**
  * @todo Fix require-extra to do this.
@@ -38,7 +38,7 @@ function _templateLoop(config) {
 }
 
 function _parseConfig(config) {
-  config.script = boltRootDir + '/server.js';
+  config.script = boltRootDir + '/bolt.js';
   return _templateLoop(config);
 }
 
