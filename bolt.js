@@ -13,7 +13,6 @@ try {linuxUser = require('linux-user');} catch (err) {}
 const chown = Promise.promisify(require('chownr'));
 const launcher = require('./server');
 
-const config = require('/etc/bolt/server.json');
 const processFileProperties = Object.keys(require('pm2/lib/CLI/schema.json'));
 const boltConfigProperties = ['port', 'root', 'accessLog', 'template', 'databases', 'secret', 'development', 'proxy'];
 
@@ -99,7 +98,7 @@ return require('require-extra').importDirectory('./bolt/', {
 }).then(()=>{
   if (bolt.indexOf(argv._, 'start') !== -1) {
     if (argv.hasOwnProperty('name')) {
-      bolt.loadConfig(argv.name, config.db).then(siteConfig=>{
+      bolt.loadConfig(argv.name).then(siteConfig=>{
         if (!linuxUser) siteConfig.development = true;
         if (argv.development) siteConfig.development = true;
         return siteConfig;
