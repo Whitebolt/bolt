@@ -8,7 +8,6 @@ global.bolt = require('lodash');
 
 const Promise = require('bluebird');
 const pm2 = require('bluebird').promisifyAll(require('pm2'));
-const _ = require('lodash');
 let linuxUser;
 try {linuxUser = require('linux-user');} catch (err) {}
 const chown = Promise.promisify(require('chownr'));
@@ -25,36 +24,6 @@ const argv = require('yargs')
 if (!argv.development && argv.d) argv.development = argv.d;
 if (!argv.development && !argv.d) argv.development = false;
 
-
-function templateLoop(config) {
-  let configText = JSON.stringify(config);
-  let configTextOld = '';
-  let template = _.template(configText);
-  while (configText !== configTextOld) {
-    config = JSON.parse(template(config));
-    configTextOld = configText;
-    configText = JSON.stringify(config);
-    template = _.template(configText);
-  }
-
-  return config;
-}
-
-function parseConfig(config) {
-  config.script = __dirname + '/server.js';
-  return templateLoop(config);
-}
-
-function loadConfig(name) {
-  return bolt.loadMongo(config.db)
-    .then(db=>db.collection('configs').findOne({name}))
-    .then(parseConfig)
-    .then(siteConfig=>{
-      siteConfig.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : argv.development);
-      if (!linuxUser) siteConfig.development = true;
-      return siteConfig;
-    })
-}
 
 function getPm2Instances(name) {
   return pm2.listAsync()
@@ -78,8 +47,8 @@ function startInstance(pm2Config, boltConfig) {
 }
 
 function launchPm2(siteConfig) {
-  let pm2Config = _.pick(siteConfig, processFileProperties);
-  let boltConfig = _.pick(siteConfig, boltConfigProperties);
+  let pm2Config = bolt.pick(siteConfig, processFileProperties);
+  let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
 
   return pm2.connectAsync()
     .then(()=>removeOldInstances(pm2Config))
@@ -87,7 +56,7 @@ function launchPm2(siteConfig) {
 }
 
 function launchApp(siteConfig) {
-  let boltConfig = _.pick(siteConfig, boltConfigProperties);
+  let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
   launcher(boltConfig);
 }
 
@@ -121,13 +90,20 @@ function addUser(siteConfig) {
   }
 }
 
+/**
+ * @todo Add a filter here do not need entire object.
+ */
 return require('require-extra').importDirectory('./bolt/', {
   merge: true,
   imports: bolt
 }).then(()=>{
-  if (_.indexOf(argv._, 'start') !== -1) {
+  if (bolt.indexOf(argv._, 'start') !== -1) {
     if (argv.hasOwnProperty('name')) {
-      loadConfig(argv.name).then(
+      bolt.loadConfig(argv.name, config.db).then(siteConfig=>{
+        if (!linuxUser) siteConfig.development = true;
+        if (argv.development) siteConfig.development = true;
+        return siteConfig;
+      }).then(
         siteConfig=>((!siteConfig.development) ? addUser(siteConfig) : siteConfig)
       ).then(
         siteConfig=>((!siteConfig.development) ? launchPm2(siteConfig) : launchApp(siteConfig)),

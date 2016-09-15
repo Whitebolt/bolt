@@ -24,6 +24,10 @@ function getTypesArray(res) {
   return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
 }
 
+
+/**
+ * @todo Fix require-extra to do this.
+ */
 function tryModuleRoutes(modPaths) {
   let mod;
   modPaths.reverse().every(modPath=>{
