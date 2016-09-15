@@ -65,6 +65,18 @@
   "config": {
     "port": 3000,
     "logLevel": 4,
+    "boltConfigProperties": [
+      "port",
+      "root",
+      "accessLog",
+      "template",
+      "databases",
+      "secret",
+      "development",
+      "proxy",
+      "eventConsoleLogging",
+      "logLevel"
+    ],
     "eventConsoleLogging": [
       {
         "event": "configLoaded",
