@@ -7,35 +7,45 @@ global.express = require('express');
 global.bolt = require('lodash');
 
 let configDone = false;
+let boltLoaded = false;
+
 process.on('message', message=>{
   if (message.type === 'config') appLauncher(message.data);
 });
 
+function startApp(config) {
+  bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
+  return bolt.loadApplication(config);
+}
+
 function appLauncher(config) {
   if (!configDone) {
     configDone = true;
-    return require('require-extra').importDirectory('./bolt/', {
-      merge: true,
-      imports: bolt,
-      excludes: ['pm2', 'system', 'config']
-    }).then(bolt => {
-      bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
-      bolt.loadApplication(config);
-    });
+    if (!boltLoaded) {
+      return require('require-extra').importDirectory('./bolt/', {
+        merge: true,
+        imports: bolt,
+        excludes: ['pm2', 'system', 'config']
+      }).then(()=>{
+        boltLoaded = true;
+        return startApp(config);
+      });
+    }
+
+    return startApp(config);
   }
 }
 
 function pm2Controller() {
-  /**
-   * @todo Add a filter here do not need entire object.
-   */
+  let boltImportOptions = {merge: true, imports: bolt};
+  if (process.env.SUDO_UID) boltImportOptions.includes = ['config', 'database', 'pm2', 'system'];
+
   return require('require-extra')
-    .importDirectory('./bolt/', {
-      merge: true,
-      imports: bolt,
-      includes: ['config', 'database', 'pm2', 'system']
+    .importDirectory('./bolt/', boltImportOptions)
+    .then(()=>{
+      boltLoaded = true;
+      return require('./cli')
     })
-    .then(()=>require('./cli'))
     .then(args=>{
       return Promise.all(args._.map(cmd=>{
         if (args.cmd.hasOwnProperty(cmd)) {
