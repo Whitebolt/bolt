@@ -61,8 +61,15 @@ function _proxyRouter(app, proxyConfig) {
     };
   }
   if (proxyConfig.slugger) {
-    let slugger = tryModuleRoutes(app.config.root.map(root=>root+proxyConfig.slugger));
-    if (slugger) config.forwardPathAsync = slugger(proxyConfig);
+    /*let slugger = tryModuleRoutes(app.config.root.map(root=>root+proxyConfig.slugger));
+    if (slugger) config.forwardPathAsync = slugger(proxyConfig);*/
+
+    let _slugger = bolt.require.getModule(app.config.root.map(root=>root+proxyConfig.slugger)).then(slugger=>{
+      config.forwardPathAsync = slugger(proxyConfig);
+      console.log('FOUND');
+      return config.forwardPathAsync;
+    });
+    config.forwardPathAsync = (req)=>_slugger.then(()=>config.forwardPathAsync(req));
   }
 
   config.decorateRequest = (proxyReq, req)=>{
