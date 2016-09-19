@@ -23,7 +23,7 @@ const templateFunctions = {
   },
 
   view: function (viewName, doc, req, parent) {
-    let view = _getView(viewName, this.__componentName, req);
+    let view = _getView2(viewName, this.__componentName, req);
     if (view) {
       bolt.fire("firingView", view.path, bolt.getPathFromRequest(req));
       return view.compiled(doc, req, parent);
@@ -211,7 +211,7 @@ function _getComponentOverridePaths(component) {
   return overridePaths;
 }
 
-function _getView(viewName, componentName, req) {
+function _getView2(viewName, componentName, req) {
   let parts = viewName.split('/');
   let _viewName = parts.pop();
   let _componentName = (parts.join('/') + '/')
