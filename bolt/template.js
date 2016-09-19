@@ -12,7 +12,7 @@ const rxStartEndSlash = /^\/|\/$/g;
 const templateFunctions = {
   component: function (componentName, doc, req, parent) {
     let _componentName = ('/' + componentName.replace(rxRelativeDir, this.__componentName)).replace('//', '/');
-    let method = getMethod(_componentName, req.app);
+    let method = _getMethod(_componentName, req.app);
     if (method) {
       req.doc = req.doc || doc;
       bolt.fire("firingControllerMethod", method.methodPath, bolt.getPathFromRequest(req));
@@ -36,55 +36,54 @@ const templateFunctions = {
 /**
  * @todo Does this need to execute in order using a special version of mapSeries?
  */
-function loadAllTemplates(options, templateName=options.templateName) {
+function _loadAllTemplates(options, templateName=options.templateName) {
   if (Array.isArray(templateName)) {
-    return Promise.all(templateName.map(templateName => loadAllTemplates(options, templateName)));
+    return Promise.all(templateName.map(templateName => _loadAllTemplates(options, templateName)));
   }
 
-  return Promise.all(getTemplateDirectories(options.roots, templateName).map(templateDir => {
+  return Promise.all(_getTemplateDirectories(options.roots, templateName).map(templateDir => {
     return bolt.filesInDirectory(templateDir, 'ejs').map(viewPath => {
-      let viewText = loadViewText(viewPath, options);
+      let viewText = _loadViewText(viewPath, options);
       bolt.fire('loadedTemplate', viewPath);
       return viewText;
     });
   }));
 }
 
-function loadComponentViews(component, dirPath) {
-  const app = bolt.getApp(component);
-  const componentOptions = getComponentOptions(component, dirPath, parseLoadOptions(app));
-  return _loadComponentViews(component, dirPath, componentOptions).then(()=>app);
-}
+function _parseLoadOptions(app, options={}) {
+  const config = _getConfig(app) || {};
 
-function parseLoadOptions(app, options = {}) {
-  const config = getConfig(app) || {};
-
-  return Object.assign(options, {
+  let _options = Object.assign(options, {
     templateName: options.templateName || config.template,
-    views: options.views || app.templates,
+    views: options.views || app.templates || {},
     roots: options.roots || config.root,
     delimiter: options.delimiter || '%',
     strict: true,
-    localsName: ['doc', 'req', 'parent'],
     _with: false,
     debug: false,
-    locals: createLocalsObject(),
     awaitPromises: true
   });
+
+  if (options.localsName !== false) _options.localsName = options.localsName || ['doc', 'req', 'parent'];
+  if (options.locals !== false) _options.locals = options.locals || _createLocalsObject();
+  options.localsName = options.localsName || [];
+  options.locals = options.locals || {};
+
+  return _options;
 }
 
-function getConfig(app) {
-  return (app.config ? app.config : (app.parent ? getConfig(app.parent) : undefined));
+function _getConfig(app) {
+  return (app.config ? app.config : (app.parent ? _getConfig(app.parent) : undefined));
 }
 
-function createLocalsObject(locals = {}) {
+function _createLocalsObject(locals = {}) {
   Object.keys(templateFunctions).forEach(funcName => {
     locals[funcName] = templateFunctions[funcName].bind(locals);
   });
   return locals;
 }
 
-function getComponentOptions(component, componentDir, parentOptions = {}) {
+function _getComponentOptions(component, componentDir, parentOptions = {}) {
   const options = Object.assign({}, parentOptions);
   options.views = component.views;
   options.roots = [componentDir];
@@ -93,27 +92,27 @@ function getComponentOptions(component, componentDir, parentOptions = {}) {
   return options;
 }
 
-function getTemplateDirectories(roots, templateName) {
+function _getTemplateDirectories(roots, templateName) {
   return Promise.all(bolt.directoriesInDirectory(roots, ['templates']).map(templateDir =>
     bolt.directoriesInDirectory(templateDir, bolt.makeArray(templateName))
   )).then(templateDirs => bolt.flatten(templateDirs))
 }
 
-function getViewFilenames(roots) {
-  return Promise.all(bolt.directoriesInDirectory(roots, ['views']).map(viewDir => {
+function _getViewFilenames(roots, dirName=['views']) {
+  return Promise.all(bolt.directoriesInDirectory(roots, bolt.makeArray(dirName)).map(viewDir => {
     return bolt.filesInDirectory(viewDir, 'ejs');
-  })).then(viewPaths => bolt.flatten(viewPaths));
+  })).then(viewPaths=>bolt.flattenDeep(viewPaths));
 }
 
-function _loadComponentViews(component, componentDir, componentOptions) {
-  return Promise.all(getViewFilenames(componentDir).map(viewPath => {
-    let viewText = loadViewText(viewPath, componentOptions);
+function _loadComponentViews(componentDir, componentOptions) {
+  return Promise.all(_getViewFilenames(componentDir).map(viewPath => {
+    let viewText = _loadViewText(viewPath, componentOptions);
     bolt.fire('loadedComponentView', viewPath);
     return viewText;
   }));
 }
 
-function loadViewText(filename, options) {
+function _loadViewText(filename, options) {
   let views = options.views;
   return readFile(filename, 'utf-8').then(viewTxt => {
     let viewName = path.basename(filename, '.ejs');
@@ -125,31 +124,20 @@ function loadViewText(filename, options) {
   });
 }
 
-function compileTemplate(config) {
-  let optionsTree = [{}];
-  if (config.app) {
-    optionsTree.push(parseLoadOptions(config.app, config.options || {}));
-  } else if (config.options) {
-    optionsTree.push(config.options);
-  }
-  if (config.filename) optionsTree.push({filename: config.filename});
-  return ejs.compile(config.text, Object.assign.apply(Object, optionsTree));
-}
-
-function getTemplate(app, control) {
+function _getTemplate(app, control) {
   return app.templates[control.template];
 }
 
-function getView(app, control, tag = {}) {
+function _getView(app, control, tag = {}) {
   const componentName = control.componentPath || control.component || tag.component;
-  const component = getComponent(componentName, app);
+  const component = _getComponent(componentName, app);
   const viewName = control.view || tag.view;
   if (component && component.views[viewName]) {
     return component.views[viewName];
   }
 }
 
-function getComponent(componentName, app) {
+function _getComponent(componentName, app) {
   if (componentName.indexOf('/') === -1) {
     return app.components[componentName];
   } else {
@@ -165,14 +153,14 @@ function getComponent(componentName, app) {
   }
 }
 
-function applyTemplate(control, req) {
+function _applyTemplate(control, req) {
   let view = false;
   const app = req.app;
   const doc = control.doc || req.doc;
   const parent = control.parent || {};
-  let template = getTemplate(app, control);
+  let template = _getTemplate(app, control);
   if (!template) {
-    template = getView(app, control);
+    template = _getView(app, control);
     view = true;
   }
 
@@ -187,7 +175,7 @@ function applyTemplate(control, req) {
   return Promise.resolve('');
 }
 
-function getPaths(route) {
+function _getPaths(route) {
   let routes = [];
   while (route.length) {
     routes.push(route);
@@ -199,9 +187,9 @@ function getPaths(route) {
   return routes;
 }
 
-function getMethod(route, app) {
+function _getMethod(route, app) {
   let methods = [];
-  getPaths(route).forEach(route => {
+  _getPaths(route).forEach(route => {
     if (app.controllerRoutes[route]) {
       app.controllerRoutes[route].forEach(method => methods.push(method.method));
     }
@@ -234,11 +222,22 @@ function _getView(viewName, componentName, req) {
 }
 
 function _loadTemplates(app, options) {
-  options = parseLoadOptions(app, options);
+  options = _parseLoadOptions(app, options);
   if (!options.templateName || !options.roots) return app;
-  app.applyTemplate = applyTemplate;
+  app.applyTemplate = _applyTemplate;
 
-  return loadAllTemplates(options);
+  return _loadAllTemplates(options);
+}
+
+function compileTemplate(config) {
+  let optionsTree = [{}];
+  if (config.app) {
+    optionsTree.push(_parseLoadOptions(config.app, config.options || {}));
+  } else if (config.options) {
+    optionsTree.push(config.options);
+  }
+  if (config.filename) optionsTree.push({filename: config.filename});
+  return ejs.compile(config.text, Object.assign.apply(Object, optionsTree));
 }
 
 function loadComponentViewsTemplateOverrides(component) {
@@ -247,10 +246,27 @@ function loadComponentViewsTemplateOverrides(component) {
   );
 }
 
+function loadComponentViews(component, dirPath) {
+  const app = bolt.getApp(component);
+  const componentOptions = _getComponentOptions(component, dirPath, _parseLoadOptions(app));
+  return _loadComponentViews(dirPath, componentOptions).then(()=>app);
+}
+
 function loadTemplates(app, options = {}) {
   return bolt.fire(()=>_loadTemplates(app, options), 'loadTemplates', app).then(() => app);
 }
 
+function loadEjsDirectory(roots, dirName, options={}) {
+  let _options = _parseLoadOptions({}, Object.assign({roots}, options));
+  return _getViewFilenames(roots, dirName)
+    .map(filename=>_loadViewText(filename, _options))
+    .then(()=>_options.views);
+}
+
 module.exports = {
-  loadTemplates, loadComponentViews, loadComponentViewsTemplateOverrides, compileTemplate
+  loadTemplates,
+  loadComponentViews,
+  loadComponentViewsTemplateOverrides,
+  compileTemplate,
+  loadEjsDirectory
 };

@@ -17,8 +17,10 @@ function start(args) {
     }).then(siteConfig=>{
       if (!siteConfig.development) return bolt.addUser(siteConfig).then(()=>siteConfig);
       return siteConfig;
-    }).then(
-      siteConfig=>((!siteConfig.development) ? bolt.pm2LaunchApp(siteConfig) : launchApp(siteConfig)),
+    }).then(siteConfig=>
+      (!siteConfig.development ? bolt.launchNginx(siteConfig) : siteConfig)
+    ).then(
+      siteConfig=>(!siteConfig.development ? bolt.pm2LaunchApp(siteConfig) : launchApp(siteConfig)),
       err=>console.log(err)
     ).then(app=>{
       if (app && app.pm2_env) {
