@@ -13,13 +13,7 @@ function init(app) {
     saveUninitialized: true
   });
 
-  app.use(sessionMiddleware);
-
-  bolt.hook('afterIoServerLaunch', (event, app)=>{
-    app.io.use((socket, next)=>{
-      sessionMiddleware(socket.request, {}, next);
-    });
-  });
+  bolt.use(app, sessionMiddleware);
 };
 
 init.priority = 1;

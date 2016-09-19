@@ -103,50 +103,24 @@ function init(app) {
     return callback(null, data._id.toString());
   });
 
-  passport.deserializeUser((id, callback) => {
+  passport.deserializeUser((id, callback)=>{
     getUserRecordById(id).nodeify(callback);
   });
 
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  app.use(function(req, res, next){
+  bolt.use(app, passport.initialize());
+  bolt.use(app, passport.session());
+  bolt.use(app, (req, res, next, socket)=>{
     const passport = req.session.passport;
 
     ((!(passport && passport.user)) ?
         populateAnnoymousSessionData(req) :
         populateUserSessionData(req)
     )
-      .finally(next);
-  });
-
-  bolt.hook('afterIoServerLaunch', (event, app)=>{
-    app.io.use((socket, next)=>{
-      passport.initialize()(socket.request, {}, next);
-    });
-    app.io.use((socket, next)=>{
-      passport.session()(socket.request, {}, next);
-    });
-    app.io.use((socket, next)=>{
-      const passport = socket.request.session.passport;
-      ((!(passport && passport.user)) ?
-          populateAnnoymousSessionData(socket.request) :
-          populateUserSessionData(socket.request)
-      ).finally(next);
-    });
-  });
-
-  bolt.hook('afterIoServerLaunch', (event, app)=>{
-    app.io.on('connection', socket=>{
-      //passport.initialize()(socket.request, {}, ()=>{});
-      //passport.session()(socket.request, {}, ()=>{});
-
-      /*const _passport = socket.request.passport;
-      ((!(_passport && _passport.user)) ?
-          populateAnnoymousSessionData(socket.request, {}, ()=>{}) :
-          populateUserSessionData(socket.request, {}, ()=>{})
-      )*/
-    });
+      .finally(()=>{
+        if (socket) req.session.socketId = socket.id;
+        req.session.save();
+        next();
+      });
   });
 }
 

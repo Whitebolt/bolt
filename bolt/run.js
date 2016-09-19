@@ -20,8 +20,6 @@ function _runApp(app) {
         }))
         .then(() => resolve(app));
     });
-
-    //console.log(app.controllerRoutes);
   });
 }
 
