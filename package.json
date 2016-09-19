@@ -40,6 +40,7 @@
     "morgan": "^1.7.0",
     "mysql": "^2.10.2",
     "mysql-promise": "^3.1.0",
+    "nginx-o": "^0.1.1",
     "nodemailer": "^2.4.2",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",

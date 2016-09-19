@@ -4,6 +4,12 @@ const Promise = require('bluebird');
 const fs = require('fs');
 const writeFile = Promise.promisify(fs.writeFile);
 const symLink = Promise.promisify(fs.symlink);
+const rename = Promise.promisify(fs.rename);
+const Nginx = require('nginx-o');
+const nginx = new Nginx();
+
+nginx.on('started', function () { console.log('nginx has started'); });
+nginx.on('stopped', function () { console.log('nginx has stopped'); });
 
 function launchNginx(siteConfig) {
   let roots = siteConfig.root;
@@ -21,9 +27,16 @@ function launchNginx(siteConfig) {
       }).then(()=>{
         symLink(
           '/etc/nginx/sites-available/' + siteConfig.userName,
+          '/etc/nginx/sites-enabled/' + siteConfig.userName + '_TEMP'
+        )
+      }).then(()=>{// This allows overwrites of symlink (better than deleting).
+        rename(
+          '/etc/nginx/sites-enabled/' + siteConfig.userName + '_TEMP',
           '/etc/nginx/sites-enabled/' + siteConfig.userName
         )
       }).then(()=>
+        nginx.reload()
+      ).then(()=>
         siteConfig
       );
     }

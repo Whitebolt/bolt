@@ -2,16 +2,14 @@ server {
     listen 80;
     server_name <%=config.domains.join(' ');%>;
 
-    include pagespeed-vhost.conf;
-
     location / {
         root /var/www;
-        try_files <%=config.root.join('$uri ')+'$uri @bolt';%>
+        try_files <%=config.root.join('$uri ')+'$uri @bolt';%>;
     }
 
     location @bolt {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_pass http://localhost:<%=config.port;%>
+        proxy_pass http://localhost:<%=config.port;%>;
     }
 }
