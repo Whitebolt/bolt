@@ -141,6 +141,7 @@ function _createApp(config) {
 
   app.config = _getConfig(config);
   bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers', 'controllerRoutes']);
+
   return app;
 }
 

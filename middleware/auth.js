@@ -87,11 +87,11 @@ function init(app) {
       .then(groups=>{session.groups = groups; return groups;})
   }
 
-  function populateUserSessionData(req, res, next){
+  function populateUserSessionData(req){
     return populateSessionWithUserData(req.session);
   }
 
-  function populateAnnoymousSessionData(req, res, next){
+  function populateAnnoymousSessionData(req){
     let session = req.session;
     session.user = {};
     return getGroups(['Annoymous']).then(groups=>{session.groups = groups;});
@@ -114,10 +114,39 @@ function init(app) {
     const passport = req.session.passport;
 
     ((!(passport && passport.user)) ?
-        populateAnnoymousSessionData(req, res, next) :
-        populateUserSessionData(req, res, next)
+        populateAnnoymousSessionData(req) :
+        populateUserSessionData(req)
     )
       .finally(next);
+  });
+
+  bolt.hook('afterIoServerLaunch', (event, app)=>{
+    app.io.use((socket, next)=>{
+      passport.initialize()(socket.request, {}, next);
+    });
+    app.io.use((socket, next)=>{
+      passport.session()(socket.request, {}, next);
+    });
+    app.io.use((socket, next)=>{
+      const passport = socket.request.session.passport;
+      ((!(passport && passport.user)) ?
+          populateAnnoymousSessionData(socket.request) :
+          populateUserSessionData(socket.request)
+      ).finally(next);
+    });
+  });
+
+  bolt.hook('afterIoServerLaunch', (event, app)=>{
+    app.io.on('connection', socket=>{
+      //passport.initialize()(socket.request, {}, ()=>{});
+      //passport.session()(socket.request, {}, ()=>{});
+
+      /*const _passport = socket.request.passport;
+      ((!(_passport && _passport.user)) ?
+          populateAnnoymousSessionData(socket.request, {}, ()=>{}) :
+          populateUserSessionData(socket.request, {}, ()=>{})
+      )*/
+    });
   });
 }
 

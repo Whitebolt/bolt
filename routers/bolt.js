@@ -62,6 +62,32 @@ function callMethod(config) {
 }
 
 function boltRouter(app) {
+  bolt.hook('afterIoServerLaunch', (event, app)=>{
+    app.io.on('connection', socket=>{
+      Object.keys(app.controllerRoutes).forEach(path=>{
+        socket.on(path, data=>{
+          let res = {
+            headersSent: false,
+            send: data=>socket.emit(path, data),
+            end: ()=>{}
+          };
+          let req = Object.assign(socket.request, {
+            orginalUrl: path,
+            body: data.body,
+            path,
+            app,
+            res,
+            webSocket: socket
+          });
+
+          let methods = getMethods(app, req);
+          let component = {req, res, done: false};
+          if (methods.length) callMethod({methods, component, req, res, next:()=>{}});
+        });
+      });
+    });
+  });
+
   return (req, res, next)=>{
     let methods = getMethods(app, req);
     let component = {req, res, done: false};

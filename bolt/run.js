@@ -2,6 +2,7 @@
 
 const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
+const IO = require('socket.io');
 
 function _runApp(app) {
   if (app.config.uid && app.config.gid && !app.config.development) { // downgrade from route just before going live.
@@ -10,13 +11,17 @@ function _runApp(app) {
   }
 
   return new Promise(resolve => {
-    app.listen(app.config.port, () => {
+    let server = app.listen(app.config.port, () => {
       bolt.fire('appListening', app.config.port);
-      readFile('./welcome.txt', 'utf-8').then(welcome => {
-        console.log(welcome);
-        return welcome;
-      }).then(() => resolve(app));
+      return bolt.fire(()=>{app.io = IO(server);}, 'ioServerLaunch', app).then(()=>
+        readFile('./welcome.txt', 'utf-8').then(welcome => {
+          console.log(welcome);
+          return welcome;
+        }))
+        .then(() => resolve(app));
     });
+
+    //console.log(app.controllerRoutes);
   });
 }
 
