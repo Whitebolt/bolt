@@ -42,7 +42,10 @@ function tryModuleRoutes(modPaths) {
 }
 
 function _proxyRouter(app, proxyConfig) {
-  let config = {reqAsBuffer: false};
+  let config = {
+    reqAsBuffer: false
+  };
+
   if (proxyConfig.proxyParseForEjs) {
     config.intercept = (rsp, data, req, res, callback)=>{
       let type = getTypesArray(res);
@@ -66,7 +69,6 @@ function _proxyRouter(app, proxyConfig) {
 
     let _slugger = bolt.require.getModule(app.config.root.map(root=>root+proxyConfig.slugger)).then(slugger=>{
       config.forwardPathAsync = slugger(proxyConfig);
-      console.log('FOUND');
       return config.forwardPathAsync;
     });
     config.forwardPathAsync = (req)=>_slugger.then(()=>config.forwardPathAsync(req));
@@ -74,6 +76,7 @@ function _proxyRouter(app, proxyConfig) {
 
   config.decorateRequest = (proxyReq, req)=>{
     if (bolt.isPlainObject(proxyReq.bodyContent)) proxyReq.bodyContent = bolt.objectToQueryString(proxyReq.bodyContent);
+    if (proxyConfig.host) proxyReq.headers.host = proxyConfig.host;
     return proxyReq;
   };
 
