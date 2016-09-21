@@ -14,25 +14,27 @@ function launchNginx(siteConfig) {
   nginx.on('started', ()=>{ console.log('nginx has started'); });
   nginx.on('stopped', ()=>{ console.log('nginx has stopped'); });
 
+  let siteName = (siteConfig.shortName || siteConfig.userName);
+
   return bolt.loadEjsDirectory(roots, 'nginx', {
     locals: false,
     localsName: ['config']
   }).then(nginxTemplates=>{
     if (siteConfig.nginx && siteConfig.nginx.template && nginxTemplates[siteConfig.nginx.template]) {
       return nginxTemplates[siteConfig.nginx.template].compiled(siteConfig).then(template=>{
-        return writeFile('/etc/nginx/sites-available/' + siteConfig.userName, template, {
+        return writeFile('/etc/nginx/sites-available/' + siteName, template, {
           flags:'w',
           encoding:'utf-8'
         });
       }).then(()=>{
         symLink(
-          '/etc/nginx/sites-available/' + siteConfig.userName,
-          '/etc/nginx/sites-enabled/' + siteConfig.userName + '_TEMP'
+          '/etc/nginx/sites-available/' + siteName,
+          '/etc/nginx/sites-enabled/' + siteName + '_TEMP'
         )
       }).then(()=>{// This allows overwrites of symlink (better than deleting).
         rename(
-          '/etc/nginx/sites-enabled/' + siteConfig.userName + '_TEMP',
-          '/etc/nginx/sites-enabled/' + siteConfig.userName
+          '/etc/nginx/sites-enabled/' + siteName + '_TEMP',
+          '/etc/nginx/sites-enabled/' + siteName
         )
       }).then(()=>
         nginx.reload()
