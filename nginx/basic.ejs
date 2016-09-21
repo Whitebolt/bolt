@@ -4,7 +4,7 @@ server {
 
     location / {
         root /var/www;
-        try_files <%=config.root.join('$uri ')+'$uri @bolt';%>;
+        try_files <%=config.root.join('public/$uri ')+'public/$uri @bolt';%>;
     }
 
     location @bolt {
