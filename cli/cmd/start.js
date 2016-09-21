@@ -20,7 +20,11 @@ function start(args) {
     }).then(siteConfig=>
       (!siteConfig.development ? bolt.launchNginx(siteConfig) : siteConfig)
     ).then(
-      siteConfig=>(!siteConfig.development ? bolt.pm2LaunchApp(siteConfig) : launchApp(siteConfig)),
+      siteConfig=>{
+        if (siteConfig.development) return launchApp(siteConfig);
+        console.log('Assigned app to TCP port no.', siteConfig.port);
+        return bolt.pm2LaunchApp(siteConfig);
+      },
       err=>console.log(err)
     ).then(app=>{
       if (app && app.pm2_env) {

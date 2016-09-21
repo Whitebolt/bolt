@@ -6,13 +6,13 @@ const writeFile = Promise.promisify(fs.writeFile);
 const symLink = Promise.promisify(fs.symlink);
 const rename = Promise.promisify(fs.rename);
 const Nginx = require('nginx-o');
-const nginx = new Nginx();
-
-nginx.on('started', function () { console.log('nginx has started'); });
-nginx.on('stopped', function () { console.log('nginx has stopped'); });
 
 function launchNginx(siteConfig) {
+  const nginx = new Nginx();
   let roots = siteConfig.root;
+
+  nginx.on('started', ()=>{ console.log('nginx has started'); });
+  nginx.on('stopped', ()=>{ console.log('nginx has stopped'); });
 
   return bolt.loadEjsDirectory(roots, 'nginx', {
     locals: false,

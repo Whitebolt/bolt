@@ -30,6 +30,7 @@
     "express": "^4.13.4",
     "express-http-proxy": "^0.10.0",
     "express-session": "^1.13.0",
+    "find-free-port": "^1.0.2",
     "ical-date-parser": "^3.1.1",
     "iconv-lite": "^0.4.13",
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
@@ -65,6 +66,10 @@
   },
   "config": {
     "port": 3000,
+    "portRange": {
+      "start": 3000,
+      "end": 8000
+    },
     "logLevel": 4,
     "boltConfigProperties": [
       "port",
