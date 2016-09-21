@@ -10,6 +10,6 @@ server {
     location @bolt {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_pass http://localhost:<%=config.port;%>;
+        proxy_pass http://localhost:<%=(config.development?config.devPort:config.port);%>;
     }
 }

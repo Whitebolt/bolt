@@ -11,8 +11,8 @@ function launchNginx(siteConfig) {
   const nginx = new Nginx();
   let roots = siteConfig.root;
 
-  nginx.on('started', function () { console.log('nginx has started'); });
-  nginx.on('stopped', function () { console.log('nginx has stopped'); });
+  nginx.on('started', ()=>{ console.log('nginx has started'); });
+  nginx.on('stopped', ()=>{ console.log('nginx has stopped'); });
 
   return bolt.loadEjsDirectory(roots, 'nginx', {
     locals: false,

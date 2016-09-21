@@ -11,7 +11,7 @@ function _runApp(app) {
 
   return new Promise(resolve => {
     app.listen(app.config.port, () => {
-      bolt.fire('appListening', app.config.port);
+      bolt.fire('appListening', app.config.development?app.config.devPort:app.config.port);
       readFile('./welcome.txt', 'utf-8').then(welcome => {
         console.log(welcome);
         return welcome;
