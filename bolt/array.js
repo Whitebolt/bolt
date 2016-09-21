@@ -30,8 +30,8 @@ function makeArray(ary, convertFunction=(ary)=>[ary]) {
  * @returns {integer}   Sort order for items a & b (-1, 0, or 1).
  */
 function prioritySorter(a, b) {
-  let aP = (a.hasOwnProperty('priority') ? a.priority : 1);
-  let bP = (b.hasOwnProperty('priority') ? b.priority : 1);
+  let aP = (a !== undefined ? (a.hasOwnProperty('priority') ? a.priority : 1) : 1);
+  let bP = (a !== undefined ? (b.hasOwnProperty('priority') ? b.priority : 1) : 1);
   return ((aP > bP)?1:((aP < bP)?-1:0));
 }
 
