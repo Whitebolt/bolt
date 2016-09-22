@@ -109,18 +109,14 @@ function init(app) {
 
   bolt.use(app, passport.initialize());
   bolt.use(app, passport.session());
-  bolt.use(app, (req, res, next, socket)=>{
+  bolt.use(app, (req, res, next)=>{
     const passport = req.session.passport;
 
     ((!(passport && passport.user)) ?
         populateAnnoymousSessionData(req) :
         populateUserSessionData(req)
     )
-      .finally(()=>{
-        if (socket) req.session.socketId = socket.id;
-        req.session.save();
-        next();
-      });
+      .finally(()=>next());
   });
 }
 

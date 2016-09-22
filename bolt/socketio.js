@@ -1,17 +1,22 @@
 'use strict';
 
-function ioUse(app, middleware) {
+function ioUse(app, ...middleware) {
   let init = ()=>{
-    app.io.use((socket, next)=>middleware(socket.request, {}, next, socket));
+    middleware.forEach(middleware=>{
+      app.io.use((socket, next)=>{
+        socket.request.websocket = socket;
+        middleware(socket.request, {}, next);
+      });
+    });
   };
 
   if (bolt.fired('afterIoServerLaunch')) return init();
   bolt.hook('afterIoServerLaunch', (event, app)=>init());
 }
 
-function use(app, middleware) {
-  app.use(middleware);
-  ioUse(app, middleware);
+function use(app, ...middleware) {
+  app.use.apply(app, middleware);
+  ioUse.bind({}, app).apply({}, middleware);
 }
 
 module.exports = {

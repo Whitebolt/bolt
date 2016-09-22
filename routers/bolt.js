@@ -64,9 +64,6 @@ function callMethod(config) {
 function boltRouter(app) {
   bolt.hook('afterIoServerLaunch', (event, app)=>{
     app.io.on('connection', socket=>{
-      let temp={};
-      for(var key in socket) temp[key]=true;
-      console.log(Object.keys(temp).sort().join(', '));
       Object.keys(app.controllerRoutes).forEach(path=>{
         socket.on(path, data=>{
           let res = {
@@ -80,7 +77,7 @@ function boltRouter(app) {
             path,
             app,
             res,
-            webSocket: socket
+            websocket: socket
           });
 
           let methods = getMethods(app, req);
