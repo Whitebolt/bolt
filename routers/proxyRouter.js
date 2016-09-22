@@ -25,22 +25,6 @@ function getTypesArray(res) {
 }
 
 
-/**
- * @todo Fix require-extra to do this.
- */
-function tryModuleRoutes(modPaths) {
-  let mod;
-  modPaths.reverse().every(modPath=>{
-    try{
-      mod = require(modPath);
-      return false;
-    } catch(e) {
-      return true;
-    }
-  });
-  return mod;
-}
-
 function _proxyRouter(app, proxyConfig) {
   let config = {
     reqAsBuffer: false
@@ -64,9 +48,6 @@ function _proxyRouter(app, proxyConfig) {
     };
   }
   if (proxyConfig.slugger) {
-    /*let slugger = tryModuleRoutes(app.config.root.map(root=>root+proxyConfig.slugger));
-    if (slugger) config.forwardPathAsync = slugger(proxyConfig);*/
-
     let _slugger = bolt.require.getModule(app.config.root.map(root=>root+proxyConfig.slugger)).then(slugger=>{
       config.forwardPathAsync = slugger(proxyConfig);
       return config.forwardPathAsync;
