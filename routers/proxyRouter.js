@@ -24,60 +24,60 @@ function getTypesArray(res) {
   return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
 }
 
-
-/**
- * @todo Fix require-extra to do this.
- */
-function tryModuleRoutes(modPaths) {
-  let mod;
-  modPaths.reverse().every(modPath=>{
-    try{
-      mod = require(modPath);
-      return false;
-    } catch(e) {
-      return true;
-    }
-  });
-  return mod;
+function parseReturnedData(options, req) {
+  if (options.text.indexOf('<'+options.options.delimiter) === -1) return Promise.resolve(options.text);
+  let template = bolt.compileTemplate(options);
+  return Promise.resolve(template({}, req, {}));
 }
 
-function _proxyRouter(app, proxyConfig) {
-  let config = {reqAsBuffer: false};
-  if (proxyConfig.proxyParseForEjs) {
-    config.intercept = (rsp, data, req, res, callback)=>{
-      let type = getTypesArray(res);
-      if (contentIsType(type, proxyConfig.proxyParseForEjs)) {
-        let _data = iconv.decode(data, getEncodingOfType(type));
-        let options = {text:_data, filename:req.path, app};
-        if (proxyConfig.delimiter) {
-          options.options = options.options || {};
-          options.options.delimiter = proxyConfig.delimiter;
-        }
-        let template = bolt.compileTemplate(options);
-        Promise.resolve(template({}, req, {})).then(data=>callback(null, data));
-      } else {
-        callback(null, data);
-      }
+function _initIntercept(app, proxyConfig) {
+  return (rsp, data, req, res, callback)=>{
+    let type = getTypesArray(res);
+    if (!contentIsType(type, proxyConfig.proxyParseForEjs)) return callback(null, data);
+
+    let options = {
+      text:iconv.decode(data, getEncodingOfType(type)),
+      filename:req.path,
+      app,
+      options:{}
     };
-  }
-  if (proxyConfig.slugger) {
-    /*let slugger = tryModuleRoutes(app.config.root.map(root=>root+proxyConfig.slugger));
-    if (slugger) config.forwardPathAsync = slugger(proxyConfig);*/
 
-    let _slugger = bolt.require.getModule(app.config.root.map(root=>root+proxyConfig.slugger)).then(slugger=>{
-      config.forwardPathAsync = slugger(proxyConfig);
-      console.log('FOUND');
-      return config.forwardPathAsync;
-    });
-    config.forwardPathAsync = (req)=>_slugger.then(()=>config.forwardPathAsync(req));
-  }
+    if (proxyConfig.delimiter) options.options.delimiter = proxyConfig.delimiter;
+    return parseReturnedData(options, req)
+      .then(data=>callback(null, data));
+  };
+}
 
-  config.decorateRequest = (proxyReq, req)=>{
+function _initSlugger(app, appProxyConfig, config) {
+  let _slugger = bolt.require.getModule(app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
+    config.forwardPathAsync = slugger(appProxyConfig);
+    return config.forwardPathAsync;
+  });
+
+  return (req)=>{
+    return _slugger.then(()=>config.forwardPathAsync(req));
+  }
+}
+
+function _initDecorateRequest(app, appProxyConfig) {
+  return (proxyReq, req)=>{
     if (bolt.isPlainObject(proxyReq.bodyContent)) proxyReq.bodyContent = bolt.objectToQueryString(proxyReq.bodyContent);
+    if (appProxyConfig.host) proxyReq.headers.host = appProxyConfig.host;
     return proxyReq;
   };
+}
 
-  return proxy(proxyConfig.forwardPath, config);
+
+function _proxyRouter(app, appProxyConfig) {
+  let config = {
+    reqAsBuffer: false,
+    decorateRequest: _initDecorateRequest(app, appProxyConfig)
+  };
+
+  if (appProxyConfig.proxyParseForEjs) config.intercept = _initIntercept(app, appProxyConfig);
+  if (appProxyConfig.slugger) config.forwardPathAsync = _initSlugger(app, appProxyConfig, config);
+
+  return proxy(appProxyConfig.forwardPath, config);
 }
 
 function proxyRouter(app) {

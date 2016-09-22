@@ -126,7 +126,20 @@ function _getConfig(config) {
     template: 'index'
   });
   packageConfigs.push(config);
-  return bolt.merge.apply(bolt, packageConfigs);
+  packageConfigs.push((objValue, srcValue, key, object, source, stack)=>{
+    if (key === 'eventConsoleLogging') {
+      let lookup = {};
+      return (objValue || []).concat(srcValue || []).reverse().filter(item=>{
+        if (!lookup[item.event]) {
+          lookup[item.event] = true;
+          return true;
+        }
+        return false;
+      }).reverse();
+    }
+  });
+
+  return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
 /**
