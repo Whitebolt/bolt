@@ -25,7 +25,8 @@ function appLauncher(config) {
       return require('require-extra').importDirectory('./bolt/', {
         merge: true,
         imports: bolt,
-        excludes: ['pm2', 'system', 'config', 'nginx']
+        excludes: ['pm2', 'system', 'config', 'nginx'],
+        useSyncRequire: true
       }).then(()=>{
         boltLoaded = true;
         return startApp(config);
@@ -37,7 +38,7 @@ function appLauncher(config) {
 }
 
 function pm2Controller() {
-  let boltImportOptions = {merge: true, imports: bolt};
+  let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
   if (process.env.SUDO_UID) boltImportOptions.includes = [
     'config', 'nginx', 'database', 'pm2', 'system', 'template', 'array', 'files'
   ];

@@ -12,6 +12,7 @@
 function _loadHooks(roots) {
   return bolt.directoriesInDirectory(roots, ['hooks'])
     .map(dirPath => bolt.require.importDirectory(dirPath, {
+      useSyncRequire: true,
       callback: hookPath=>bolt.fire('loadedHook', hookPath)
     }))
     .each(hooks =>

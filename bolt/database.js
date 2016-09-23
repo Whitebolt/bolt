@@ -3,7 +3,8 @@
 const Promise = require('bluebird');
 
 module.exports = require('require-extra').importDirectory('./database/interfaces/', {
-  merge: true
+  merge: true,
+  useSyncRequire: true
 }).then(interfaces=>{
 
   function _loadDatabases(app, config=app.config.databases) {

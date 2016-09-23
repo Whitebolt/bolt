@@ -43,7 +43,7 @@ function assignPort(config) {
 }
 
 function loadConfig(name) {
-  return requireX.getModule(configLoadPaths)
+  return requireX.getModule(true, configLoadPaths)
     .then(config=>bolt.loadMongo(config.db))
     .then(db=>db.collection('configs').findOne({name}))
     .then(_parseConfig)

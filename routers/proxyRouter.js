@@ -49,7 +49,7 @@ function _initIntercept(app, proxyConfig) {
 }
 
 function _initSlugger(app, appProxyConfig, config) {
-  let _slugger = bolt.require.getModule(app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
+  let _slugger = bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
     config.forwardPathAsync = slugger(appProxyConfig);
     return config.forwardPathAsync;
   });

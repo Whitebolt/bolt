@@ -164,6 +164,7 @@ function _boltLoader(app) {
     .map(dirPath=>bolt.require.importDirectory(dirPath, {
       merge: true,
       imports: bolt,
+      useSyncRequire: true,
       callback:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
     }))
     .then(()=>app);
@@ -205,6 +206,7 @@ function importIntoObject(options) {
     .mapSeries(dirPath => {
       return bolt.require.importDirectory(dirPath, {
         imports: options.importObj,
+        useSyncRequire: true,
         callback: filepath => bolt.fire(options.eventName, filepath)
       });
     })
