@@ -110,13 +110,17 @@ function init(app) {
   bolt.use(app, passport.initialize());
   bolt.use(app, passport.session());
   bolt.use(app, (req, res, next)=>{
-    const passport = req.session.passport;
+    if (req.session) {
+      const passport = req.session.passport;
 
-    ((!(passport && passport.user)) ?
-        populateAnnoymousSessionData(req) :
-        populateUserSessionData(req)
-    )
-      .finally(()=>next());
+      ((!(passport && passport.user)) ?
+          populateAnnoymousSessionData(req) :
+          populateUserSessionData(req)
+      )
+        .finally(()=>next());
+    } else {
+      next();
+    }
   });
 }
 

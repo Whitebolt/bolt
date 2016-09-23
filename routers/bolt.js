@@ -1,13 +1,15 @@
 'use strict';
 
 const Promise = require('bluebird');
+const http = require('http');
+const mime = require('mime');
 
 
 function getMethods(app, req) {
   let methods = [];
   getPaths(req).forEach(route => {
     if (app.controllerRoutes[route]) {
-      app.controllerRoutes[route].forEach(method => {
+      app.controllerRoutes[route].forEach(method =>{
         methods.push((component) => {
           bolt.fire("firingControllerMethod", method.method.methodPath, bolt.getPathFromRequest(req));
           component.component = component.component || method.method.componentName;
@@ -61,32 +63,105 @@ function callMethod(config) {
   }, error => handleMethodErrors(error, config));
 }
 
-function boltRouter(app) {
-  bolt.hook('afterIoServerLaunch', (event, app)=>{
-    app.io.on('connection', socket=>{
-      Object.keys(app.controllerRoutes).forEach(path=>{
-        socket.on(path, data=>{
-          let res = {
-            headersSent: false,
-            send: data=>socket.emit(path, data),
-            end: ()=>{}
-          };
-          let req = Object.assign(socket.request, {
-            orginalUrl: path,
-            body: data.body,
-            path,
-            app,
-            res,
-            websocket: socket
-          });
+function addJsonMethod(res, message, socket, method) {
+  res.json = data=>{
+    socket.emit(method, {
+      type: 'application/json',
+      status: res.statusCode,
+      path: message.path,
+      body: data
+    });
+    return res;
+  };
+  return res;
+}
 
-          let methods = getMethods(app, req);
-          let component = {req, res, done: false};
-          if (methods.length) callMethod({methods, component, req, res, next:()=>{}});
+function addSendMethod(res, message, socket, method) {
+  res.send = data=>{
+    socket.emit(method, {
+      type: 'application/json',
+      status: res.statusCode,
+      path: message.path,
+      body: data
+    });
+    return res;
+  };
+  return res;
+}
+
+function addTypeMethod(res) {
+  res.type = type=>{
+    res.headers['content-type'] = mime.lookup(type);
+    return res
+  };
+
+  return res;
+}
+
+function addGetHeader(res) {
+  res.getHeader = headerName=>{
+    res.headers[headerName];
+  };
+
+  return res;
+}
+
+function addStatusMethod(res) {
+  res.status = statusCode=>{
+    res.statusCode=statusCode;
+    return res;
+  };
+
+  return res;
+}
+
+function createSocketResponse(message, socket, method) {
+  let res = {
+    headers: {},
+    headersSent: false,
+    end: ()=>{},
+    statusCode: 200
+  };
+
+  addJsonMethod(res, message, socket, method);
+  addSendMethod(res, message, socket, method);
+  addTypeMethod(res);
+  addGetHeader(res);
+  addStatusMethod(res);
+
+  return res;
+}
+
+function createSocketResquest(message, socket, method) {
+  let req = Object.assign(socket.request, {
+    method,
+    orginalUrl: message.path,
+    body: message.body,
+    path: message.path,
+    websocket: socket
+  });
+
+  return req;
+}
+
+function boltRouter(app) {
+  http.METHODS
+    .map(method=>method.toLowerCase())
+    .forEach(method=> {
+      bolt.ioOn(method, (socket, message)=> {
+        let res = createSocketResponse(message, socket, method);
+        let req = Object.assign(socket.request, createSocketResquest(message, socket, method));
+        res.req = res;
+        req.res = res;
+        req.app = app;
+
+        let methods = getMethods(app, req);
+        let component = {req, res, done: false};
+        if (methods.length) callMethod({
+          methods, component, req, res, next:()=>{}
         });
       });
     });
-  });
 
   return (req, res, next)=>{
     let methods = getMethods(app, req);

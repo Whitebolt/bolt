@@ -13,7 +13,10 @@ function _runApp(app) {
   return new Promise(resolve => {
     let server = app.listen(app.config.port, () => {
       bolt.fire('appListening', app.config.port);
-      return bolt.fire(()=>{app.io = IO(server);}, 'ioServerLaunch', app).then(()=>
+      return bolt.fire(()=>{
+        app.io = IO(server);
+        app.io.sockets.setMaxListeners(50);
+      }, 'ioServerLaunch', app).then(()=>
         readFile('./welcome.txt', 'utf-8').then(welcome => {
           console.log(welcome);
           return welcome;
