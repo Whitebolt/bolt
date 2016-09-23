@@ -87,11 +87,11 @@ function init(app) {
       .then(groups=>{session.groups = groups; return groups;})
   }
 
-  function populateUserSessionData(req, res, next){
+  function populateUserSessionData(req){
     return populateSessionWithUserData(req.session);
   }
 
-  function populateAnnoymousSessionData(req, res, next){
+  function populateAnnoymousSessionData(req){
     let session = req.session;
     session.user = {};
     return getGroups(['Annoymous']).then(groups=>{session.groups = groups;});
@@ -103,21 +103,24 @@ function init(app) {
     return callback(null, data._id.toString());
   });
 
-  passport.deserializeUser((id, callback) => {
+  passport.deserializeUser((id, callback)=>{
     getUserRecordById(id).nodeify(callback);
   });
 
-  app.use(passport.initialize());
-  app.use(passport.session());
+  bolt.use(app, passport.initialize());
+  bolt.use(app, passport.session());
+  bolt.use(app, (req, res, next)=>{
+    if (req.session) {
+      const passport = req.session.passport;
 
-  app.use(function(req, res, next){
-    const passport = req.session.passport;
-
-    ((!(passport && passport.user)) ?
-        populateAnnoymousSessionData(req, res, next) :
-        populateUserSessionData(req, res, next)
-    )
-      .finally(next);
+      ((!(passport && passport.user)) ?
+          populateAnnoymousSessionData(req) :
+          populateUserSessionData(req)
+      )
+        .finally(()=>next());
+    } else {
+      next();
+    }
   });
 }
 

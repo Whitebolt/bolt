@@ -6,6 +6,7 @@ const events = new Map();
 const topics = new Map();
 const hooks = new Map();
 const idLookup = new WeakMap();
+const done = new WeakMap();
 const reverseLookup = new Map();
 
 const defaultOptions = {priority:0, context:{}};
@@ -13,6 +14,10 @@ const defaultOptions = {priority:0, context:{}};
 idLookup.set(events, new Map());
 idLookup.set(topics, new Map());
 idLookup.set(hooks, new Map());
+
+done.set(events, new Map());
+done.set(topics, new Map());
+done.set(hooks, new Map());
 
 reverseLookup.set("events", events);
 reverseLookup.set("topics", topics);
@@ -151,6 +156,14 @@ function fire(hookName, ...params) {
       _fireThrough(_hookName, caller, params, events) :
       _fire(_hookName, params, events)
   );
+}
+
+function fired(hookName, type="hooks") {
+  if (reverseLookup.has(type)) {
+    let lookup = reverseLookup.get(type);
+    if (done.get(lookup).has(hookName)) return true;
+  }
+  return false;
 }
 
 /**
@@ -306,7 +319,7 @@ function _onCreateUnregister(hookName, lookup, id) {
  * @private
  */
 function _hookPrioritySorter(a, b) {
-  return bolt.prioritySorter(a.priority, b.priority);
+  return bolt.prioritySorter(a, b);
 }
 
 /**
@@ -322,7 +335,10 @@ function _hookPrioritySorter(a, b) {
  */
 function _fire(hookName, params, lookup) {
   return Promise.all(bolt.splitAndTrim(hookName, ',').map(hookName=>{
-    process.nextTick(()=>_fireEvents(hookName, params, lookup));
+    process.nextTick(()=>{
+      done.get(lookup).set(hookName, true);
+      _fireEvents(hookName, params, lookup);
+    });
     return _fireHooks(hookName, params);
   }));
 }
@@ -384,17 +400,18 @@ function _fireEvents(hookName, params, lookup) {
  *                          for this promise to return.
  */
 function _fireHooks(hookName, params) {
-  return (hooks.has(hookName) ?
-    Promise.all(hooks
+  if (hooks.has(hookName)) {
+    done.get(hooks).set(hookName, true);
+    return Promise.all(hooks
       .get(hookName)
       .map(hook =>
         hook.handler.apply(hook.options.context || {}, [hook.options].concat(params.slice()))
       )
-    ) :
-    Promise.resolve()
-  );
+    );
+  }
+  return Promise.resolve()
 }
 
 module.exports = {
-  on, once, hook, subscribe, off, fire, broadcast, _eventDefaultParams: defaultOptions
+  on, once, hook, subscribe, off, fire, broadcast, fired, _eventDefaultParams: defaultOptions
 };
