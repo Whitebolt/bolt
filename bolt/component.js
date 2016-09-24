@@ -91,17 +91,16 @@ function _getComponentDirectories(roots) {
 function _loadComponents(app, roots) {
   bolt.addDefaultObjects(app, 'components');
 
-  return _getComponentDirectories(roots).mapSeries(
-    dirPath=>_createComponent(app, dirPath)
-  ).map(
-    component=>Promise.all([
+  return _getComponentDirectories(roots).mapSeries(dirPath=>{
+      let component = _createComponent(app, dirPath);
+      return Promise.all([
         bolt.fire(()=>bolt.loadHooks(component, component.fullPath), 'loadComponentHooks', app),
         bolt.fire(()=>bolt.loadControllers(component, component.fullPath), 'loadComponentControllers', app),
         bolt.fire(()=>bolt.loadComponentViews(component, component.fullPath), 'loadComponentViews', app),
         bolt.fire(()=>bolt.loadComponents(component, component.fullPath), 'loadComponentComponents', app)
       ]).then(()=>component)
-    ).mapSeries(
-    component=>bolt.fire(() => bolt.loadComponents(component, component.fullPath), 'loadComponentComponents', app)
+  }).mapSeries(
+    component=>bolt.fire(()=>bolt.loadComponents(component, component.fullPath), 'loadComponentComponents', app)
   );
 }
 
