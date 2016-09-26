@@ -10,24 +10,23 @@ const requireX = require('require-extra');
 const freeport = Promise.promisify(require("find-free-port"));
 const packageConfig = require(boltRootDir + '/package.json').config;
 
+function getKeyedEnvVars(key, env=process.env) {
+  let vars = {};
 
-function _templateLoop(config) {
-  let configText = JSON.stringify(config);
-  let configTextOld = '';
-  let template = bolt.template(configText);
-  while (configText !== configTextOld) {
-    config = JSON.parse(template(config));
-    configTextOld = configText;
-    configText = JSON.stringify(config);
-    template = bolt.template(configText);
-  }
+  object.keys(env)
+    .filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
+    .forEach(envKey=>{
+      let varKey = bolt.camelCase(envKey.subStr(key.length));
+      vars[varKey] = env[envKey];
+    });
 
-  return bolt.merge(packageConfig, config);
+  return vars;
 }
+
 
 function _parseConfig(config) {
   config.script = boltRootDir + '/bolt.js';
-  return _templateLoop(config);
+  return bolt.merge(packageConfig, bolt.parseTemplatedJson(config));
 }
 
 function assignPort(config) {
@@ -55,5 +54,5 @@ function loadConfig(name) {
 }
 
 module.exports = {
-  loadConfig
+  loadConfig, getKeyedEnvVars
 };

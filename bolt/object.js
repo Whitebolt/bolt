@@ -24,6 +24,21 @@ function addDefaultObjects(obj, properties, defaultIsArray=false) {
   return obj;
 }
 
+function parseTemplatedJson(jsonString) {
+  let _jsonString = (bolt.isString(jsonString)?JSON.parse(jsonString):jsonString);
+  let configText = (bolt.isString(jsonString)?jsonString:JSON.stringify(jsonString));
+  let configTextOld = '';
+  let template = bolt.template(configText);
+  while (configText !== configTextOld) {
+    _jsonString = JSON.parse(template(_jsonString));
+    configTextOld = configText;
+    configText = JSON.stringify(_jsonString);
+    template = bolt.template(configText);
+  }
+
+  return _jsonString;
+}
+
 module.exports = {
-  addDefaultObjects
+  addDefaultObjects, parseTemplatedJson
 };
