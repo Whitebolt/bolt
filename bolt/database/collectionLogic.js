@@ -130,36 +130,51 @@ function _removeUnauthorisedFields(doc, session, accessLevel) {
   return doc;
 }
 
+function _removeAddedFields(doc, projection={}) {
+  if (!projection._acl) delete doc._acl;
+  if (!projection._id) delete doc._id;
+  return doc;
+}
+
 function _getDoc(options) {
+  let getDoc;
+  let projection = (options.projection ?
+    Object.assign({}, options.projection, {'_acl':true, '_id':true}) :
+    undefined
+  );
   if (options.id) {
     let query = Object.assign({_id: options.id}, options.query || {});
-    return options.db.collection(options.collection).findOne(query, options.projection);
+    getDoc = options.db.collection(options.collection).findOne(query, projection);
   } else {
-    return options.db.collection(options.collection).find(options.query, options.projection).toArray();
+    getDoc = options.db.collection(options.collection).find(options.query, projection).toArray();
   }
+
+  return getDoc
+    .then(docs=>bolt.makeArray(docs))
+    .then(docs=>(options.filterByAccessLevel ? docs.filter(doc=>_isAuthorised(doc, options.session, options.accessLevel)) : docs))
+    .then(docs=>(options.filterByVisibility ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))
+    .map(doc=>(options.filterUnauthorisedFields ? _removeUnauthorisedFields(doc, options.session, options.accessLevel) : doc))
+    .map(_addCreatedField)
+    .map(doc=>_removeAddedFields(doc, options.projection));
 }
 
 function getDocs(options) {
   let _options = _parseOptions(options);
 
-  return _getDoc(_options).then(docs=>bolt.makeArray(docs))
+  return _getDoc(_options);
+}
+
+function _addCreatedField(doc, projection={}) {
+  if (projection._created && doc && doc._id) doc._created = new Date(parseInt(doc._id.toString().substring(0, 8), 16) * 1000);
+  return doc;
 }
 
 function getDoc(options) {
   let _options = _parseOptions(options);
 
   return _getDoc(_options)
-    .then(docs=>bolt.makeArray(docs))
-    .then(docs=>
-      (options.filterByAccessLevel ? docs.filter(doc=>_isAuthorised(doc, _options.session, _options.accessLevel)) : docs)
-    )
-    .then(docs=>
-      (options.filterByVisibility ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs)
-    )
     .then(docs=>docs.sort(_prioritySorter))
-    .then(docs=>
-      (options.filterUnauthorisedFields ? _removeUnauthorisedFields(docs[0], _options.session, _options.accessLevel) : docs[0])
-    )
+    .then(docs=>docs[0]);
 }
 
 function removeUnauthorisedFields(options) {
