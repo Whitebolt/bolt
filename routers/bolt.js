@@ -12,7 +12,7 @@ function getMethods(app, req) {
       app.controllerRoutes[route].forEach(method =>{
         methods.push((component) => {
           bolt.fire("firingControllerMethod", method.method.methodPath, bolt.getPathFromRequest(req));
-          component.component = component.component || method.method.componentName;
+          component.__componentName = component.component || method.method.componentName;
           component.componentPath = method.method.componentPath;
           return method.method(component);
         });
@@ -165,7 +165,7 @@ function boltRouter(app) {
 
   return (req, res, next)=>{
     let methods = getMethods(app, req);
-    let component = {req, res, done: false};
+    let component = bolt.addTemplateFunctions({req, res, done: false});
     if (methods.length) {
       callMethod({methods, component, req, res, next})
         .then(component=>{

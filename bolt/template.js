@@ -65,7 +65,7 @@ function _parseLoadOptions(app, options={}) {
   });
 
   if (options.localsName !== false) _options.localsName = options.localsName || ['doc', 'req', 'parent'];
-  if (options.locals !== false) _options.locals = options.locals || _createLocalsObject();
+  if (options.locals !== false) _options.locals = options.locals || addTemplateFunctions();
   options.localsName = options.localsName || [];
   options.locals = options.locals || {};
 
@@ -76,7 +76,7 @@ function _getConfig(app) {
   return (app.config ? app.config : (app.parent ? _getConfig(app.parent) : undefined));
 }
 
-function _createLocalsObject(locals = {}) {
+function addTemplateFunctions(locals = {}) {
   Object.keys(templateFunctions).forEach(funcName => {
     locals[funcName] = templateFunctions[funcName].bind(locals);
   });
@@ -268,5 +268,6 @@ module.exports = {
   loadComponentViews,
   loadComponentViewsTemplateOverrides,
   compileTemplate,
-  loadEjsDirectory
+  loadEjsDirectory,
+  addTemplateFunctions
 };
