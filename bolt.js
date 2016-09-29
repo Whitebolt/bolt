@@ -6,8 +6,11 @@ global.colour = require('colors');
 global.express = require('express');
 global.bolt = require('lodash');
 
+const packageConfig = require('./package.json').config || {};
+
 let configDone = false;
 let boltLoaded = false;
+
 
 process.on('message', message=>{
   if (message.type === 'config') appLauncher(message.data);
@@ -25,7 +28,7 @@ function appLauncher(config) {
       return require('require-extra').importDirectory('./bolt/', {
         merge: true,
         imports: bolt,
-        excludes: ['pm2', 'system', 'config', 'nginx'],
+        excludes: packageConfig.appLaunchExcludes,
         useSyncRequire: true
       }).then(()=>{
         boltLoaded = true;
@@ -39,9 +42,7 @@ function appLauncher(config) {
 
 function pm2Controller() {
   let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
-  if (process.env.SUDO_UID) boltImportOptions.includes = [
-    'config', 'nginx', 'database', 'pm2', 'system', 'template', 'array', 'files', 'object'
-  ];
+  if (process.env.SUDO_UID) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
   return require('require-extra')
     .importDirectory('./bolt/', boltImportOptions)

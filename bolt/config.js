@@ -149,7 +149,7 @@ function _getConfig(config) {
  * @param {Object} [env=process.env]  The environment object to use.
  * @returns {Object}                  The imported values.
  */
-function getKeyedEnvVars(key='BOLT', env=process.env) {
+function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
   let vars = {};
 
   Object.keys(env)

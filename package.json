@@ -85,6 +85,13 @@
       "eventConsoleLogging",
       "logLevel"
     ],
+    "boltEnvPrefix": "BOLT",
+    "appLaunchExcludes": [
+      "pm2", "system", "config", "nginx"
+    ],
+    "pm2LaunchIncludes": [
+      "config", "nginx", "database", "pm2", "system", "template", "array", "files", "object"
+    ],
     "eventConsoleLogging": [
       {
         "event": "configLoaded",
