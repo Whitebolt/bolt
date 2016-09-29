@@ -101,6 +101,12 @@ function _getEventChannel(root, level, max) {
   return channel;
 }
 
+/**
+ *
+ * @private
+ * @param {Array|string} roots  Get configs from the various package.json roots.
+ * @returns {Array}             Array of config objects.
+ */
 function _getPackageConfigs(roots) {
   return bolt.makeArray(roots || []).map(root=>{
     try {
@@ -110,14 +116,53 @@ function _getPackageConfigs(roots) {
   });
 }
 
+const _configMergeOverrides = {
+  /**
+   * Merge eventConsoleLogging arrays together avoid duplicates and merging of
+   * the actual objects (default lodash action).
+   *
+   * @param {Array} objValue    The value being merged into.
+   * @param {Array} srcValue    The value to merge in.
+   * @returns {Array}           The merged value.
+   */
+  eventConsoleLogging: (objValue, srcValue)=>{
+    let lookup = {};
+    return (objValue || []).concat(srcValue || []).reverse().filter(item=>{
+      if (!lookup[item.event]) {
+        lookup[item.event] = true;
+        return true;
+      }
+      return false;
+    }).reverse();
+  }
+};
+
+/**
+ * Generate a function to to merge the configs together. The default lodash
+ * merge is used, unless an override is supplied via _configMergeOverrides.
+ *
+ * @private
+ * @param {*} objValue    The value being merged into.
+ * @param {*} srcValue    The value to merge in.
+ * @param {string} key    The object property we are merging.
+ * @returns {undefined|*} The new value after merging or undefined to use
+ *                        default method.
+ */
+function _configMerge(objValue, srcValue, key) {
+  return (_configMergeOverrides.hasOwnProperty(key) ?
+      _configMergeOverrides[key](objValue, srcValue) :
+      undefined
+  );
+}
+
 /**
  * Get a config object from package.json and the supplied config.
  *
- * @private
+ * @public
  * @param {Object} config   Config object to act as the last merge item.
  * @returns {Object}        The new constructed config with default available.
  */
-function _getConfig(config) {
+function getConfig(config) {
   let packageConfigs = _getPackageConfigs(config.root);
   packageConfigs.unshift({
     version: packageData.version,
@@ -125,19 +170,7 @@ function _getConfig(config) {
     description: packageData.description,
     template: 'index'
   });
-  packageConfigs.push(config);
-  packageConfigs.push((objValue, srcValue, key, object, source, stack)=>{
-    if (key === 'eventConsoleLogging') {
-      let lookup = {};
-      return (objValue || []).concat(srcValue || []).reverse().filter(item=>{
-        if (!lookup[item.event]) {
-          lookup[item.event] = true;
-          return true;
-        }
-        return false;
-      }).reverse();
-    }
-  });
+  packageConfigs.push(config, _configMerge);
 
   return bolt.mergeWith.apply(bolt, packageConfigs);
 }
@@ -152,15 +185,23 @@ function _getConfig(config) {
 function _createApp(config) {
   const app = express();
 
-  app.config = _getConfig(config);
+  app.config = getConfig(config);
   bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers', 'controllerRoutes']);
 
   return app;
 }
 
+/**
+ * Load additional bolt modules (not just the main root ones).  Will only load
+ * additional modules, ignoring the main root.
+ *
+ * @private
+ * @param {Object} app    The application object.
+ * @returns {Promise}     Promise resolving to app when all is loaded.
+ */
 function _boltLoader(app) {
   return bolt.directoriesInDirectory(app.config.root, ['bolt'])
-    .filter(dirPath => (dirPath != boltRootDir + '/bolt'))
+    .filter(dirPath=>(dirPath !== boltRootDir + '/bolt'))
     .map(dirPath=>bolt.require.importDirectory(dirPath, {
       merge: true,
       imports: bolt,
@@ -240,5 +281,5 @@ function loadApplication(configPath) {
 }
 
 module.exports = {
-  loadApplication, getApp, importIntoObject
+  loadApplication, getApp, importIntoObject, getConfig
 };

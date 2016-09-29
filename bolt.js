@@ -40,7 +40,7 @@ function appLauncher(config) {
 function pm2Controller() {
   let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
   if (process.env.SUDO_UID) boltImportOptions.includes = [
-    'config', 'nginx', 'database', 'pm2', 'system', 'template', 'array', 'files', 'object'
+    'config', 'nginx', 'database', 'pm2', 'system', 'template', 'array', 'files', 'object', 'app'
   ];
 
   return require('require-extra')
