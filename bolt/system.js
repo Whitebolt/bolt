@@ -12,20 +12,32 @@ const exec = Promise.promisify(require('child_process').exec);
 const fs = require('fs');
 const stat = Promise.promisify(fs.stat);
 
-function _createUserIfNotCreated(isUser, config) {
-  if (!isUser) {
-    var options = {username: config.userName};
-    if (config.homeDir) options.d = config.homeDir;
-    return linuxUser.addUser(options)
-      .then(result=>linuxUser.getUserInfo(config.userName));
-  }
-  return true;
+/**
+ * Create a given user.
+ *
+ * @private
+ * @param {boltConfig} config   The bolt config object.
+ * @returns {Promise.<Object>}
+ */
+function _createUser(config) {
+  var options = {username: config.userName};
+  if (config.homeDir) options.d = config.homeDir;
+  return linuxUser.addUser(options)
+    .then(result=>linuxUser.getUserInfo(config.userName));
 }
 
+/**
+ * Add user and group specified in supplied config if not already present.
+ * Endure all the application directories are appropriately accessible for
+ * the given user.
+ *
+ * @param {boltConfig} config       The bolt config objecct.
+ * @returns {Promise.<boltConfig>}  Promise resolving to the bolt config object.
+ */
 function addUser(config) {
   if (config.userName) {
     return linuxUser.isUser(config.userName).then(
-      isUser=>_createUserIfNotCreated(isUser, config)
+      isUser=>(!isUser?_createUserIfNotCreated(isUser, config):true)
     ).then(
       isUser=>linuxUser.getUserInfo(config.userName)
     ).then(user=> {
