@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const Promise = require('bluebird');
 
 module.exports = require('require-extra').importDirectory('./database/interfaces/', {

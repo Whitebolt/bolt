@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
+ */
+
+/**
  * Add properties to each method used by bolt.
  *
  * @private

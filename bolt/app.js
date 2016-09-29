@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const Promise = require('bluebird');
 const fs = require('fs');
 const open = Promise.promisify(fs.open);
@@ -17,7 +21,7 @@ const ejsOptions = {
  * within in.  This is basically way of mapping specfic events to specific log
  * broadcasts.  Normally the input object is taken from package.json.
  *
- * @public
+ * @private
  * @param {Object} config   The config object.
  * @returns {Function}      Unreg function.
  */
@@ -196,6 +200,11 @@ function getApp(component) {
  * initialisation events.
  *
  * @public
+ * @static
+ *
+ * @fires beforeInitialiseApp
+ * @fires afterInitialiseApp
+ *
  * @param {string} configPath   Path to server config.
  * @returns {Promise}           Promise resolving to app object once it is
  *                              loaded and events fired.

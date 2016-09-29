@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
+ */
+
+/**
  * Add new objects to and object if not already present.  Will construct a
  * series of blank objects attached to the property names supplied. If
  * properties already exist, leave as.

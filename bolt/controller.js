@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
+ */
+
+/**
  * Get all possible routes to given method in priority order.
  *
  * @private

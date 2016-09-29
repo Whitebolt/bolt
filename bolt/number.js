@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const xIsInt = /^[0-9]+$/;
 
 /**

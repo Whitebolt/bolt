@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
+ */
+
+/**
  * Always return an array.  If the provided parameter is an array then return
  * it as-is.  If provided param is not an array return param as first item
  * of an array. If a convertFunction is supplied the default non-array to array

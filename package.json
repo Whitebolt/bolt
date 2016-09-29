@@ -61,6 +61,8 @@
   "license": "SEE LICENSE IN LICENSE.md",
   "devDependencies": {
     "chai": "^3.5.0",
+    "gulp": "^3.9.1",
+    "gulp-jsdoc3": "^1.0.0",
     "mocha": "^3.0.2"
   },
   "scripts": {
@@ -91,10 +93,21 @@
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [
-      "pm2", "system", "config", "nginx"
+      "pm2",
+      "system",
+      "config",
+      "nginx"
     ],
     "pm2LaunchIncludes": [
-      "config", "nginx", "database", "pm2", "system", "template", "array", "files", "object"
+      "config",
+      "nginx",
+      "database",
+      "pm2",
+      "system",
+      "template",
+      "array",
+      "files",
+      "object"
     ],
     "eventConsoleLogging": [
       {

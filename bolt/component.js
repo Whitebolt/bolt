@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const path = require('path');
 const Promise = require('bluebird');
 

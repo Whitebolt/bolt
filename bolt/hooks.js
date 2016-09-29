@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
 
 /**
  * Load hooks in given directory into the application.

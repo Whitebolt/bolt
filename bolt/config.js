@@ -1,6 +1,7 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
  * @todo Add windows and mac path?
  */
 const configLoadPaths = [boltRootDir + '/server.json', '/etc/bolt/server.json'];
@@ -125,7 +126,7 @@ function _configMerge(objValue, srcValue, key) {
 /**
  * Get a config object from package.json and the supplied config.
  *
- * @public
+ * @private
  * @param {Object} config   Config object to act as the last merge item.
  * @returns {Object}        The new constructed config with default available.
  */
@@ -145,6 +146,7 @@ function _getConfig(config) {
 /**
  * Get configs items from environment variables (BOLT_*).
  *
+ * @public
  * @param {string} [key='BOLT']       The key values to import.
  * @param {Object} [env=process.env]  The environment object to use.
  * @returns {Object}                  The imported values.
@@ -163,10 +165,40 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
 }
 
 /**
+ * @typedef boltConfig
+ * Configuration object for bolt-server.
+ *
+ * @property {integer} [port]                       Network port to attach app to.
+ * @property {string|Array} root                    The directory roots to load server from.
+ * @property {string} accessLog                     Location to write access log to.
+ * @property {string|Array.<string>} [template]     Named template(s) to apply.
+ * @property {Array.<boltConfigDb>} [databases]     Databases to load.
+ * @property {string} secret                        Cookie encryption string.
+ * @property {boolean} [development]                Run in development mode or not?
+ * @property {Array.<Object>} [proxy]               Define any proxies.
+ * @property {Array.<Object>} [eventConsoleLogging] Event logging options.
+ * @property {integer} [logLevel]                   Log level to run at (0-8).
+ */
+
+/**
+ * @typedef boltConfigDb
+ * @property {string} type                    Connection type (eg. mongodb,
+ *                                            mysql, ...etc).
+ * @property {string} [server='localhost']    Server hostname
+ * @property {integer} [port]                 Port no.
+ * @property {string} database                Database name.
+ * @property {string} [username]              Username to connect as.
+ * @property {string} [password]              Password to use.
+ * @property {string} [adminDatabase='admin'] Admin database t use (mongo specfic).
+ */
+
+/**
  * Load global config for app.
  *
- * @param {string} name     The config to load.
- * @returns {Promise}       Promise resolving to the config object.
+ * @public
+ * @static
+ * @param {string} name           The config to load.
+ * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 function loadConfig(name) {
   return requireX.getModule(true, configLoadPaths)

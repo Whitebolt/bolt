@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 let linuxUser;
 try {linuxUser = require('linux-user');} catch (err) {}
 const Promise = require('bluebird');

@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 function _addMethodProperties(routers, routerName) {
   let method = routers[routerName];
   let priority = (method.hasOwnProperty('priority') ? method.priority : 10);

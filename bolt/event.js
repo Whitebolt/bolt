@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const Promise = require('bluebird');
 
 const events = new Map();
@@ -216,7 +220,7 @@ function broadcast(topicName, ...params) {
  *                                                    through function.
  * @param params {Array}                              Parameters to pass to
  *                                                    the event.
- * @returns {Array({Function|undefined}, {string})}   The calculated event
+ * @returns {Array}   The calculated event
  *                                                    name nd call-through.
  */
 function _getCallerAndEventName(eventName, params) {
@@ -292,6 +296,7 @@ function _onCreate(hookName, handler, options, lookup) {
 /**
  * Get the id lookup map for given lookup object and hook name.
  *
+ * @private
  * @param {string} hookName   The hook name to lookup.
  * @param {Object} lookup     The lookup map to lookup.
  * @returns {Map}             The id lookup Map.

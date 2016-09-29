@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
+ */
+
+/**
  * Get the path from a url removing an trailing slashes.
  *
  * @todo  How robust is this? Test and improve.

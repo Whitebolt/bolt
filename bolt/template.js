@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const path = require('path');
 const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
@@ -35,6 +39,8 @@ const templateFunctions = {
 
 /**
  * @todo Does this need to execute in order using a special version of mapSeries?
+ *
+ * @private
  */
 function _loadAllTemplates(options, templateName=options.templateName) {
   if (Array.isArray(templateName)) {

@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @module bolt/bolt
+ */
+
+/**
  * Set middleware on a given socket after sockets are available.
  *
  * @public

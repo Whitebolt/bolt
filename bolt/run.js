@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const Promise = require('bluebird');
 const readFile = Promise.promisify(require('fs').readFile);
 const IO = require('socket.io');

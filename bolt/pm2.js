@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const pm2 = require('bluebird').promisifyAll(require('pm2'));
 const processFileProperties = Object.keys(require('pm2/lib/CLI/schema.json'));
 const boltConfigProperties = require(boltRootDir + '/package.json').config.boltConfigProperties;
