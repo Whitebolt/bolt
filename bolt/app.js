@@ -4,7 +4,6 @@ const Promise = require('bluebird');
 const fs = require('fs');
 const open = Promise.promisify(fs.open);
 const ejs = require('ejs');
-const packageData = require(boltRootDir + '/package.json');
 
 const ejsOptions = {
   strict: true,
@@ -102,80 +101,6 @@ function _getEventChannel(root, level, max) {
 }
 
 /**
- *
- * @private
- * @param {Array|string} roots  Get configs from the various package.json roots.
- * @returns {Array}             Array of config objects.
- */
-function _getPackageConfigs(roots) {
-  return bolt.makeArray(roots || []).map(root=>{
-    try {
-      let packageData = require(root+'package.json');
-      return packageData.config || {};
-    } catch(e) {return {};}
-  });
-}
-
-const _configMergeOverrides = {
-  /**
-   * Merge eventConsoleLogging arrays together avoid duplicates and merging of
-   * the actual objects (default lodash action).
-   *
-   * @param {Array} objValue    The value being merged into.
-   * @param {Array} srcValue    The value to merge in.
-   * @returns {Array}           The merged value.
-   */
-  eventConsoleLogging: (objValue, srcValue)=>{
-    let lookup = {};
-    return (objValue || []).concat(srcValue || []).reverse().filter(item=>{
-      if (!lookup[item.event]) {
-        lookup[item.event] = true;
-        return true;
-      }
-      return false;
-    }).reverse();
-  }
-};
-
-/**
- * Generate a function to to merge the configs together. The default lodash
- * merge is used, unless an override is supplied via _configMergeOverrides.
- *
- * @private
- * @param {*} objValue    The value being merged into.
- * @param {*} srcValue    The value to merge in.
- * @param {string} key    The object property we are merging.
- * @returns {undefined|*} The new value after merging or undefined to use
- *                        default method.
- */
-function _configMerge(objValue, srcValue, key) {
-  return (_configMergeOverrides.hasOwnProperty(key) ?
-      _configMergeOverrides[key](objValue, srcValue) :
-      undefined
-  );
-}
-
-/**
- * Get a config object from package.json and the supplied config.
- *
- * @public
- * @param {Object} config   Config object to act as the last merge item.
- * @returns {Object}        The new constructed config with default available.
- */
-function getConfig(config) {
-  let packageConfigs = _getPackageConfigs(config.root);
-  packageConfigs.unshift({
-    version: packageData.version,
-    name: packageData.name,
-    description: packageData.description,
-    template: 'index'
-  });
-  packageConfigs.push(config, _configMerge);
-
-  return bolt.mergeWith.apply(bolt, packageConfigs);
-}
-
-/**
  * Create a new express application with the given config object.
  *
  * @private
@@ -184,8 +109,7 @@ function getConfig(config) {
  */
 function _createApp(config) {
   const app = express();
-
-  app.config = getConfig(config);
+  app.config = config;
   bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers', 'controllerRoutes']);
 
   return app;
@@ -281,5 +205,5 @@ function loadApplication(configPath) {
 }
 
 module.exports = {
-  loadApplication, getApp, importIntoObject, getConfig
+  loadApplication, getApp, importIntoObject
 };
