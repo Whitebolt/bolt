@@ -13,7 +13,7 @@
  * @returns {Function}              The middleware function with
  *                                  added properties.
  */
-function _addMethodProperties(middleware, middlewareName) {
+function _decorateMiddlewareMethod(middleware, middlewareName) {
   let method = middleware[middlewareName];
   let priority = (method.hasOwnProperty('priority') ? method.priority : 0);
   method.id = middlewareName;
@@ -38,7 +38,7 @@ function _loadMiddleware(app, roots, importObj) {
   })
     .then(middleware=>middleware[0])
     .then(middleware=>Object.keys(middleware)
-        .map(middlewareName => _addMethodProperties(middleware, middlewareName))
+        .map(middlewareName => _decorateMiddlewareMethod(middleware, middlewareName))
         .sort(bolt.prioritySorter)
     )
     .then(middleware=>{
