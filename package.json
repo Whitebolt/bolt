@@ -73,6 +73,10 @@
       "end": 8000
     },
     "logLevel": 4,
+    "nginx": {
+      "sitesAvailable": "/etc/nginx/sites-available/",
+      "sitesEnabled": "/etc/nginx/sites-enabled/"
+    },
     "boltConfigProperties": [
       "port",
       "root",

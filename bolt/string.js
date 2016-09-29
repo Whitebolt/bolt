@@ -41,6 +41,15 @@ function randomString(length=32) {
   return str;
 }
 
+/**
+ * Split a string using the given separator and trim the array items of
+ * leading/trailing spaces. Also remove empty items.
+ *
+ * @public
+ * @param {string} value      Text to split and trim.
+ * @param {string} splitter   Splitter character(s).
+ * @returns {Array}           Split and trimmed array.
+ */
 function splitAndTrim(value, splitter) {
   return value.split(splitter)
     .filter(value=>value)

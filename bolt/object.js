@@ -24,6 +24,16 @@ function addDefaultObjects(obj, properties, defaultIsArray=false) {
   return obj;
 }
 
+/**
+ * Parse a json string/object applying each property as a template with itself
+ * as the source.  This means that properties can refer to each other with
+ * values being constructed from other properties.  Uses lodash templates for
+ * template parsing. Parses recursively until all values are replaced.
+ *
+ * @param {Object|string} jsonString    Object or string that is json. This
+ *                                      is the input to parse.
+ * @returns {Object}                    The parsed object.
+ */
 function parseTemplatedJson(jsonString) {
   let _jsonString = (bolt.isString(jsonString)?JSON.parse(jsonString):jsonString);
   let configText = (bolt.isString(jsonString)?jsonString:JSON.stringify(jsonString));

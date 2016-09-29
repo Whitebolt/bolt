@@ -29,7 +29,19 @@ function getPathPartsFromRequest(req) {
   return getPathFromRequest(req).split('/').filter(part => (part.trim() !== ''));
 }
 
-function objectToQueryString(obj, splitter='&', defaultValue=undefined) {
+/**
+ * Convert a given object to a url style query string.
+ *
+ * @public
+ * @param {Object} obj              Object to convert.
+ * @param {string} [splitter='&']   Splitter between string values.
+ * @param {string} [defaultValue]   Default value when key is present but has
+ *                                  no value.  If undefined then leave blank.
+ *                                  This means you can have properties without
+ *                                  values, eg. field1=1&field2&field3
+ * @returns {string}                The url query style string.
+ */
+function objectToQueryString(obj, splitter='&', defaultValue) {
   let queryString = [];
 
   Object.keys(obj).forEach(key=>{
@@ -39,6 +51,18 @@ function objectToQueryString(obj, splitter='&', defaultValue=undefined) {
   return queryString.join(splitter);
 }
 
+/**
+ * This is the opposite of objectToQueryString and converts a url query
+ * string to an object.
+ *
+ * @public
+ * @param queryString               The query string to parse.
+ * @param {string} [splitter='&']   Splitter between string values.
+ * @param {string} [defaultValue]   Default value when key is present but has
+ *                                  no value.  This defines what the object
+ *                                  value is set to for these items.
+ * @returns {Object}                The parse query object.
+ */
 function queryStringToObject(queryString, splitter='&', defaultValue=undefined) {
   let obj = {};
   let parts = queryString.split(splitter);
@@ -50,6 +74,13 @@ function queryStringToObject(queryString, splitter='&', defaultValue=undefined) 
   return obj;
 }
 
+/**
+ * Get a query object from a given array, avoiding any hash section errors.
+ *
+ * @public
+ * @param {string} url    The url string to parse.
+ * @returns {Object}      The query object.
+ */
 function getUrlQueryObject(url) {
   let parts = url.split('?');
   if (parts.length > 1) {
@@ -58,6 +89,15 @@ function getUrlQueryObject(url) {
   return {};
 }
 
+/**
+ * Add a query to the url,maintaining any query already present but add or
+ * overwriting from the supplied query object.
+ *
+ * @public
+ * @param {string} url          The url to add to.
+ * @param {Objects[]} ...objs   Queries to add to the query string.
+ * @returns {string}            The new url.
+ */
 function addQueryObjectToUrl(url, ...objs) {
   let _obj = Object.assign.apply(Object, objs);
   let parts = url.split('?');

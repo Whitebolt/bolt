@@ -158,7 +158,18 @@ function fire(hookName, ...params) {
   );
 }
 
-function fired(hookName, type="hooks") {
+/**
+ * Test whether a hook (or event/topic) has fired at least once. If a hook has
+ * already fired you may actually want to run the callback instead of setting
+ * it as an on.
+ *
+ * @todo  Provide a means of always firing a hook when hook already fired or waiting till it fires if not.
+ *
+ * @param {string} hookName         The hook name to test.
+ * @param {string} [type='hooks']   Type of event (hooks|events|topics).
+ * @returns {boolean}               Has it fired.
+ */
+function fired(hookName, type='hooks') {
   if (reverseLookup.has(type)) {
     let lookup = reverseLookup.get(type);
     if (done.get(lookup).has(hookName)) return true;
