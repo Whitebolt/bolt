@@ -6,8 +6,11 @@
 
 const _bolt = require('./bolt');
 
-_bolt.setDefault('bool.true', ['true', 'yes', 'on']);
-_bolt.setDefault('bool.false', ['false', 'no', 'off']);
+let _defaultTrueValues = _bolt.setDefault('bool.true', ['true', 'yes', 'on']);
+_bolt.watchDefault('bool.true', value=>{_defaultTrueValues = value;});
+let _defaultFalseValues = _bolt.setDefault('bool.false', ['false', 'no', 'off']);
+_bolt.watchDefault('bool.false', value=>{_defaultFalseValues = value;});
+
 
 /**
  * Convert a text value to a boolean if it is in the list of matched values
@@ -24,12 +27,11 @@ _bolt.setDefault('bool.false', ['false', 'no', 'off']);
  *                                                                    values.
  * @returns {boolean|*}   Boolean value or original value.
  */
-function toBool(value, defaultTrueValues, defaultFalseValues) {
-  let _value = value.toString().toLowerCase().trim();
-  if (bolt.indexOf(defaultFalseValues || bolt.getDefault('bool.false'), _value) !== -1) {
-    return true;
-  } else if (bolt.indexOf(defaultTrueValues || bolt.getDefault('bool.false'), _value) !== -1) {
+function toBool(value, defaultTrueValues=_defaultTrueValues, defaultFalseValues=_defaultFalseValues) {
+  if (bolt.indexOfEquiv(defaultFalseValues, value) !== -1) {
     return false;
+  } else if (bolt.indexOfEquiv(defaultTrueValues, value) !== -1) {
+    return true;
   }
   return value;
 }

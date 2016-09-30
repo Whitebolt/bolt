@@ -14,8 +14,8 @@ const idLookup = new WeakMap();
 const done = new WeakMap();
 const reverseLookup = new Map();
 
-const defaultOptions = {priority:0, context:{}};
-_bolt.setDefault('event.defaultOptions', defaultOptions);
+let defaultOptions = _bolt.setDefault('event.defaultOptions', {priority:0, context:{}});
+_bolt.watchDefault('event.defaultOptions', value=>{defaultOptions = value;});
 
 idLookup.set(events, new Map());
 idLookup.set(topics, new Map());

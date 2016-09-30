@@ -94,6 +94,20 @@ function prioritySorter(a, b) {
   return sorter;
 }
 
+/**
+ * Find the first index in an array that matches supplied value.  Does a deep equivalence match so arrays and objects
+ * can be compared.
+ *
+ * @static
+ * @public
+ * @param {Array} ary     The Array to search.
+ * @param {*}             The value to search for.
+ * @returns {integer}     The index if found; if not found return -1.
+ */
+function indexOfEquiv(ary, value) {
+  return bolt.findIndex(ary, _value=>bolt.isEqual(value, _value));
+}
+
 module.exports = {
-  makeArray, prioritySorter
+  makeArray, prioritySorter, indexOfEquiv
 };

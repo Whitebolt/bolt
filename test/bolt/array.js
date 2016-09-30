@@ -6,8 +6,8 @@ global.bolt = Object.assign(
   require(getFilePathForSubject())
 );
 
-function getFilePathForSubject() {
-  return process.cwd() + __dirname.replace(new RegExp('^' + process.cwd() + '/test'), '') + '/' + __filename.split('/').pop();
+function getFilePathForSubject(fileName=__filename) {
+  return process.cwd() + __dirname.replace(new RegExp('^' + process.cwd() + '/test'), '') + '/' + fileName.split('/').pop();
 }
 
 describe('bolt.array', ()=>{
@@ -138,6 +138,24 @@ describe('bolt.array', ()=>{
     it('Throws when one argument supplied and direction is neither ASC or DESC', ()=>{
       assert.throws(()=>bolt.prioritySorter({direction:'EQUAL'}), RangeError);
       assert.throws(()=>bolt.prioritySorter({direction:'EQUAL'}), 'Sort direction for prioritySorter() should be either ASC or DESC');
+    });
+  });
+
+  describe('bolt.indexOfEquiv()', ()=>{
+    it('Will search array returning matching index.', ()=>{
+      assert.equal(bolt.indexOfEquiv([1,2,3,4,5], 3), 2);
+      assert.equal(bolt.indexOfEquiv([1,'two',3,4,5], 'two'), 1);
+    });
+
+    it('Will return -1 if not found.', ()=>{
+      assert.equal(bolt.indexOfEquiv([1,2,3,4,5], 0), -1);
+      assert.equal(bolt.indexOfEquiv([1,2,3,4,5], 'two'), -1);
+    });
+
+    it('Will perform equivalence matching.', ()=>{
+      assert.equal(bolt.indexOfEquiv([1,2,null,4,5], null), 2);
+      assert.equal(bolt.indexOfEquiv([1,{hello:'world'},3,4,5], {hello:'world'}), 1);
+      assert.equal(bolt.indexOfEquiv([1,{hello:'world'},3,4,5], {}), -1);
     });
   });
 });
