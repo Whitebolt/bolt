@@ -53,6 +53,14 @@ function getDefault(key) {
   return defaults.get(key);
 }
 
+/**
+ * Fire a specific watcher, firing any registered callbacks for that default.
+ *
+ * @private
+ * @param {string} key    The key to fire watchers for.
+ * @param {*} value       The new value for that key.
+ * @returns {*}           The new value for that key.
+ */
 function _fireWatchers(key, value=defaults.get(key)) {
   if (watchers.has(key)) {
     watchers.get(key).forEach(_callback=>_callback.callback(value));
@@ -60,6 +68,15 @@ function _fireWatchers(key, value=defaults.get(key)) {
   return value;
 }
 
+/**
+ * Watch a default value reporting on any changes.
+ *
+ * @static
+ * @public
+ * @param {string} key          Key to watch.
+ * @param {function} callback   Callback when watched changes.
+ * @returns {function}          An unwatch function, when call will unregister this watch.
+ */
 function watchDefault(key, callback) {
   if (!watchers.has(key)) watchers.set(key, []);
   let _watcers = watchers.get(key);
