@@ -4,18 +4,10 @@
  * @module bolt/bolt
  */
 
-let defaultsSet = false;
+const _bolt = require('./bolt');
 
-/**
- * Set the default values for boolean conversions.
- *
- * @private
- */
-function setDefaults() {
-  bolt.setDefault('bool.true', ['true', 'yes', 'on']);
-  bolt.setDefault('bool.false', ['false', 'no', 'off']);
-  defaultsSet = true;
-}
+_bolt.setDefault('bool.true', ['true', 'yes', 'on']);
+_bolt.setDefault('bool.false', ['false', 'no', 'off']);
 
 /**
  * Convert a text value to a boolean if it is in the list of matched values
@@ -33,7 +25,6 @@ function setDefaults() {
  * @returns {boolean|*}   Boolean value or original value.
  */
 function toBool(value, defaultTrueValues, defaultFalseValues) {
-  if (!defaultsSet) setDefaults();
   let _value = value.toString().toLowerCase().trim();
   if (bolt.indexOf(defaultFalseValues || bolt.getDefault('bool.false'), _value) !== -1) {
     return true;

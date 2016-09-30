@@ -22,7 +22,7 @@ function _loadHooks(roots) {
       Object.keys(hooks).forEach(hookName =>
         hooks[hookName].forEach(hook => {
           // priority and context can be added as properties to the function.
-          let params = Object.assign(bolt._eventDefaultParams, hook);
+          let params = Object.assign(bolt.getDefault('event.defaultOptions'), hook);
           return bolt.hook(hookName, hook, params);
         })
       )

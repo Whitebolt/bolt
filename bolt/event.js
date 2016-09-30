@@ -5,6 +5,7 @@
  */
 
 const Promise = require('bluebird');
+const _bolt = require('./bolt');
 
 const events = new Map();
 const topics = new Map();
@@ -14,6 +15,7 @@ const done = new WeakMap();
 const reverseLookup = new Map();
 
 const defaultOptions = {priority:0, context:{}};
+_bolt.setDefault('event.defaultOptions', defaultOptions);
 
 idLookup.set(events, new Map());
 idLookup.set(topics, new Map());
@@ -429,5 +431,5 @@ function _fireHooks(hookName, params) {
 }
 
 module.exports = {
-  on, once, hook, subscribe, off, fire, broadcast, fired, _eventDefaultParams: defaultOptions
+  on, once, hook, subscribe, off, fire, broadcast, fired
 };
