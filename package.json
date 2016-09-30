@@ -66,7 +66,9 @@
     "mocha": "^3.0.2"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --recursive test"
+    "test": "./node_modules/mocha/bin/mocha --recursive test",
+    "start": "./server.js start",
+    "build-docs": "gulp doc"
   },
   "config": {
     "port": 3000,

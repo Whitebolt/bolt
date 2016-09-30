@@ -1,6 +1,6 @@
 'use strict';
 
-const launcher = require(boltRootDir + '/bolt');
+const launcher = require(boltRootDir + '/server');
 
 function launchApp(siteConfig) {
   const boltConfigProperties = require(boltRootDir + '/package.json').config.boltConfigProperties;

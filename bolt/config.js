@@ -40,7 +40,7 @@ function _parseEnvValue(value) {
  * @returns {Object}        The parsed config.
  */
 function _parseConfig(config) {
-  config.script = boltRootDir + '/bolt.js';
+  config.script = boltRootDir + '/server.js';
   let envConfig = getKeyedEnvVars();
   let dbConfig = bolt.parseTemplatedJson(config);
   let _packageConfig = _getConfig({
