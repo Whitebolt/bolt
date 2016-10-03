@@ -18,9 +18,10 @@ const templateFunctions = {
     let _componentName = ('/' + componentName.replace(rxRelativeDir, this.__componentName)).replace('//', '/');
     let method = _getMethod(_componentName, req.app);
     if (method) {
+      Object.assign(this, {req, parent, doc});
       req.doc = req.doc || doc;
       bolt.fire("firingControllerMethod", method.methodPath, bolt.getPathFromRequest(req));
-      return method({req, doc, parent, component:this.component, view:this.view});
+      return method(this);
     } else {
       Promise.resolve('Could not find component: ' + componentName);
     }

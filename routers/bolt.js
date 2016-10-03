@@ -49,7 +49,7 @@ function getPaths(req) {
 
 function callMethod(config) {
   let method = Promise.method(config.methods.shift());
-  return method(config.component).then(() => {
+  return method(config.component).then(component => {
     if (config.component.redirect) {
       config.res.redirect(config.component.status || 302, config.component.redirect);
       return config.res.end();
