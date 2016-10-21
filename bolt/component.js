@@ -101,6 +101,7 @@ function _loadComponents(app, roots) {
         bolt.fire(()=>bolt.loadHooks(component, component.fullPath), 'loadComponentHooks', app),
         bolt.fire(()=>bolt.loadControllers(component, component.fullPath), 'loadComponentControllers', app),
         bolt.fire(()=>bolt.loadComponentViews(component, component.fullPath), 'loadComponentViews', app),
+        bolt.fire(()=>bolt.loadShortcodes(component, component.fullPath), 'loadComponentShortcodes', app),
         bolt.fire(()=>bolt.loadComponents(component, component.fullPath), 'loadComponentComponents', app)
       ]).then(()=>component)
   }).mapSeries(

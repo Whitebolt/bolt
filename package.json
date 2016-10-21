@@ -168,6 +168,11 @@
         "description": "router"
       },
       {
+        "event": "loadedShortcode",
+        "action": "load",
+        "description": "shortcode"
+      },
+      {
         "event": "loadedController",
         "action": "load",
         "description": "controller"
