@@ -15,9 +15,9 @@ var Shortcode = function(text, tags) {
   this.now = Date.now(); // used to generate a non-orthogonal key
 
   this.matches = [];
-  this.regex = '\\[{name}(\\s[\\s\\S]*?)?\\]' +
-    '(?:((?!\\s*?(?:\\[{name}|\\[\\/(?!{name})))[\\s\\S]*?)' +
-    '(\\[\/{name}\\]))?';
+  this.regex = '\\[\\[{name}(\\s[\\s\\S]*?)?\\]\\]' +
+    '(?:((?!\\s*?(?:\\[\\[{name}|\\[\\/(?!{name})))[\\s\\S]*?)' +
+    '(\\[\\[\/{name}\\]\\]))?';
 };
 
 Shortcode.prototype.get = function() {
@@ -52,7 +52,7 @@ Shortcode.prototype.matchTags = function() {
       if (match[2]) {
         contents = match[2].trim();
         tag = tag.replace(contents, '').replace(/\n\s*/g, '');
-        regex = this.escapeTagRegExp(tag).replace('\\]\\[', '\\]([\\s\\S]*?)\\[');
+        regex = this.escapeTagRegExp(tag).replace('\\]\\]\\[\\[', '\\]\\]([\\s\\S]*?)\\[\\[');
       }
 
       var instanceId = key + this.now + '_' + i;
@@ -175,7 +175,7 @@ Shortcode.prototype.parseOptions = function(instanceString) {
 };
 
 Shortcode.prototype.escapeTagRegExp = function(regex) {
-  return regex.replace(/[\[\]\/]/g, '\\$&');
+  return regex.replace(/\[\[/g, '\\$&').replace(/\]\]/g, '\\$&');
 };
 
 Shortcode.prototype.template = function(s, d) {
