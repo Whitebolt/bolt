@@ -1,5 +1,7 @@
 'use strict';
 
+const Promise = require('bluebird');
+
 /**
  * achoi@hearst.com
  * inspired by: https://github.com/nicinabox/shortcode.js
@@ -91,9 +93,9 @@ Shortcode.prototype.convertMatchesToNodes = function() {
 Shortcode.prototype.replaceNodes = function() {
   var self = this;
   var match;
-  var result;
   var done;
   var fn;
+  var promises = [];
 
   var replacer = function(result) {
     var re = new RegExp(replaceToken, 'g');
@@ -106,15 +108,10 @@ Shortcode.prototype.replaceNodes = function() {
 
     fn = this.tags[match.name].bind(match);
     done = replacer.bind(match);
-    result = fn(done);
-
-    if (result !== undefined) {
-      done(result);
-    }
-
+    promises.push(Promise.resolve(fn(done)).then(result=>done(result)));
   }
 
-  return this.text;
+  return Promise.all(promises).then(()=>this.text);
 };
 
 Shortcode.prototype.parseOptions = function(instanceString) {
@@ -188,8 +185,17 @@ Shortcode.prototype.template = function(s, d) {
   return s;
 };
 
-function parseShortcodes(component, txt) {
-  return new Shortcode(txt, bolt.getApp(component).shortcodes).get();
+function parseShortcodes(component, doc, properties=[]) {
+  const shortcodes = bolt.getApp(component).shortcodes;
+  if (bolt.isString(doc)) return new Shortcode(doc, shortcodes).get();
+
+  return Promise.all(properties.map(property=>{
+    if (doc.hasOwnProperty(property)) {
+      return (new Shortcode(doc[property], shortcodes)).get().then(result=>{
+        doc[property] = result;
+      });
+    }
+  }));
 }
 
 function loadShortcodes(component, roots=bolt.getApp(component).config.root, importObj=bolt.getApp(component).shortcodes) {
