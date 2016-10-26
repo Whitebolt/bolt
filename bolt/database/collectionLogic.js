@@ -146,7 +146,12 @@ function _getDoc(options) {
     let query = Object.assign({_id: options.id}, options.query || {});
     getDoc = options.db.collection(options.collection).findOne(query, projection);
   } else {
-    getDoc = options.db.collection(options.collection).find(options.query, projection).toArray();
+    let results = options.db.collection(options.collection).find(options.query, projection);
+    if (options.sort) {
+      getDoc = results.sort(options.sort).toArray();
+    } else {
+      getDoc = results.toArray();
+    }
   }
 
   return getDoc
