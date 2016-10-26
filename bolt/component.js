@@ -122,6 +122,7 @@ function loadComponents(app, roots=app.config.root) {
   return bolt.fire(()=>_loadComponents(app, roots), fireEvent, app).then(() => app);
 }
 
+
 module.exports = {
   loadComponents
 };

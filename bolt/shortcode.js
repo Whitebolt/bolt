@@ -1,198 +1,149 @@
 'use strict';
 
 const Promise = require('bluebird');
+const defaultOptions = {start:'[[', end:']]'};
+const _getAttribute = new RegExp('(\\S+)\\s*=\\s*([\'"])(.*?)\\2|(\\S+)\\s*=\\s*(.*?)(?:\s|$)|(\\S+)(?:\s|$)', 'g');
 
-/**
- * achoi@hearst.com
- * inspired by: https://github.com/nicinabox/shortcode.js
- * but sans dom
- */
-var Shortcode = function(text, tags) {
-  if (!text) return;
+function addSlashToEachCharacter(txt) {
+  return txt.split('').map(char=>'\\'+char).join('');
+}
 
-  this.text = text;
-  this.tags = tags;
-  this.now = Date.now(); // used to generate a non-orthogonal key
+function getAttribute(getAttributes, tag) {
+  let results = getAttributes.exec(tag);
 
-  this.matches = [];
-  this.regex = '\\[\\[{name}(\\s[\\s\\S]*?)?\\]\\]' +
-    '(?:((?!\\s*?(?:\\[\\[{name}|\\[\\/(?!{name})))[\\s\\S]*?)' +
-    '(\\[\\[\/{name}\\]\\]))?';
-};
-
-Shortcode.prototype.get = function() {
-  this.matchTags();
-  this.convertMatchesToNodes();
-  return this.replaceNodes();
-};
-
-Shortcode.prototype.matchTags = function() {
-  var html = this.text;
-  var instances;
-  var match;
-  var re;
-  var contents;
-  var regex;
-  var tag;
-  var options;
-
-  for (var key in this.tags) {
-    re = this.template(this.regex, {
-      name: key
-    });
-    instances = html.match(new RegExp(re, 'g')) || [];
-
-    for (var i = 0, len = instances.length; i < len; i++) {
-      match = instances[i].match(new RegExp(re));
-      contents = match[3] ? '' : undefined;
-      tag = match[0];
-      regex = this.escapeTagRegExp(tag);
-      options = this.parseOptions(instances[i]);
-
-      if (match[2]) {
-        contents = match[2].trim();
-        tag = tag.replace(contents, '').replace(/\n\s*/g, '');
-        regex = this.escapeTagRegExp(tag).replace('\\]\\]\\[\\[', '\\]\\]([\\s\\S]*?)\\[\\[');
+  let attributes = {};
+  if (results) {
+    let result;
+    let count = 1;
+    while (result = _getAttribute.exec(results[1])) {
+      if (!result[6] && (result[1]||result[4])) {
+        attributes[result[1]||result[4]] = result[3]||result[5];
+      } else if (result[6]) {
+        attributes[count] = result[6];
       }
-
-      var instanceId = key + this.now + '_' + i;
-
-      this.matches.push({
-        name: key,
-        tag: tag,
-        source: instances[i],
-        regex: regex,
-        options: options,
-        contents: contents,
-        id: instanceId, // every instance has a unique idenitifer
-        placeholderToken: '==SHORTCODE.' + instanceId + '=='
-      });
+      count++;
     }
   }
-  return this.matches;
-};
 
-/**
- * Convert the Matches to replaceable elements
- */
-Shortcode.prototype.convertMatchesToNodes = function() {
-  var html = this.text;
-  var replacer;
+  return attributes;
+}
 
-  for (var i = 0, len = this.matches.length; i < len; i++) {
-    var match = this.matches[i];
-    html = html.replace(match.source, match.placeholderToken);
-  }
-  this.text = html;
-  return this.text;
-};
+function createRegEx(options) {
+  let start = addSlashToEachCharacter(options.start);
+  let end = addSlashToEachCharacter(options.end);
+  let _getAttributes = new RegExp(start+'.*?\\s(.*?)'+end);
 
-/**
- * replaceNodes
- */
-Shortcode.prototype.replaceNodes = function() {
-  var self = this;
-  var match;
-  var done;
-  var fn;
-  var promises = [];
-
-  var replacer = function(result) {
-    var re = new RegExp(replaceToken, 'g');
-    self.text = self.text.replace(re, result);
+  return {
+    tagMatch: new RegExp(start+'.*?'+end, 'g'),
+    isEndTag: new RegExp('^'+start+'\/'),
+    getTagName: new RegExp(start+'(?:\/|)(.*?)(?:\\s|'+end+')'),
+    getAttributes: getAttribute.bind({}, _getAttributes)
   };
+}
 
-  for (var i = 0, len = this.matches.length; i < len; i++) {
-    match = this.matches[i];
-    var replaceToken = match.placeholderToken;
+function create(options=defaultOptions) {
+  const _options = Object.assign({}, defaultOptions, options);
+  const tags = new Map();
+  const finder = createRegEx(_options);
 
-    fn = this.tags[match.name].bind(match);
-    done = replacer.bind(match);
-    promises.push(Promise.resolve(fn(done)).then(result=>done(result)));
+  function add(name, handler, throwOnAlreadySet=true) {
+    if (has(name) && throwOnAlreadySet) throw new Error(`Tag '${name}' already exists`);
+    tags.set(name, handler);
   }
 
-  return Promise.all(promises).then(()=>this.text);
-};
+  function has(name) {
+    return tags.has(name);
+  }
 
-Shortcode.prototype.parseOptions = function(instanceString) {
+  function _delete(name) {
+    return tags.delete(name);
+  }
 
-  if (instanceString) {
-    // first, strip brackets
+  function get(name) {
+    if (!has(name)) throw new Error(`Tag '${name}' does not exist`);
+    return tags.get(name);
+  }
 
-    var openingTag = instanceString.match(/\[[a-zA-Z](.*?[^?])?\]/); // http://stackoverflow.com/a/8038932
+  function _parse(txt) {
+    let results = [];
+    let result;
+    while (result = finder.tagMatch.exec(txt)) {
+      result.lastIndex = finder.tagMatch.lastIndex;
+      results.push(result);
+    }
+    results = results.map(result=>{
+      return {
+        tagName: finder.getTagName.exec(result[0])[1],
+        endTag: finder.isEndTag.test(result[0]),
+        fullMatch: result[0],
+        end: result.lastIndex,
+        start: result.lastIndex - result[0].length,
+        attributes: finder.getAttributes(result[0]),
+        content: '',
+        selfClosing: true
+      }
+    }).filter(result=>has(result.tagName));
 
-    // lets get the opening tag only
-    var options;
+    return results
+  }
 
-    if (openingTag){
-      var openingTagText = openingTag[0];
-
-      if (openingTagText){
-        // robustificate this in order to handle special characters
-        // that broke the previous regexp
-
-        // this thing does two passes to get all attrnames
-        // this is necessary to capture attributes that contain no value
-        // why bother? because that's how it was received
-        var attrNames = openingTagText.match(/(\s(\-?\:?[a-zA-Z0-9._]*))/g);
-
-        if (!attrNames){
-          // none found? GTFO
-          return;
-        }
-        options = {};
-        for( var j = 0; j < attrNames.length; j++) {
-          if (!attrNames[i] || true) {
-            var singleAttrName = attrNames[j].trim();
-            options[singleAttrName] = null; // preappoint the attribute
+  function fixEndTags(txt, tags) {
+    return tags.map((result, n)=>{
+      if (result.endTag) {
+        for (let nn=n; nn>=0; nn--) {
+          if ((tags[nn].tagName === result.tagName) && (!tags[nn].endTag)) {
+            tags[nn].content = txt.substring(tags[nn].end, result.start);
+            tags[nn].fullMatch += (tags[nn].content + result.fullMatch);
+            tags[nn].end = result.end;
+            tags[nn].selfClosing = false;
           }
-        }
-
-        //http://stackoverflow.com/a/2482127
-        var attrList = openingTagText.match(/([\w\-.:]+)\s*=\s*("[^"]*"|'[^']*'|[\w\-.:]+)/g);
-
-        if (attrList) {
-
-          for (var i = 0; i < attrList.length; i++) {
-            // time ti interate thru the list...
-            var attrSplit = attrList[i].split(/\=(.+)?/);
-
-            var prop = attrSplit[0];
-            var value = attrSplit[1];
-            if (value){
-              value = value.replace(/^"(.*)"$/, '$1');
-            }
-            options[prop] = value;
-          }
-          return options;
         }
       }
-
-    }
-    return options;
+      return result;
+    }).filter(result=>!result.endTag);
   }
 
-};
-
-Shortcode.prototype.escapeTagRegExp = function(regex) {
-  return regex.replace(/\[\[/g, '\\$&').replace(/\]\]/g, '\\$&');
-};
-
-Shortcode.prototype.template = function(s, d) {
-  for (var p in d) {
-    s = s.replace(new RegExp('{' + p + '}', 'g'), d[p]);
+  function filterOverlappingTags(tags) {
+    return tags.filter((tag, n)=>{
+      if (n>0) {
+        for (let nn=(n-1); nn>=0; nn--) {
+          if (tags[nn].end > tag.start) return false;
+        }
+      }
+      return true;
+    });
   }
-  return s;
-};
+
+  function runHandlers(txt, tags, params) {
+    return Promise.all(tags.map(tag=>{
+      let handler = get(tag.tagName).bind({}, tag);
+      return Promise.resolve(handler.apply({}, params) || '').then(replacer=>{
+        return {replacer, tag};
+      });
+    })).mapSeries(result=>{
+      txt = txt.replace(result.tag.fullMatch, result.replacer);
+    }).then(()=>txt);
+  }
+
+  function parse(txt, ...params) {
+    let tags = filterOverlappingTags(fixEndTags(txt, _parse(txt)));
+
+    return runHandlers(txt, tags, params).then(parsedTxt=>{
+      if (txt !== parsedTxt) return parse(parsedTxt);
+      return parsedTxt;
+    });
+  }
+
+  return {parse, add, has, delete:_delete, get}
+}
+
+let shortCodeParser = create();
 
 function parseShortcodes(component, doc, properties=[]) {
-  const shortcodes = bolt.getApp(component).shortcodes;
-  if (bolt.isString(doc)) return new Shortcode(doc, shortcodes).get();
-
   return Promise.all(properties.map(property=>{
     if (doc.hasOwnProperty(property)) {
-      return (new Shortcode(doc[property], shortcodes)).get().then(result=>{
-        doc[property] = result;
+      return shortCodeParser.parse(doc[property], component).then(txt=>{
+        doc[property] = txt;
       });
     }
   }));
@@ -201,7 +152,10 @@ function parseShortcodes(component, doc, properties=[]) {
 function loadShortcodes(component, roots=bolt.getApp(component).config.root, importObj=bolt.getApp(component).shortcodes) {
   return bolt
     .importIntoObject({roots, importObj, dirName:'shortcodes', eventName:'loadedShortcode'})
-    .then(()=>component);
+    .then(()=>{
+      Object.keys(importObj).forEach(tag=>shortCodeParser.add(tag, importObj[tag], false));
+      return component;
+    });
 }
 
 module.exports = {
