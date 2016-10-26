@@ -5,6 +5,7 @@ global.boltRootDir = __dirname;
 global.colour = require('colors');
 global.express = require('express');
 global.bolt = require('lodash');
+global.boltAppID = require('./bolt/string').randomString();
 
 const packageConfig = require('./package.json').config || {};
 

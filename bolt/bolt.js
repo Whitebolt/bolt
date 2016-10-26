@@ -2,31 +2,31 @@
 
 /**
  * @module bolt/bolt
+ *
+ * @todo Extract some of this into a npm for watchable maps?
  */
+
+const string = require('./string');
 
 const defaults = new Map();
 const watchers = new Map();
+const lookup = new Map();
+
+lookup.set('defaults', defaults);
+lookup.set('watchers', watchers);
 
 /**
- * Generate a random string of specified length.
+ * Get the map for the current app space. This stops errors from different apps accesing the same cached space.
  *
- * @todo    Use some sort of generic algorithm instead of this one (perhaps a stock node module).
- * @todo    Add more options such as hex string.
- *
- * @public
- * @param {integer} [length=32] The length of string to return.
- * @returns {string}            The random string.
+ * @private
+ * @param {string} type   Either 'defaults' or 'watchers', which map to return.
+ * @returns {Map}
  */
-function _randomString(length=32) {
-  var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
-
-  if (!length) length = Math.floor(Math.random() * chars.length);
-
-  var str = '';
-  for (var i = 0; i < length; i++) {
-    str += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return str;
+function _getMap(type) {
+  if (!global.hasOwnProperty('boltAppID') || (global.boltAppID === undefined)) throw new ReferenceError('No app space defined for defaults, global property \'boltAppId\' should be set');
+  let requestedMap = lookup.get(type);
+  if (!requestedMap.has(global.boltAppID)) requestedMap.set(global.boltAppID, new Map());
+  return requestedMap.get(global.boltAppID);
 }
 
 /**
@@ -38,8 +38,10 @@ function _randomString(length=32) {
  * @returns {*}           The value he default has been set to.
  */
 function setDefault(key, value) {
+  let defaults = _getMap('defaults');
+  _fireWatchers(key, value, defaults.has(key)?getDefault(key):undefined);
   defaults.set(key, value);
-  return _fireWatchers(key, value);
+  return value;
 }
 
 /**
@@ -50,7 +52,42 @@ function setDefault(key, value) {
  * @returns {*}         The default value.
  */
 function getDefault(key) {
+  let defaults = _getMap('defaults');
+  if (!defaults.has(key)) throw new ReferenceError(`Attempt to get default value: ${key}, which does not exist.`);
   return defaults.get(key);
+}
+
+/**
+ * Test global default key exists.
+ *
+ * @public
+ * @param {string} key  The default to test.
+ * @returns {boolean}   Has key?
+ */
+function hasDefault(key) {
+  return _getMap('defaults').has(key);
+}
+
+/**
+ * Delete a global default.
+ *
+ * @public
+ * @param {string} key  The default to test.
+ * @returns {boolean}   Has key?
+ */
+function deleteDefault(key) {
+  return _getMap('defaults').delete(key);
+}
+
+/**
+ * Test global default has a watcher assigned.
+ *
+ * @public
+ * @param {string} key  The default to test.
+ * @returns {boolean}   Has a watcher?
+ */
+function hasDefaultWatcher(key) {
+  return _getMap('defaults').has(key);
 }
 
 /**
@@ -59,13 +96,14 @@ function getDefault(key) {
  * @private
  * @param {string} key    The key to fire watchers for.
  * @param {*} value       The new value for that key.
+ * @param {*} value       The new old value for that key.
  * @returns {*}           The new value for that key.
  */
-function _fireWatchers(key, value=defaults.get(key)) {
-  if (watchers.has(key)) {
-    watchers.get(key).forEach(_callback=>_callback.callback(value));
-  }
-  return value;
+function _fireWatchers(key, value, oldValue) {
+  let watchers = _getMap('watchers');
+  if (watchers.has(key)) watchers.get(key).forEach(
+    _callback=>_callback.callback(value, oldValue)
+  );
 }
 
 /**
@@ -78,9 +116,10 @@ function _fireWatchers(key, value=defaults.get(key)) {
  * @returns {function}          An unwatch function, when call will unregister this watch.
  */
 function watchDefault(key, callback) {
+  let watchers = _getMap('watchers');
   if (!watchers.has(key)) watchers.set(key, []);
   let _watcers = watchers.get(key);
-  let id = _randomString();
+  let id = string.randomString();
   let _callback = {callback, id};
   _watcers.push(_callback);
   watchers.set(key, _watcers);
@@ -96,5 +135,5 @@ function watchDefault(key, callback) {
 }
 
 module.exports = {
-  setDefault, getDefault, watchDefault
+  setDefault, getDefault, hasDefault, deleteDefault, watchDefault, hasDefaultWatcher
 };

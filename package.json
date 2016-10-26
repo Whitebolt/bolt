@@ -50,6 +50,7 @@
     "require-extra": "^0.4.0",
     "rrule": "https://github.com/jkbrzt/rrule.git",
     "serve-static": "^1.10.2",
+    "shortcode-insert": "^1.0.1",
     "socket.io": "^1.4.8",
     "yargs": "^5.0.0"
   },
