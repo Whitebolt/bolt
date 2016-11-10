@@ -1,0 +1,8 @@
+{
+  "config": {
+    "test1": "TEST1"
+  },
+  "config2": {
+    "test1": "TEST2"
+  }
+}

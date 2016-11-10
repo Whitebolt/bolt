@@ -1,3 +1,5 @@
+'use strict';
+
 const chai = require('chai');
 const assert = chai.assert;
 const morphEnv = require('mock-env').morph;
@@ -106,11 +108,56 @@ describe('bolt.config', ()=>{
     });
   });
 
-  describe('bolt.loadConfig()', ()=>{
+  describe('bolt.mergePackageConfigs()', ()=>{
+    it('Should default load config objects from package.json in supplied directories and merge.',()=>{
+      let config = bolt.mergePackageConfigs([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/'
+      ]);
+      assert.deepEqual(config, { test1:'TEST1', test2:'TEST2'});
 
+      config = bolt.mergePackageConfigs([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/',
+        __dirname+'/config/test3/'
+      ]);
+      assert.deepEqual(config, {test1:'TEST3', test2:'TEST2'});
+
+      config = bolt.mergePackageConfigs([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/',
+        __dirname+'/config/test3/',
+        __dirname+'/config/test4/'
+      ]);
+      assert.deepEqual(config, {test1:{
+        "test1_1":"TEST1_1",
+        "test1_2":"TEST1_2"
+      }, test2:'TEST2'});
+
+      config = bolt.mergePackageConfigs([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/',
+        __dirname+'/config/test3/',
+        __dirname+'/config/test4/',
+        __dirname+'/config/test5/'
+      ]);
+      assert.deepEqual(config, {test1:{
+        test1_1:"TEST1_2",
+        test1_2:"TEST1_2",
+        test1_3:"TEST1_3"
+      }, test2:'TEST2'});
+    });
+
+    it('Should be able to override use of config property.',()=>{
+      let config = bolt.mergePackageConfigs([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/'
+      ], 'config2');
+      assert.deepEqual(config, {test1:'TEST2', test2:'TEST3'});
+    });
   });
 
-  describe('bolt.mergeConfig()', ()=>{
+  describe('bolt.loadConfig()', ()=>{
 
   });
 });

@@ -23,8 +23,6 @@ const path = require('path');
  * @returns {Array|*}       Parsed value.
  */
 function _parseEnvValue(value) {
-
-
   [_parseEnvArray, bolt.toBool, bolt.toTypedNumber].forEach(converter=>{
     value = _parseEnvValueConvert(value, converter);
   });
@@ -92,11 +90,11 @@ function _assignPort(config) {
  * @param {Array|string} roots  Get configs from the various package.json roots.
  * @returns {Array}             Array of config objects.
  */
-function _getPackageConfigs(roots) {
+function _getPackageConfigs(roots, configProp='config') {
   return bolt.makeArray(roots || []).map(root=>{
     try {
       let packageData = require(root+'package.json');
-      return packageData.config || {};
+      return packageData[configProp] || {};
     } catch(e) {return {};}
   });
 }
@@ -181,6 +179,13 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
   return vars;
 }
 
+function mergePackageConfigs(roots, merger=()=>{}, configProp='config') {
+  const packageConfigs = _getPackageConfigs(roots, bolt.isString(merger)?merger:configProp);
+  packageConfigs.unshift({});
+  if (bolt.isFunction(merger)) packageConfigs.push(_configMerge);
+  return bolt.mergeWith.apply(bolt, packageConfigs);
+}
+
 /**
  * @typedef boltConfig
  * Configuration object for bolt-server.
@@ -230,5 +235,5 @@ function loadConfig(name) {
 }
 
 module.exports = {
-  loadConfig, getKeyedEnvVars
+  loadConfig, getKeyedEnvVars, mergePackageConfigs
 };
