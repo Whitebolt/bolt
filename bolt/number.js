@@ -26,7 +26,7 @@ function isNumeric(value) {
  */
 function toTypedNumber(value) {
   if (!isNumeric(value)) return value;
-  let _value = _value.toString().trim();
+  let _value = value.toString().trim();
   if (xIsInt.test(_value)) return parseInt(_value, 10);
   return parseFloat(_value);
 }

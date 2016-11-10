@@ -12,7 +12,7 @@ function getFilePathForSubject(fileName=__filename) {
   return process.cwd() + __dirname.replace(new RegExp('^' + process.cwd() + '/test'), '') + '/' + fileName.split('/').pop();
 }
 
-describe('bolt.array', ()=>{
+describe('bolt.boolean', ()=>{
   describe('bolt.toBool()', ()=>{
     it('Should set boolean conversion defaults correctly.', ()=> {
       assert.deepEqual(bolt.getDefault('bool.true'), ['true', 'yes', 'on']);
@@ -54,6 +54,8 @@ describe('bolt.array', ()=>{
     });
 
     it('Should use different defaults if the global default is changed.', ()=> {
+      let _true = bolt.getDefault('bool.true');
+      let _false = bolt.getDefault('bool.false');
       bolt.setDefault('bool.true', [null]);
       bolt.setDefault('bool.false', [undefined]);
 
@@ -62,6 +64,9 @@ describe('bolt.array', ()=>{
 
       assert.isBoolean(bolt.toBool(undefined));
       assert.equal(bolt.toBool(undefined), false);
+
+      bolt.setDefault('bool.true', _true);
+      bolt.setDefault('bool.false', _false);
     });
   });
 });

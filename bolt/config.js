@@ -13,6 +13,7 @@ const packageData = require(boltRootDir + '/package.json');
 const packageConfig = packageData.config || {};
 const path = require('path');
 
+
 /**
  * Parse the environment variable value into arrays and types (float,
  * integer and boolean).
@@ -22,15 +23,31 @@ const path = require('path');
  * @returns {Array|*}       Parsed value.
  */
 function _parseEnvValue(value) {
-  let _value = (value.indexOf(path.delimiter) !== -1 ?
+
+
+  [_parseEnvArray, bolt.toBool, bolt.toTypedNumber].forEach(converter=>{
+    value = _parseEnvValueConvert(value, converter);
+  });
+
+  return value;
+}
+
+function _parseEnvArray(value) {
+  return (value.indexOf(path.delimiter) !== -1 ?
       value.split(path.delimiter).map(value=>value.trim()) :
       value
   );
-
-  _value = (Array.isArray(_value) ? _value.map(_value=>bolt.toBool(_value)) : bolt.toBool(_value));
-  _value = (Array.isArray(_value) ? _value.map(_value=>bolt.toTypedNumber(_value)) : bolt.toTypedNumber(_value));
-  return _value;
 }
+
+function _parseEnvValueConvert(value, converter) {
+  return (Array.isArray(value) ? value.map(value=>_parseEnvValueConvertItem(value, converter)) : _parseEnvValueConvertItem(value, converter));
+}
+
+function _parseEnvValueConvertItem(value, converter) {
+  let converted = converter(value);
+  return ((converted !== value) ? converted :value);
+}
+
 
 /**
  * Parse config, parsing templated values and return the config.
@@ -157,7 +174,7 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
   Object.keys(env)
     .filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
     .forEach(envKey=>{
-      let varKey = bolt.camelCase(envKey.subStr(key.length));
+      let varKey = bolt.camelCase(envKey.substr(key.length));
       vars[varKey] = _parseEnvValue(env[envKey]);
     });
 
