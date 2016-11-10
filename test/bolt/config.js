@@ -107,6 +107,42 @@ describe('bolt.config', ()=>{
         'BOLT_ARRAY': '1:test:3:off'
       });
     });
+
+    it(`Should load from alternative tag if supplied`, ()=>{
+      morphEnv(()=>{
+        let config = bolt.getKeyedEnvVars();
+        assert.deepEqual(config, {});
+      }, {
+        'BOLT2_TEST1': 'HELLO1',
+        'bolt2_TEST2': 'HELLO2',
+        'Bolt2_TEST3': 'HELLO3'
+      });
+
+      morphEnv(()=>{
+        let config = bolt.getKeyedEnvVars('BOLT2');
+        assert.deepEqual(config, {test1:'HELLO1', test2:'HELLO2', test3:'HELLO3'});
+      }, {
+        'BOLT2_TEST1': 'HELLO1',
+        'bolt2_TEST2': 'HELLO2',
+        'Bolt2_TEST3': 'HELLO3'
+      });
+    });
+
+    it(`Should load from alternative environment object if supplied`, ()=>{
+      let config = bolt.getKeyedEnvVars('BOLT2', {
+        'BOLT_TEST1': 'HELLO1',
+        'bolt_TEST2': 'HELLO2',
+        'Bolt_TEST3': 'HELLO3'
+      });
+      assert.deepEqual(config, {});
+
+      config = bolt.getKeyedEnvVars('BOLT3', {
+        'BOLT3_TEST1': 'HELLO1',
+        'bolt3_TEST2': 'HELLO2',
+        'Bolt3_TEST3': 'HELLO3'
+      });
+      assert.deepEqual(config, {test1:'HELLO1', test2:'HELLO2', test3:'HELLO3'});
+    });
   });
 
   describe('bolt.mergePackageConfigs()', ()=>{
@@ -156,6 +192,14 @@ describe('bolt.config', ()=>{
       ], 'config2');
       assert.deepEqual(config, {test1:'TEST2', test2:'TEST3'});
     });
+
+    it('Should be able to override use of config property deeply.',()=>{
+      let config = bolt.mergePackageConfigs([
+        __dirname+'/config/test4/',
+        __dirname+'/config/test5/'
+      ], 'config.test1');
+      assert.deepEqual(config, {test1_1:'TEST1_2', test1_2:'TEST1_2', test1_3:'TEST1_3'});
+    });
   });
 
   describe('bolt.mergePackageProperties()', ()=>{
@@ -165,6 +209,14 @@ describe('bolt.config', ()=>{
         __dirname+'/config/test2/'
       ], ['description', 'name', 'version']);
       assert.deepEqual(config, {name: "test-2", version: "2.0.0", description: "TEST 1"});
+    });
+
+    it('Should deeply load properties from package.json files and merge.',()=>{
+      let config = bolt.mergePackageProperties([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/'
+      ], ['description', 'name', 'version', 'config.test1']);
+      assert.deepEqual(config, {name: "test-2", version: "2.0.0", description: "TEST 1", config:{test1:"TEST1"}});
     });
   });
 

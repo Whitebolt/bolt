@@ -4,15 +4,28 @@
  * @module bolt/bolt
  * @todo Add windows and mac path?
  */
-const configLoadPaths = [boltRootDir + '/server.json', '/etc/bolt/server.json'];
-if (process.env.BOLT_CONFIG) configLoadPaths.push(process.env.BOLT_CONFIG + '/server.json');
+const packageData = _getPackage(boltRootDir);
+const packageConfig = packageData.config || {};
+const configLoadPaths = _getConfigLoadPaths();
 const Promise = require('bluebird');
 const requireX = require('require-extra');
 const freeport = Promise.promisify(require("find-free-port"));
-const packageData = require(boltRootDir + '/package.json');
-const packageConfig = packageData.config || {};
 const path = require('path');
 
+
+/**
+ * Load config from default locations.
+ *
+ * @private
+ * @returns {Object}    The config object.
+ */
+function _getConfigLoadPaths() {
+  const env = getKeyedEnvVars();
+  const configLoadPaths = [boltRootDir + '/server.json'];
+  if (env.hasOwnProperty('config')) configLoadPaths.push(env.config + '/server.json');
+  configLoadPaths.push('/etc/bolt/server.json');
+  return configLoadPaths;
+}
 
 /**
  * Parse the environment variable value into arrays and types (float,
@@ -30,6 +43,13 @@ function _parseEnvValue(value) {
   return value;
 }
 
+/**
+ * Take an environment variable string and convert arrays into arrays,.
+ *
+ * @private
+ * @param {string} value      Value to convert.
+ * @returns {string|array}    New array or original string.
+ */
 function _parseEnvArray(value) {
   return (value.indexOf(path.delimiter) !== -1 ?
       value.split(path.delimiter).map(value=>value.trim()) :
@@ -37,10 +57,26 @@ function _parseEnvArray(value) {
   );
 }
 
+/**
+ * Convert given environment variable using the given convertor function. Will accept arrays, converting each item.
+ *
+ * @private
+ * @param {Array|*} value         Value to convert.
+ * @param {Function} converter    Converter function.
+ * @returns {*}                   Converted value.
+ */
 function _parseEnvValueConvert(value, converter) {
   return (Array.isArray(value) ? value.map(value=>_parseEnvValueConvertItem(value, converter)) : _parseEnvValueConvertItem(value, converter));
 }
 
+/**
+ * Convert given environment variable using the given converter function. Will not accept arrays.
+ *
+ * @private
+ * @param {*} value               Value to convert.
+ * @param {Function} converter    Converter function.
+ * @returns {*}                   Converted value.
+ */
 function _parseEnvValueConvertItem(value, converter) {
   let converted = converter(value);
   return ((converted !== value) ? converted :value);
@@ -97,9 +133,16 @@ function _getPackageConfigs(roots, configProp='config') {
   });
 }
 
-function _getPackage(root) {
+/**
+ * Get the package file in the given directory (or return empty object).
+ *
+ * @private
+ * @param {string} dirPath    Path to load from.
+ * @returns {Object}          The package object.
+ */
+function _getPackage(dirPath) {
   try {
-    return require(root+'package.json');
+    return require(dirPath+'package.json');
   } catch(e) {return {};}
 }
 
@@ -150,15 +193,10 @@ function _configMerge(objValue, srcValue, key) {
  * @returns {Object}        The new constructed config with default available.
  */
 function _getConfig(config) {
-  let packageConfigs = _getPackageConfigs(config.root);
-  packageConfigs.unshift({
-    version: packageData.version,
-    name: packageData.name,
-    description: packageData.description,
-    template: 'index'
-  });
-  packageConfigs.push(config, _configMerge);
-
+  let packageConfigs = [];
+  packageConfigs.push(bolt.pickDeep(packageData, ['version', 'name', 'description']));
+  packageConfigs.push({template:'index'});
+  packageConfigs.push(mergePackageConfigs(config.root, _configMerge));
   return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
@@ -170,7 +208,7 @@ function _getConfig(config) {
  * @param {Object} [env=process.env]  The environment object to use.
  * @returns {Object}                  The imported values.
  */
-function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
+function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.env) {
   let vars = {};
 
   Object.keys(env)
@@ -183,12 +221,30 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
   return vars;
 }
 
+/**
+ * Grab package.json files and get the config properties merging them all together.
+ *
+ * @public
+ * @param {string[]|string} roots             The directories to load from.
+ * @param {Function|string} [merger=()=>{}]   Merger function to use or configProp (if a string).
+ * @param {string} [configProp='config]       The property to get from.
+ * @returns {Object}                          The merged package.
+ */
 function mergePackageConfigs(roots, merger=()=>{}, configProp='config') {
   let _configProp = bolt.isString(merger)?merger:configProp;
   let _merger = bolt.isFunction(merger)?merger:()=>{};
   return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
 }
 
+/**
+ * Grab package.json files and get the specfied properties merging them all together.
+ *
+ * @public
+ *  @param {string[]|string} roots              The directories to load from.
+ * @param {Array|string} [properties=[]]        Properties to grab.
+ * @param {Function} [merger=()=>{}]            Merger function to use.
+ * @returns {Object}                            Merged object with selected properties.
+ */
 function mergePackageProperties(roots, properties=[], merger=()=>{}) {
   const packageConfigs = bolt.makeArray(roots).map(root=>
     bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))

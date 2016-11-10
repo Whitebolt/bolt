@@ -53,6 +53,13 @@ function parseTemplatedJson(jsonString) {
   return _jsonString;
 }
 
+/**
+ * Deep pick function, similar to lodash.pick but with the facility to pick deeply.
+ *
+ * @param {Object} obj          Object to pick from.
+ * @param {Array} properties    Properties to pick.
+ * @returns {Object}            Object with picked properties.
+ */
 function pickDeep(obj, properties) {
   let _obj = {};
   bolt.makeArray(properties).forEach(property=>
