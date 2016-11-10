@@ -9,6 +9,7 @@ global.bolt = Object.assign(
   require('lodash'),
   require(getFilePathForSubject('boolean')),
   require(getFilePathForSubject('number')),
+  require(getFilePathForSubject('object')),
   require(getFilePathForSubject('bolt')),
   require(getFilePathForSubject())
 );
@@ -154,6 +155,16 @@ describe('bolt.config', ()=>{
         __dirname+'/config/test2/'
       ], 'config2');
       assert.deepEqual(config, {test1:'TEST2', test2:'TEST3'});
+    });
+  });
+
+  describe('bolt.mergePackageProperties()', ()=>{
+    it('Should load properties from package.json files and merge.',()=>{
+      let config = bolt.mergePackageProperties([
+        __dirname+'/config/test1/',
+        __dirname+'/config/test2/'
+      ], ['description', 'name', 'version']);
+      assert.deepEqual(config, {name: "test-2", version: "2.0.0", description: "TEST 1"});
     });
   });
 

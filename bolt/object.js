@@ -53,6 +53,14 @@ function parseTemplatedJson(jsonString) {
   return _jsonString;
 }
 
+function pickDeep(obj, properties) {
+  let _obj = {};
+  bolt.makeArray(properties).forEach(property=>
+    bolt.set(_obj, property, bolt.get(obj, property))
+  )
+  return _obj;
+}
+
 module.exports = {
-  addDefaultObjects, parseTemplatedJson
+  addDefaultObjects, parseTemplatedJson, pickDeep
 };

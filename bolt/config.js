@@ -92,11 +92,15 @@ function _assignPort(config) {
  */
 function _getPackageConfigs(roots, configProp='config') {
   return bolt.makeArray(roots || []).map(root=>{
-    try {
-      let packageData = require(root+'package.json');
-      return packageData[configProp] || {};
-    } catch(e) {return {};}
+    let packageData = _getPackage(root);
+    return packageData[configProp] || {};
   });
+}
+
+function _getPackage(root) {
+  try {
+    return require(root+'package.json');
+  } catch(e) {return {};}
 }
 
 const _configMergeOverrides = {
@@ -180,7 +184,15 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix, env=process.env) {
 }
 
 function mergePackageConfigs(roots, merger=()=>{}, configProp='config') {
-  const packageConfigs = _getPackageConfigs(roots, bolt.isString(merger)?merger:configProp);
+  let _configProp = bolt.isString(merger)?merger:configProp;
+  let _merger = bolt.isFunction(merger)?merger:()=>{};
+  return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
+}
+
+function mergePackageProperties(roots, properties=[], merger=()=>{}) {
+  const packageConfigs = bolt.makeArray(roots).map(root=>
+    bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
+  );
   packageConfigs.unshift({});
   if (bolt.isFunction(merger)) packageConfigs.push(_configMerge);
   return bolt.mergeWith.apply(bolt, packageConfigs);
@@ -235,5 +247,5 @@ function loadConfig(name) {
 }
 
 module.exports = {
-  loadConfig, getKeyedEnvVars, mergePackageConfigs
+  loadConfig, getKeyedEnvVars, mergePackageConfigs, mergePackageProperties
 };
