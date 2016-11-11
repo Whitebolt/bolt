@@ -6,7 +6,7 @@
  */
 
 const argv = require('yargs')
-  .command('start <name>', 'Start the server process.')
+  .command('start <name> <profile>', 'Start the server process.')
   .argv;
 
 if (!argv.development && argv.d) argv.development = argv.d;

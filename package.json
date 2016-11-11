@@ -83,6 +83,8 @@
       "sitesAvailable": "/etc/nginx/sites-available/",
       "sitesEnabled": "/etc/nginx/sites-enabled/"
     },
+    "serverConfigPath": "/etc/bolt",
+    "serverConfigFile": "server.json",
     "boltConfigProperties": [
       "port",
       "root",

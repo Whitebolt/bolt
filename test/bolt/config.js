@@ -18,22 +18,6 @@ function getFilePathForSubject(fileName=__filename) {
   return process.cwd() + __dirname.replace(new RegExp('^' + process.cwd() + '/test'), '') + '/' + fileName.split('/').pop();
 }
 
-function stubEnv(routine, stubbedEnv={}) {
-  let env = process.env;
-  process.env = stubbedEnv;
-  routine();
-  process.env = env;
-}
-
-function stubEnvIt(statement, routine, stubbedEnv={}) {
-  let env = process.env;
-  process.env = stubbedEnv;
-  it(statement, ()=>{
-    routine();
-    process.env = env;
-  });
-}
-
 describe('bolt.config', ()=>{
   describe('bolt.getKeyedEnvVars()', ()=>{
     it(`Should load tagged environment variables and return as object - defaulting to tag of 'BOLT'.`, ()=>{

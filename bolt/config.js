@@ -4,13 +4,15 @@
  * @module bolt/bolt
  * @todo Add windows and mac path?
  */
-const packageData = _getPackage(boltRootDir);
-const packageConfig = packageData.config || {};
-const configLoadPaths = _getConfigLoadPaths();
 const Promise = require('bluebird');
 const requireX = require('require-extra');
 const freeport = Promise.promisify(require("find-free-port"));
 const path = require('path');
+
+const packageData = _getPackage(boltRootDir);
+const packageConfig = packageData.config || {};
+const env = getKeyedEnvVars();
+const configLoadPaths = _getConfigLoadPaths();
 
 
 /**
@@ -20,11 +22,11 @@ const path = require('path');
  * @returns {Object}    The config object.
  */
 function _getConfigLoadPaths() {
-  const env = getKeyedEnvVars();
-  const configLoadPaths = [boltRootDir + '/server.json'];
-  if (env.hasOwnProperty('config')) configLoadPaths.push(env.config + '/server.json');
-  configLoadPaths.push('/etc/bolt/server.json');
-  return configLoadPaths;
+  const serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile);
+  const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
+  if (env.hasOwnProperty('config')) configLoadPaths.push(env.config + '/' + serverConfigFile);
+  configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
+  return bolt.flattenDeep(configLoadPaths);
 }
 
 /**
@@ -92,13 +94,21 @@ function _parseEnvValueConvertItem(value, converter) {
  */
 function _parseConfig(config) {
   config.script = boltRootDir + '/server.js';
-  let envConfig = getKeyedEnvVars();
   let dbConfig = bolt.parseTemplatedJson(config);
-  let _packageConfig = _getConfig({
-    root: bolt.uniq((dbConfig.root || []).concat(envConfig.root || []).concat(packageConfig.root || []))
-  });
+  let root = _concatPropertyArray([dbConfig, env, packageConfig], 'root');
+  return bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerge);
+}
 
-  return bolt.merge(_packageConfig, envConfig, dbConfig);
+/**
+ * Take an array of objects and return the given property from (assuming an array) and merge together.
+ *
+ * @private
+ * @param {Object[]} objects    Objects to get property from.
+ * @param {string} property     Property to get.
+ * @returns {Array}             Merged array.
+ */
+function _concatPropertyArray(objects, property) {
+  return bolt.uniq(bolt.flatten(objects.map(_property=>_property[property] || [])));
 }
 
 /**
@@ -121,19 +131,6 @@ function _assignPort(config) {
 }
 
 /**
- *
- * @private
- * @param {Array|string} roots  Get configs from the various package.json roots.
- * @returns {Array}             Array of config objects.
- */
-function _getPackageConfigs(roots, configProp='config') {
-  return bolt.makeArray(roots || []).map(root=>{
-    let packageData = _getPackage(root);
-    return packageData[configProp] || {};
-  });
-}
-
-/**
  * Get the package file in the given directory (or return empty object).
  *
  * @private
@@ -142,7 +139,7 @@ function _getPackageConfigs(roots, configProp='config') {
  */
 function _getPackage(dirPath) {
   try {
-    return require(dirPath+'package.json');
+    return require(dirPath + '/package.json');
   } catch(e) {return {};}
 }
 
@@ -201,60 +198,6 @@ function _getConfig(config) {
 }
 
 /**
- * Get configs items from environment variables (BOLT_*).
- *
- * @public
- * @param {string} [key='BOLT']       The key values to import.
- * @param {Object} [env=process.env]  The environment object to use.
- * @returns {Object}                  The imported values.
- */
-function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.env) {
-  let vars = {};
-
-  Object.keys(env)
-    .filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
-    .forEach(envKey=>{
-      let varKey = bolt.camelCase(envKey.substr(key.length));
-      vars[varKey] = _parseEnvValue(env[envKey]);
-    });
-
-  return vars;
-}
-
-/**
- * Grab package.json files and get the config properties merging them all together.
- *
- * @public
- * @param {string[]|string} roots             The directories to load from.
- * @param {Function|string} [merger=()=>{}]   Merger function to use or configProp (if a string).
- * @param {string} [configProp='config]       The property to get from.
- * @returns {Object}                          The merged package.
- */
-function mergePackageConfigs(roots, merger=()=>{}, configProp='config') {
-  let _configProp = bolt.isString(merger)?merger:configProp;
-  let _merger = bolt.isFunction(merger)?merger:()=>{};
-  return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
-}
-
-/**
- * Grab package.json files and get the specfied properties merging them all together.
- *
- * @public
- *  @param {string[]|string} roots              The directories to load from.
- * @param {Array|string} [properties=[]]        Properties to grab.
- * @param {Function} [merger=()=>{}]            Merger function to use.
- * @returns {Object}                            Merged object with selected properties.
- */
-function mergePackageProperties(roots, properties=[], merger=()=>{}) {
-  const packageConfigs = bolt.makeArray(roots).map(root=>
-    bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
-  );
-  packageConfigs.unshift({});
-  if (bolt.isFunction(merger)) packageConfigs.push(_configMerge);
-  return bolt.mergeWith.apply(bolt, packageConfigs);
-}
-
-/**
  * @typedef boltConfig
  * Configuration object for bolt-server.
  *
@@ -283,6 +226,59 @@ function mergePackageProperties(roots, properties=[], merger=()=>{}) {
  */
 
 /**
+ * Grab package.json files and get the specfied properties merging them all together.
+ *
+ * @public
+ *  @param {string[]|string} roots              The directories to load from.
+ * @param {Array|string} [properties=[]]        Properties to grab.
+ * @param {Function} [merger=()=>{}]            Merger function to use.
+ * @returns {Object}                            Merged object with selected properties.
+ */
+function mergePackageProperties(roots, properties=[], merger=()=>{}) {
+  const packageConfigs = bolt.makeArray(roots).map(root=>
+    bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
+  );
+  packageConfigs.unshift({});
+  if (bolt.isFunction(merger)) packageConfigs.push(_configMerge);
+  return bolt.mergeWith.apply(bolt, packageConfigs);
+}
+
+/**
+ * Get configs items from environment variables (BOLT_*).
+ *
+ * @public
+ * @param {string} [key='BOLT']       The key values to import.
+ * @param {Object} [env=process.env]  The environment object to use.
+ * @returns {Object}                  The imported values.
+ */
+function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.env) {
+  let vars = {};
+  Object.keys(env)
+    .filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
+    .forEach(envKey=>{
+      let varKey = bolt.camelCase(envKey.substr(key.length));
+      vars[varKey] = _parseEnvValue(env[envKey]);
+    });
+
+  return vars;
+}
+
+/**
+ * Grab package.json files and get the config properties merging them all together.
+ *
+ * @public
+ * @param {string[]|string} roots             The directories to load from.
+ * @param {Function|string} [merger=()=>{}]   Merger function to use or configProp (if a string).
+ * @param {string} [configProp='config]       The property to get from.
+ * @returns {Object}                          The merged package.
+ */
+function mergePackageConfigs(roots, merger=()=>{}, configProp='config') {
+  let _configProp = bolt.isString(merger)?merger:configProp;
+  let _merger = bolt.isFunction(merger)?merger:()=>{};
+  return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
+}
+
+/**
  * Load global config for app.
  *
  * @public
@@ -290,11 +286,21 @@ function mergePackageProperties(roots, properties=[], merger=()=>{}) {
  * @param {string} name           The config to load.
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
-function loadConfig(name) {
+function loadConfig(name, profile) {
   return requireX.getModule(true, configLoadPaths)
     .then(config=>bolt.loadMongo(config.db))
-    .then(db=>db.collection('configs').findOne({name}))
-    .then(_parseConfig)
+    .then(db=>{
+      return db.collection('apps')
+        .findOne({name})
+        .then(_parseConfig)
+        .then(config=>{
+          if (!profile) profile = (config.development ? 'development' : 'production');
+          return db.collection('profiles').findOne({name:profile}).then(profileConfig=>{
+            if (profileConfig) return bolt.mergeWith(config, profileConfig, _configMerge);
+            return config;
+          });
+        });
+    })
     .then(_assignPort)
     .then(siteConfig=>{
       siteConfig.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : false);

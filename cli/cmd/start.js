@@ -10,9 +10,10 @@ function launchApp(siteConfig) {
 
 function start(args) {
   if (args.hasOwnProperty('name')) {
-    return bolt.loadConfig(args.name).then(siteConfig=>{
-      if (!process.env.SUDO_UID) siteConfig.development = true;
-      if (args.development) siteConfig.development = true;
+    let development = (!process.env.SUDO_UID || args.development);
+
+    return bolt.loadConfig(args.name, args.profile).then(siteConfig=>{
+      if (development) siteConfig.development = development;
       return siteConfig;
     }).then(siteConfig=>{
       if (!siteConfig.development) return bolt.addUser(siteConfig).then(()=>siteConfig);
@@ -33,7 +34,7 @@ function start(args) {
       }
     });
   } else {
-    throw "No profile specified";
+    throw new Error("No app specified");
   }
 }
 
