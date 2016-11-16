@@ -24,6 +24,10 @@ function getRoot() {
   return path.dirname(process.argv[1]);
 }
 
+function fileExists(filePath) {
+  return lstat(filePath).then(stat=>!!stat,err=>false);
+}
+
 /**
  * Get the filename of the function, which called the function calling
  * this method.  Use stack trace to achieve this.
@@ -131,5 +135,6 @@ function filesInDirectory(dirPath, ext = 'js') {
 
 module.exports = {
   filesInDirectory, directoriesInDirectory,
-  getCallerFileName, getRoot, require: requireX
+  getCallerFileName, getRoot, require: requireX,
+  fileExists
 };

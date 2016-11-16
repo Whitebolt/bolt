@@ -9,10 +9,10 @@ const requireX = require('require-extra');
 const freeport = Promise.promisify(require("find-free-port"));
 const path = require('path');
 
-const packageData = _getPackage(boltRootDir);
+const packageData = getPackage(boltRootDir);
 const packageConfig = packageData.config || {};
 const env = getKeyedEnvVars();
-const configLoadPaths = _getConfigLoadPaths();
+const configLoadPaths = getConfigLoadPaths();
 
 
 /**
@@ -21,7 +21,7 @@ const configLoadPaths = _getConfigLoadPaths();
  * @private
  * @returns {Object}    The config object.
  */
-function _getConfigLoadPaths() {
+function getConfigLoadPaths() {
   const serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile);
   const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
   if (env.hasOwnProperty('config')) configLoadPaths.push(env.config + '/' + serverConfigFile);
@@ -137,7 +137,7 @@ function _assignPort(config) {
  * @param {string} dirPath    Path to load from.
  * @returns {Object}          The package object.
  */
-function _getPackage(dirPath) {
+function getPackage(dirPath) {
   try {
     return require(dirPath + '/package.json');
   } catch(e) {return {};}
@@ -236,7 +236,7 @@ function _getConfig(config) {
  */
 function mergePackageProperties(roots, properties=[], merger=()=>{}) {
   const packageConfigs = bolt.makeArray(roots).map(root=>
-    bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
+    bolt.pickDeep(getPackage(root), bolt.makeArray(properties))
   );
   packageConfigs.unshift({});
   if (bolt.isFunction(merger)) packageConfigs.push(_configMerge);
@@ -309,5 +309,5 @@ function loadConfig(name, profile) {
 }
 
 module.exports = {
-  loadConfig, getKeyedEnvVars, mergePackageConfigs, mergePackageProperties
+  loadConfig, getKeyedEnvVars, mergePackageConfigs, mergePackageProperties, getConfigLoadPaths, getPackage
 };
