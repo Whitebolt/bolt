@@ -1,0 +1,6 @@
+{
+  "config": {
+    "serverConfigPath": "/etc/bolt",
+    "serverConfigFile": "server.json"
+  }
+}

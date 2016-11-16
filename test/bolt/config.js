@@ -14,11 +14,25 @@ global.bolt = Object.assign(
   require(getFilePathForSubject())
 );
 
+let root = global.boltRootDir;
+
+
 function getFilePathForSubject(fileName=__filename) {
   return process.cwd() + __dirname.replace(new RegExp('^' + process.cwd() + '/test'), '') + '/' + fileName.split('/').pop();
 }
 
+function changeRootAndReload(newRoot=root) {
+  delete require.cache[require.resolve(getFilePathForSubject())];
+  delete require.cache[require.resolve(boltRootDir+'/package.json')];
+  global.boltRootDir = newRoot;
+  global.bolt = Object.assign(bolt, require(getFilePathForSubject()));
+}
+
 describe('bolt.config', ()=>{
+  describe('bolt.loadConfig()', ()=>{
+
+  });
+
   describe('bolt.getKeyedEnvVars()', ()=>{
     it(`Should load tagged environment variables and return as object - defaulting to tag of 'BOLT'.`, ()=>{
       morphEnv(()=>{
@@ -204,7 +218,73 @@ describe('bolt.config', ()=>{
     });
   });
 
-  describe('bolt.loadConfig()', ()=>{
+  describe('bolt.getConfigLoadPaths()', ()=>{
+    it(`Should get config paths from root folder then package.json config location.`, ()=>{
+      changeRootAndReload(global.boltRootDir + '/test/bolt/config/test6');
+      let paths = bolt.getConfigLoadPaths();
+      assert.deepEqual(paths, [global.boltRootDir + '/server.json', '/etc/bolt/server.json']);
+      changeRootAndReload();
+    });
 
+    it(`Changing 'serverConfigFile' in package.json should change the json file loaded.`, ()=>{
+      changeRootAndReload(global.boltRootDir + '/test/bolt/config/test7');
+      let paths = bolt.getConfigLoadPaths();
+      assert.deepEqual(paths, [global.boltRootDir + '/test.json', '/etc/bolt/test.json']);
+      changeRootAndReload();
+    });
+
+    it(`Changing 'serverConfigPath' in package.json should change global config referenced.`, ()=>{
+      changeRootAndReload(global.boltRootDir + '/test/bolt/config/test8');
+      let paths = bolt.getConfigLoadPaths();
+      assert.deepEqual(paths, [global.boltRootDir + '/server.json', '/notetc/bolt/server.json']);
+      changeRootAndReload();
+    });
+
+    it(`If no 'serverConfigPath' specified then remove from paths.`, ()=>{
+      changeRootAndReload(global.boltRootDir + '/test/bolt/config/test9');
+      let paths = bolt.getConfigLoadPaths();
+      assert.deepEqual(paths, [global.boltRootDir + '/server.json']);
+      changeRootAndReload();
+    });
+
+    it(`Changing env.BOLT_CONFIG should load extra paths`, ()=>{
+      morphEnv(()=>{
+        changeRootAndReload(global.boltRootDir + '/test/bolt/config/test6');
+        let paths = bolt.getConfigLoadPaths();
+        assert.deepEqual(paths, [global.boltRootDir + '/server.json', '/notetc/bolt/server.json', '/etc/bolt/server.json']);
+        changeRootAndReload();
+      }, {
+        'BOLT_CONFIG': '/notetc/bolt'
+      });
+    });
+
+    it(`Changing env.BOLT_CONFIG should to an array should load all extra paths`, ()=>{
+      morphEnv(()=>{
+        changeRootAndReload(global.boltRootDir + '/test/bolt/config/test6');
+        let paths = bolt.getConfigLoadPaths();
+        assert.deepEqual(paths, [global.boltRootDir + '/server.json', '/etc1/bolt/server.json', '/etc2/bolt/server.json', '/etc3/bolt/server.json', '/etc/bolt/server.json']);
+        changeRootAndReload();
+      }, {
+        'BOLT_CONFIG': '/etc1/bolt:/etc2/bolt:/etc3/bolt'
+      });
+    });
+  });
+
+  describe('bolt.getPackage()', ()=>{
+    it(`Should load package.json from given directory.`, ()=>{
+      let data = bolt.getPackage(__dirname+'/config/test1/');
+      assert.equal(data.name, "test-1");
+    });
+
+    it(`Should load package.json root directory for this package if no directory supplied.`, ()=>{
+      let data1 = bolt.getPackage();
+      let data2 = require(boltRootDir + '/package.json');
+      assert.deepEqual(data1, data2);
+    });
+
+    it(`Should return an empty object if package.json not found.`, ()=>{
+      let data = bolt.getPackage(__dirname+'/config/test/');
+      assert.deepEqual(data, {});
+    });
   });
 });

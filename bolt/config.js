@@ -16,20 +16,6 @@ const configLoadPaths = getConfigLoadPaths();
 
 
 /**
- * Load config from default locations.
- *
- * @private
- * @returns {Object}    The config object.
- */
-function getConfigLoadPaths() {
-  const serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile);
-  const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
-  if (env.hasOwnProperty('config')) configLoadPaths.push(env.config + '/' + serverConfigFile);
-  configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
-  return bolt.flattenDeep(configLoadPaths);
-}
-
-/**
  * Parse the environment variable value into arrays and types (float,
  * integer and boolean).
  *
@@ -130,19 +116,6 @@ function _assignPort(config) {
   return config;
 }
 
-/**
- * Get the package file in the given directory (or return empty object).
- *
- * @private
- * @param {string} dirPath    Path to load from.
- * @returns {Object}          The package object.
- */
-function getPackage(dirPath) {
-  try {
-    return require(dirPath + '/package.json');
-  } catch(e) {return {};}
-}
-
 const _configMergeOverrides = {
   /**
    * Merge eventConsoleLogging arrays together avoid duplicates and merging of
@@ -224,6 +197,33 @@ function _getConfig(config) {
  * @property {string} [password]              Password to use.
  * @property {string} [adminDatabase='admin'] Admin database t use (mongo specfic).
  */
+
+/**
+ * Load config from default locations.
+ *
+ * @private
+ * @returns {Object}    The config object.
+ */
+function getConfigLoadPaths() {
+  const serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile);
+  const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
+  if (env.hasOwnProperty('config')) bolt.makeArray(env.config).forEach(config=>configLoadPaths.push(config + '/' + serverConfigFile));
+  if (packageConfig.serverConfigPath) configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
+  return bolt.flattenDeep(configLoadPaths);
+}
+
+/**
+ * Get the package file in the given directory (or return empty object).
+ *
+ * @private
+ * @param {string} dirPath    Path to load from.
+ * @returns {Object}          The package object.
+ */
+function getPackage(dirPath=boltRootDir) {
+  try {
+    return require(dirPath + '/package.json');
+  } catch(e) {return {};}
+}
 
 /**
  * Grab package.json files and get the specfied properties merging them all together.

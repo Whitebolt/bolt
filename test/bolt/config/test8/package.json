@@ -1,0 +1,6 @@
+{
+  "config": {
+    "serverConfigPath": "/notetc/bolt",
+    "serverConfigFile": "server.json"
+  }
+}
