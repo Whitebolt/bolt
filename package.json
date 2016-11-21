@@ -65,7 +65,8 @@
     "gulp": "^3.9.1",
     "gulp-jsdoc3": "^1.0.0",
     "mocha": "^3.0.2",
-    "mock-env": "^0.1.3"
+    "mock-env": "^0.1.3",
+    "mockgo": "^1.1.6"
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --recursive test",

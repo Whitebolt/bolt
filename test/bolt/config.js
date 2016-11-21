@@ -1,8 +1,16 @@
 'use strict';
 
+const Promise = require('bluebird');
 const chai = require('chai');
 const assert = chai.assert;
 const morphEnv = require('mock-env').morph;
+const mockgo = require('mockgo');
+
+let mongo = {
+  apps:[{
+    name:'test'
+  }]
+};
 
 global.boltRootDir = process.cwd();
 global.bolt = Object.assign(
@@ -11,11 +19,25 @@ global.bolt = Object.assign(
   require(getFilePathForSubject('number')),
   require(getFilePathForSubject('object')),
   require(getFilePathForSubject('bolt')),
-  require(getFilePathForSubject())
+  require(getFilePathForSubject()),
+  {loadMongo}
 );
 
 let root = global.boltRootDir;
 
+function loadMongo() {
+  return new Promise((resolve, reject)=>{
+    const getConnection = Promise.promisify(mockgo.getConnection);
+    Promise.all(getConnection('test').then(connection=>{
+      return Promise.all(Object.keys(mongo).map(collectionName=>{
+        const collection = connection.collection(collectionName);
+        return mongo[collectionName].map(doc=>collection.insertOne(doc));
+      }));
+    })).then(()=>{
+      resolve(getConnection('test'));
+    });
+  });
+}
 
 function getFilePathForSubject(fileName=__filename) {
   return process.cwd() + __dirname.replace(new RegExp('^' + process.cwd() + '/test'), '') + '/' + fileName.split('/').pop();
@@ -30,7 +52,14 @@ function changeRootAndReload(newRoot=root) {
 
 describe('bolt.config', ()=>{
   describe('bolt.loadConfig()', ()=>{
-
+    it(`Should return a siteConfig object`, ()=>{
+      changeRootAndReload(global.boltRootDir + '/test/bolt/config/test10');
+      let test = bolt.loadConfig('test').then(siteConfig=>{
+        console.log(2);
+      });
+      console.log(1);
+      changeRootAndReload();
+    });
   });
 
   describe('bolt.getKeyedEnvVars()', ()=>{
