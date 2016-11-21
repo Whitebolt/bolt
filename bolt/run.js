@@ -5,8 +5,8 @@
  */
 
 const Promise = require('bluebird');
-const readFile = Promise.promisify(require('fs').readFile);
 const IO = require('socket.io');
+const figlet =  Promise.promisify(require('figlet'));
 
 /**
  * Run the given express app, binding to correct port.
@@ -27,11 +27,13 @@ function _runApp(app) {
       return bolt.fire(()=>{
         app.io = IO(server);
         app.io.sockets.setMaxListeners(50);
-      }, 'ioServerLaunch', app).then(()=>
-        readFile('./welcome.txt', 'utf-8').then(welcome => {
+      }, 'ioServerLaunch', app).then(()=>{
+        let serverName = bolt.upperFirst(bolt.camelCase(app.config.name));
+        return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
           console.log(welcome);
           return welcome;
-        }))
+        });
+      })
         .then(() => resolve(app));
     });
   });

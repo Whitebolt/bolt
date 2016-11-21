@@ -79,6 +79,7 @@ function _parseEnvValueConvertItem(value, converter) {
  * @returns {Object}        The parsed config.
  */
 function _parseConfig(config) {
+  if (config.name) delete config.name;
   config.script = boltRootDir + '/server.js';
   let dbConfig = bolt.parseTemplatedJson(config);
   let root = _concatPropertyArray([dbConfig, env, packageConfig], 'root');
@@ -296,8 +297,10 @@ function loadConfig(name, profile) {
         .then(config=>{
           if (!profile) profile = (config.development ? 'development' : 'production');
           return db.collection('profiles').findOne({name:profile}).then(profileConfig=>{
-            if (profileConfig) return bolt.mergeWith(config, profileConfig, _configMerge);
-            return config;
+            if (profileConfig) {
+              delete profileConfig.name;
+              return bolt.mergeWith(config, profileConfig, _configMerge);
+            }
           });
         });
     })

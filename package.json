@@ -30,6 +30,7 @@
     "express": "^4.13.4",
     "express-http-proxy": "^0.10.0",
     "express-session": "^1.13.0",
+    "figlet": "^1.2.0",
     "find-free-port": "^1.0.2",
     "ical-date-parser": "^3.1.1",
     "iconv-lite": "^0.4.13",
@@ -96,7 +97,9 @@
       "development",
       "proxy",
       "eventConsoleLogging",
-      "logLevel"
+      "logLevel",
+      "version",
+      "name"
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [
