@@ -43,7 +43,7 @@ function appLauncher(config) {
 
 function pm2Controller() {
   let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
-  if (process.env.SUDO_UID) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
+  if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
   return require('require-extra')
     .importDirectory('./bolt/', boltImportOptions)

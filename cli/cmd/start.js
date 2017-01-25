@@ -10,12 +10,13 @@ function launchApp(siteConfig) {
 
 function start(args) {
   if (args.hasOwnProperty('name')) {
-    let development = (!process.env.SUDO_UID || args.development);
+    let development = ((process.getuid && process.getuid() !== 0)?true:args.development);
 
     return bolt.loadConfig(args.name, args.profile).then(siteConfig=>{
       if (development) siteConfig.development = development;
       return siteConfig;
     }).then(siteConfig=>{
+console.log(siteConfig.development, development);
       if (!siteConfig.development) return bolt.addUser(siteConfig).then(()=>siteConfig);
       return siteConfig;
     }).then(siteConfig=>
