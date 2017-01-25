@@ -89,6 +89,7 @@
     "serverConfigFile": "server.json",
     "boltConfigProperties": [
       "port",
+      "portRange",
       "root",
       "accessLog",
       "template",
