@@ -166,7 +166,7 @@ function boltRouter(app) {
   return (req, res, next)=>{
     let methods = getMethods(app, req);
     let component = bolt.addTemplateFunctions({req, res, done: false});
-    console.log(app);
+
     if (methods.length) {
       callMethod({methods, component, req, res, next})
         .then(component=>{

@@ -136,7 +136,7 @@ function _removeAddedFields(doc, projection={}) {
   return doc;
 }
 
-function _getDoc(options) {
+function _getDoc(options, noFilters=false) {
   let getDoc;
   let projection = (options.projection ?
     Object.assign({}, options.projection, {'_acl':true, '_id':true}) :
@@ -156,11 +156,11 @@ function _getDoc(options) {
 
   return getDoc
     .then(docs=>bolt.makeArray(docs))
-    .then(docs=>(options.filterByAccessLevel ? docs.filter(doc=>_isAuthorised(doc, options.session, options.accessLevel)) : docs))
-    .then(docs=>(options.filterByVisibility ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))
-    .map(doc=>(options.filterUnauthorisedFields ? _removeUnauthorisedFields(doc, options.session, options.accessLevel) : doc))
+    .then(docs=>((options.filterByAccessLevel && !noFilters) ? docs.filter(doc=>_isAuthorised(doc, options.session, options.accessLevel)) : docs))
+    .then(docs=>((options.filterByVisibility && !noFilters) ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))
+    .map(doc=>((options.filterUnauthorisedFields && !noFilters) ? _removeUnauthorisedFields(doc, options.session, options.accessLevel) : doc))
     .map(_addCreatedField)
-    .map(doc=>_removeAddedFields(doc, options.projection));
+    .map(doc=>(!noFilters ? _removeAddedFields(doc, options.projection) : doc));
 }
 
 function getDocs(options) {
@@ -172,6 +172,30 @@ function getDocs(options) {
 function _addCreatedField(doc, projection={}) {
   if (projection._created && doc && doc._id) doc._created = new Date(parseInt(doc._id.toString().substring(0, 8), 16) * 1000);
   return doc;
+}
+
+function updateDoc(options) {
+  let _options = _parseOptions(options);
+  let collection = _options.db.collection(_options.collection);
+  _options.accessLevel = options.accessLevel || 'edit';
+  _options.projection = {_id:true};
+
+  if (!_options.query) return collection.insert(options.doc);
+  return _getDoc(_options, true).then(docs=>{
+    if (docs.length) {
+      return Promise.all(docs.map(doc=>{
+        if (!options.filterByAccessLevel || (_options.filterByAccessLevel && _isAuthorised(doc, _options.session, _options.accessLevel))) {
+          let _doc = Object.assign({}, _options.doc, {_acl: doc._acl});
+          if (options.filterUnauthorisedFields) {
+            _doc = _removeUnauthorisedFields(_doc, _options.session, _options.accessLevel);
+          }
+          return collection.update({_id: doc._id}, {$set:_doc});
+        }
+      }));
+    } else {
+      return collection.insert(options.doc);
+    }
+  });
 }
 
 function getDoc(options) {
@@ -195,6 +219,7 @@ function isAuthorised(options) {
 }
 
 module.exports = {
+  updateDoc,
   getDoc,
   getDocs,
   isAuthorised,
