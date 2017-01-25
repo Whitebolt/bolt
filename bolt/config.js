@@ -167,7 +167,7 @@ function _getConfig(config) {
   let packageConfigs = [];
   packageConfigs.push(bolt.pickDeep(packageData, ['version', 'name', 'description']));
   packageConfigs.push({template:'index'});
-  packageConfigs.push(bolt.pick(packageData), packageData.config.boltConfigProperties || []);
+  packageConfigs.push(bolt.pick(packageData, packageData.config.boltConfigProperties || []));
   packageConfigs.push(mergePackageConfigs(config.root, _configMerge));
   return bolt.mergeWith.apply(bolt, packageConfigs);
 }
