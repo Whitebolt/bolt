@@ -16,7 +16,6 @@ function start(args) {
       if (development) siteConfig.development = development;
       return siteConfig;
     }).then(siteConfig=>{
-console.log(siteConfig.development, development);
       if (!siteConfig.development) return bolt.addUser(siteConfig).then(()=>siteConfig);
       return siteConfig;
     }).then(siteConfig=>
