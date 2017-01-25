@@ -37,7 +37,7 @@ function _createUser(config) {
 function addUser(config) {
   if (config.userName) {
     return linuxUser.isUser(config.userName).then(
-      isUser=>(!isUser?_createUserIfNotCreated(isUser, config):true)
+      isUser=>(!isUser?_createUser(config):true)
     ).then(
       isUser=>linuxUser.getUserInfo(config.userName)
     ).then(user=> {
