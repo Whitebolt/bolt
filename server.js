@@ -18,6 +18,7 @@ process.on('message', message=>{
 });
 
 function startApp(config) {
+//console.log(config);
   bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
   return bolt.loadApplication(config);
 }
@@ -36,7 +37,6 @@ function appLauncher(config) {
         return startApp(config);
       });
     }
-
     return startApp(config);
   }
 }
