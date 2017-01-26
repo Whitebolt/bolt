@@ -7,6 +7,7 @@
 const Promise = require('bluebird');
 const fs = require('fs');
 const open = Promise.promisify(fs.open);
+const write = Promise.promisify(fs.write);
 const ejs = require('ejs');
 
 const ejsOptions = {
@@ -82,7 +83,7 @@ function _initConsoleLogging(level, callback) {
 function _initAccessLogging(logPath) {
   if (logPath) {
     open(logPath, 'a').then(fd => {
-      bolt.subscribe('/logging/access', (options, message)=>fs.write(fd, message));
+      bolt.subscribe('/logging/access', (options, message)=>write(fd, message));
     });
   }
 }
