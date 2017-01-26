@@ -115,6 +115,7 @@ function _getEventChannel(root, level, max) {
 function _createApp(config) {
   const app = express();
   app.config = config;
+  app.componentType = 'app';
   bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers', 'controllerRoutes', 'shortcodes']);
 
   return app;

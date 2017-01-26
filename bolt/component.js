@@ -20,7 +20,9 @@ const componentDefaultObjects = ['controllers', 'views', 'components'];
  */
 function _getComponentPath(component) {
   let compPath = [component.name];
-  while (component = component.parent) compPath.unshift(component.name);
+  while (component = component.parent) {
+    compPath.unshift((component.componentType !== 'app')?component.name:'');
+  }
   return compPath.join('/');
 }
 
@@ -51,6 +53,7 @@ function _initComponentProperties(app, name, fullPath) {
   component.name = name;
   component.fullPath = fullPath;
   component.path = _getComponentPath(component);
+  component.componentType = 'component';
   component.filePath = _getRelativeDirectoryPathForComponent(component);
   return bolt.addDefaultObjects(component, componentDefaultObjects);
 }
