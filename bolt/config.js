@@ -79,9 +79,11 @@ function _parseEnvValueConvertItem(value, converter) {
  * @returns {Object}        The parsed config.
  */
 function _parseConfig(config) {
+  let name = config.name;
+  delete config.name;
   config.script = boltRootDir + '/server.js';
   let dbConfig = bolt.parseTemplatedJson(config);
-  if (dbConfig.name) delete dbConfig.name;
+  if (!dbConfig.name && name) dbConfig.name = name;
   let root = _concatPropertyArray([dbConfig, env, packageConfig], 'root');
   return bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerge);
 }
