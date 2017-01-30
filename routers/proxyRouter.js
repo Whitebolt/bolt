@@ -61,7 +61,7 @@ function _initSlugger(app, appProxyConfig, config) {
 
 function _initDecorateRequest(app, appProxyConfig) {
   return (proxyReq, req)=>{
-    if (bolt.isPlainObject(proxyReq.bodyContent)) proxyReq.bodyContent = bolt.objectToQueryString(proxyReq.bodyContent);
+    if (bolt.isPlainObject(proxyReq.bodyContent)) proxyReq.bodyContent = bolt.objectToQueryString(proxyReq.bodyContent, {addEquals: appProxyConfig.addEqualsToEmptyQueryValues || false});
     if (appProxyConfig.host) proxyReq.headers.host = appProxyConfig.host;
     return proxyReq;
   };

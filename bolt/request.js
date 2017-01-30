@@ -37,19 +37,47 @@ function getPathPartsFromRequest(req) {
  * Convert a given object to a url style query string.
  *
  * @public
- * @param {Object} obj              Object to convert.
- * @param {string} [splitter='&']   Splitter between string values.
- * @param {string} [defaultValue]   Default value when key is present but has
- *                                  no value.  If undefined then leave blank.
- *                                  This means you can have properties without
- *                                  values, eg. field1=1&field2&field3
- * @returns {string}                The url query style string.
+ * @param {Object} obj                                Object to convert.
+ * @param {string|Object} [splitter='&']              Splitter between
+ *                                                    string values.
+ *                                                    If object then
+ *                                                    assume options object.
+ * @param {string} splitter.splitter                  Splitter between
+ *                                                    string values.
+ * @param {string} [splitter.defaultValue=undefined]  Default value when key
+ *                                                    is present but has
+ *                                                    no value.
+ * @param {boolean} [splitter.addEquals=false]        Whether to add an equals
+ *                                                    if no value, sometimes
+ *                                                    equals is needed
+ *                                                    when proxying.
+ * @param {string} [defaultValue=undefined]           Default value when key
+ *                                                    is present but has no
+ *                                                    value.  If undefined
+ *                                                    then leave blank. This
+ *                                                    means you can have
+ *                                                    properties without
+ *                                                    values, eg.
+ *                                                    field1=1&field2&field3
+ * @param {boolean} [addEquals=false]                 Whether to add an equals
+ *                                                    if no value, sometimes
+ *                                                    equals is needed
+ *                                                    when proxying.
+ * @returns {string}                                  The url query
+ *                                                    style string.
  */
-function objectToQueryString(obj, splitter='&', defaultValue) {
+function objectToQueryString(obj, splitter='&', defaultValue=undefined, addEquals=false) {
   let queryString = [];
 
+  if (splitter && !bolt.isString(splitter)) {
+    defaultValue = splitter.defaultValue || undefined;
+    addEquals = splitter.addEquals || false;
+    splitter = splitter.splitter || '&';
+  }
+
   Object.keys(obj).forEach(key=>{
-    queryString.push(encodeURIComponent(key) + (((obj[key] !== defaultValue) && (obj[key] !== ''))? '='+encodeURIComponent(obj[key]) : ''));
+    let value = ((obj[key] !== '') ? obj[key] : defaultValue);
+    queryString.push(encodeURIComponent(key) + ((value !== undefined) ? '='+encodeURIComponent(value) : (addEquals?'=':'')));
   });
 
   return queryString.join(splitter);
@@ -103,14 +131,15 @@ function getUrlQueryObject(url) {
  * @returns {string}            The new url.
  */
 function addQueryObjectToUrl(url, ...objs) {
+  let addEquals = ((objs.length && bolt.isBoolean(objs[0])) ? objs.shift() : false);
   let _obj = Object.assign.apply(Object, objs);
   let parts = url.split('?');
   if (parts.length > 1) {
-    parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), _obj));
+    parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), _obj), {addEquals});
     return parts.join('?');
   }
   parts = url.split('#');
-  let queryString = objectToQueryString(_obj);
+  let queryString = objectToQueryString(_obj, {addEquals});
   parts[0] += ((queryString.trim() !== '') ? '?'+queryString : '');
   return parts.join('#');
 }
