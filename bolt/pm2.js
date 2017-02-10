@@ -5,7 +5,7 @@
  */
 
 const pm2 = require('bluebird').promisifyAll(require('pm2'));
-const processFileProperties = Object.keys(require('pm2/lib/CLI/schema.json'));
+const processFileProperties = Object.keys(require('pm2/lib/API/schema.json'));
 
 
 /**

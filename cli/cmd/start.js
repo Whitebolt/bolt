@@ -30,6 +30,19 @@ function start(args) {
     ).then(app=>{
       if (app && app.pm2_env) {
         console.log(app.pm2_env.name, 'launched with id:', app.pm2_env.pm_id);
+
+        /*process.on('message', message=>{
+          console.log('received a message');
+          if (message && message.type && (message.type === 'on')) {
+            process.send({
+              type: 'response',
+              id: message.id,
+              message: 'ready'
+            });
+          }
+        });*/
+
+
         process.exit();
       }
     });
