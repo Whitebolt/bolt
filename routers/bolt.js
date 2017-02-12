@@ -23,9 +23,11 @@ function getMethods(app, req) {
 }
 
 function applyAndSend(config) {
-  return config.req.app.applyTemplate(config.component, config.req).then(data => {
-    config.res.send(data);
-    config.res.end();
+  return config.req.app.applyTemplate(config.component, config.req).then(data=>{
+    config.res
+      .status(config.component.status || 200)
+      .send(data || config.component.statusMessage)
+      .end();
   });
 }
 
@@ -51,10 +53,11 @@ function callMethod(config) {
   let method = Promise.method(config.methods.shift());
   return method(config.component).then(component => {
     if (config.component.redirect) {
-      config.res.redirect(config.component.status || 302, config.component.redirect);
-      return config.res.end();
+      return config.res
+        .redirect(config.component.status || 302, config.component.redirect)
+        .end();
     } else if (config.component.done && !config.component.res.headersSent) {
-      return applyAndSend(config)
+      return applyAndSend(config);
     } else if (config.methods.length && !config.component.done && !config.component.res.headersSent) {
       return callMethod(config);
     } else {
@@ -144,6 +147,40 @@ function createSocketResquest(message, socket, method) {
   return req;
 }
 
+const _componentAllowedToSet = [
+  'done', 'status', 'stausMessage', 'header', 'mime'
+];
+
+function _componentSet(values, value, headerValue) {
+  if (value !== undefined) {
+    if (values === 'header') {
+      this.res.set(value, headerValue);
+    } else if (values === 'mime') {
+      this.res.set('Content-Type', mime.lookup(value));
+    } else {
+      this[values] = value;
+    }
+  } else {
+    _componentAllowedToSet.forEach(key=>{
+      if (values.hasOwnProperty(key)) {
+        if (key === 'header') {
+          Object.keys(values[key] || {}).forEach(header=>
+            this.res.set(header, values[key][header])
+          );
+        } else if (key === 'mime') {
+          this.res.set('Content-Type', mime.lookup(values[key]));
+        } else {
+          this[key] = values[key];
+        }
+      }
+    });
+  }
+}
+
+function _setMime(mimeType) {
+  this.res.set('Content-Type', mime.lookup(mimeType));
+}
+
 function boltRouter(app) {
   http.METHODS
     .map(method=>method.toLowerCase())
@@ -156,7 +193,9 @@ function boltRouter(app) {
         req.app = app;
 
         let methods = getMethods(app, req);
-        let component = {req, res, done: false};
+        let component = {req, res, done:false};
+        component.set = _componentSet.bind(component);
+        component.mime = _setMime.bind(component);
         if (methods.length) callMethod({
           methods, component, req, res, next:()=>{}
         });
@@ -165,7 +204,9 @@ function boltRouter(app) {
 
   return (req, res, next)=>{
     let methods = getMethods(app, req);
-    let component = bolt.addTemplateFunctions({req, res, done: false});
+    let component = bolt.addTemplateFunctions({req, res, done:false});
+    component.set = _componentSet.bind(component);
+    component.mime = _setMime.bind(component);
 
     if (methods.length) {
       callMethod({methods, component, req, res, next})
