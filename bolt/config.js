@@ -117,6 +117,13 @@ function _assignPort(config) {
 }
 
 const _configMergeOverrides = {
+  boltConfigProperties: (objValue, srcValue)=>{
+    let lookup = new Map();
+    return (objValue || [])
+      .concat(srcValue || [])
+      .filter(item=>(!lookup.has(item)) ? lookup.set(item, true).get(item) : false);
+  },
+
   /**
    * Merge eventConsoleLogging arrays together avoid duplicates and merging of
    * the actual objects (default lodash action).
@@ -125,15 +132,13 @@ const _configMergeOverrides = {
    * @param {Array} srcValue    The value to merge in.
    * @returns {Array}           The merged value.
    */
-  eventConsoleLogging: (objValue, srcValue)=>{
-    let lookup = {};
-    return (objValue || []).concat(srcValue || []).reverse().filter(item=>{
-      if (!lookup[item.event]) {
-        lookup[item.event] = true;
-        return true;
-      }
-      return false;
-    }).reverse();
+  eventConsoleLogging: (objValue, srcValue)=> {
+    let lookup = new Map();
+    return (objValue || [])
+      .concat(srcValue || [])
+      .reverse()
+      .filter(item=>(!lookup.has(item.event)) ? lookup.set(item.event, true).get(item.event) : false)
+      .reverse();
   }
 };
 
@@ -164,10 +169,11 @@ function _configMerge(objValue, srcValue, key) {
  */
 function _getConfig(config) {
   let packageConfigs = [];
+  let _packageConfigs = mergePackageConfigs(config.root);
   packageConfigs.push(bolt.pickDeep(packageData, ['version', 'name', 'description']));
   packageConfigs.push({template:'index'});
-  packageConfigs.push(bolt.pick(packageData.config, packageData.config.boltConfigProperties || []));
-  packageConfigs.push(mergePackageConfigs(config.root, _configMerge));
+  packageConfigs.push(bolt.pick(packageData.config, _packageConfigs.boltConfigProperties || []));
+  packageConfigs.push(_packageConfigs);
   return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
@@ -273,7 +279,7 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.
  * @param {string} [configProp='config]       The property to get from.
  * @returns {Object}                          The merged package.
  */
-function mergePackageConfigs(roots, merger=()=>{}, configProp='config') {
+function mergePackageConfigs(roots, merger=_configMerge, configProp='config') {
   let _configProp = bolt.isString(merger)?merger:configProp;
   let _merger = bolt.isFunction(merger)?merger:()=>{};
   return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};

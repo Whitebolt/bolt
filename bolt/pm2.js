@@ -62,8 +62,9 @@ function _startInstance(pm2Config, boltConfig) {
  *                                  application object.
  */
 function pm2LaunchApp(siteConfig) {
+  const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root || []) || {}).boltConfigProperties;
   let pm2Config = bolt.pick(siteConfig, processFileProperties);
-  let boltConfig = bolt.pick(siteConfig, siteConfig.boltConfigProperties);
+  let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
 
   return pm2.connectAsync()
     .then(()=>_removeOldInstances(pm2Config))

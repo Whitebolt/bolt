@@ -20,7 +20,7 @@ process.on('message', message=>{
 });
 
 function startApp(config) {
-  bolt.hook('afterInitialiseApp', (hook, configPath, app) => bolt.loadHooks(app));
+  bolt.hook('afterInitialiseApp', (hook, configPath, app)=>bolt.loadHooks(app));
   return bolt.loadApplication(config);
 }
 

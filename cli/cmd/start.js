@@ -3,7 +3,7 @@
 const launcher = require(boltRootDir + '/server');
 
 function launchApp(siteConfig) {
-  const boltConfigProperties = require(boltRootDir + '/package.json').config.boltConfigProperties;
+  const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root) || {}).boltConfigProperties;
   let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
   launcher(boltConfig);
 }
