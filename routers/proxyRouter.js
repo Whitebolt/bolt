@@ -30,21 +30,47 @@ function parseReturnedData(options, req) {
   return Promise.resolve(template({}, req, {}));
 }
 
+function _ejsIntercept(options) {
+  if (!contentIsType(options.type, options.proxyConfig.proxyParseForEjs)) return Promise.resolve(options);
+
+  return parseReturnedData(options, options.req).then(text=>{
+    options.text = text;
+    return options;
+  });
+}
+
 function _initIntercept(app, proxyConfig) {
   return (rsp, data, req, res, callback)=>{
     let type = getTypesArray(res);
-    if (!contentIsType(type, proxyConfig.proxyParseForEjs)) return callback(null, data);
+    let interceptCount = 0;
 
     let options = {
       text:iconv.decode(data, getEncodingOfType(type)),
       filename:req.path,
       app,
-      options:{}
+      options:{},
+      type,
+      proxyConfig,
+      rsp,
+      res,
+      req
     };
 
     if (proxyConfig.delimiter) options.options.delimiter = proxyConfig.delimiter;
-    return parseReturnedData(options, req)
-      .then(data=>callback(null, data));
+
+    function interceptCaller(interceptCount) {
+      return proxyConfig.intercepts[interceptCount](options).then(options=>{
+        interceptCount++;
+        if (interceptCount < proxyConfig.intercepts.length) return interceptCaller(interceptCount);
+        return options;
+      });
+    }
+
+    if (proxyConfig.intercepts && proxyConfig.intercepts.length) {
+      return interceptCaller(interceptCount).then(options=>callback(null, options.text));
+    }
+
+    return callback(null, data);
   };
 }
 
@@ -57,6 +83,13 @@ function _initSlugger(app, appProxyConfig, config) {
   return (req)=>{
     return _slugger.then(()=>config.forwardPathAsync(req));
   }
+}
+
+function _initInterceptModule(app, appProxyConfig, config) {
+  return bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
+    appProxyConfig.intercepts.push(intercept);
+    return config;
+  });
 }
 
 function _initDecorateRequest(app, appProxyConfig) {
@@ -77,11 +110,15 @@ function _proxyRouter(app, appProxyConfig) {
   let config = {
     reqAsBuffer: true,
     reqBodyEncoding: null,
-    decorateRequest: _initDecorateRequest(app, appProxyConfig)
+    decorateRequest: _initDecorateRequest(app, appProxyConfig),
+    intercept: _initIntercept(app, appProxyConfig)
   };
 
-  if (appProxyConfig.proxyParseForEjs) config.intercept = _initIntercept(app, appProxyConfig);
+  appProxyConfig.intercepts = appProxyConfig.intercepts || [];
+
+  if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
   if (appProxyConfig.slugger) config.forwardPathAsync = _initSlugger(app, appProxyConfig, config);
+  if (appProxyConfig.intercept) _initInterceptModule(app, appProxyConfig, config);
 
   return proxy(appProxyConfig.forwardPath, config);
 }
