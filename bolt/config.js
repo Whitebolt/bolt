@@ -116,13 +116,14 @@ function _assignPort(config) {
   return config;
 }
 
+function _concatArrayUnique(ary1, ary2) {
+  let combined = [].concat(ary1 || []).concat(ary2 || []);
+  let unique = [...new Set(combined)];
+  return unique;
+}
+
 const _configMergeOverrides = {
-  boltConfigProperties: (objValue, srcValue)=>{
-    let lookup = new Map();
-    return (objValue || [])
-      .concat(srcValue || [])
-      .filter(item=>(!lookup.has(item)) ? lookup.set(item, true).get(item) : false);
-  },
+  boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 
   /**
    * Merge eventConsoleLogging arrays together avoid duplicates and merging of
@@ -132,14 +133,7 @@ const _configMergeOverrides = {
    * @param {Array} srcValue    The value to merge in.
    * @returns {Array}           The merged value.
    */
-  eventConsoleLogging: (objValue, srcValue)=> {
-    let lookup = new Map();
-    return (objValue || [])
-      .concat(srcValue || [])
-      .reverse()
-      .filter(item=>(!lookup.has(item.event)) ? lookup.set(item.event, true).get(item.event) : false)
-      .reverse();
-  }
+  eventConsoleLogging: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue)
 };
 
 /**
