@@ -23,12 +23,18 @@ function getMethods(app, req) {
 }
 
 function applyAndSend(config) {
-  return config.req.app.applyTemplate(config.component, config.req).then(data=>{
+  function send(data) {
     config.res
       .status(config.component.status || 200)
       .send(data || config.component.statusMessage)
       .end();
-  });
+  }
+
+  if (config.component.data) {
+    return send(config.component.data);
+  } else {
+    return config.req.app.applyTemplate(config.component, config.req).then(send);
+  }
 }
 
 function handleMethodErrors(error, config) {
