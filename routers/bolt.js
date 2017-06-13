@@ -23,17 +23,25 @@ function getMethods(app, req) {
 }
 
 function applyAndSend(config) {
-  function send(data) {
-    config.res
+  function send(content) {
+    let data;
+    if (config.component.sendFields) {
+      data = bolt.pick(config.component.req.doc, bolt.makeArray(config.component.sendFields));
+      if (content) Object.assign(data, {content});
+    } else {
+      data = content;
+    }
+
+    return config.res
       .status(config.component.status || 200)
       .send(data || config.component.statusMessage)
       .end();
   }
 
-  if (config.component.data) {
-    return send(config.component.data);
-  } else {
+  if (config.component.template) {
     return config.req.app.applyTemplate(config.component, config.req).then(send);
+  } else if (config.component.sendFields) {
+    return(send);
   }
 }
 
