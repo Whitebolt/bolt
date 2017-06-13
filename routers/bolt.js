@@ -3,6 +3,7 @@
 const Promise = require('bluebird');
 const http = require('http');
 const mime = require('mime');
+const typeis = require('type-is');
 
 
 function getMethods(app, req) {
@@ -11,7 +12,7 @@ function getMethods(app, req) {
     if (app.controllerRoutes[route]) {
       app.controllerRoutes[route].forEach(method =>{
         methods.push((component) => {
-          bolt.fire("firingControllerMethod", method.method.methodPath, bolt.getPathFromRequest(req));
+          bolt.fire('firingControllerMethod', method.method.methodPath, bolt.getPathFromRequest(req));
           component.__componentName = component.component || method.method.componentName;
           component.componentPath = method.method.componentPath;
           return method.method(component);
@@ -31,6 +32,8 @@ function applyAndSend(config) {
     } else {
       data = content;
     }
+
+    if (config.req.isWebSocket) data.messageId = config.req.messageId;
 
     return config.res
       .status(config.component.status || 200)
@@ -137,7 +140,12 @@ function createSocketResponse(message, socket, method) {
     headers: {},
     headersSent: false,
     end: ()=>{},
-    statusCode: 200
+    statusCode: 200,
+    set: (headerName, value)=>{
+      res.headers[headerName] = value;
+    },
+    websocket: socket,
+    isSocket: true
   };
 
   addJsonMethod(res, message, socket, method);
@@ -149,14 +157,34 @@ function createSocketResponse(message, socket, method) {
   return res;
 }
 
+function getContentLength(message) {
+  var txt;
+  try {
+    txt = JSON.stringify(message);
+  } catch(error) {
+    try {
+      txt = message.toString();
+    } catch(error) {
+      txt = " ";
+    }
+  }
+  return txt.toString().length;
+}
+
 function createSocketResquest(message, socket, method) {
   let req = Object.assign(socket.request, {
     method,
     orginalUrl: message.path,
-    body: message.body,
+    body: message.body || {},
     path: message.path,
-    websocket: socket
+    websocket: socket,
+    messageId: message.messageId
   });
+
+  req.headers['content-type'] = 'application/json';
+  req.headers['transfer-encoding'] = 'identity';
+  req.headers['content-length'] = getContentLength(message);
+  req.is = test=>typeis(req, test);
 
   return req;
 }
@@ -210,6 +238,7 @@ function boltRouter(app) {
         let component = {req, res, done:false};
         component.set = _componentSet.bind(component);
         component.mime = _setMime.bind(component);
+
         if (methods.length) callMethod({
           methods, component, req, res, next:()=>{}
         });
@@ -221,6 +250,7 @@ function boltRouter(app) {
     let component = bolt.addTemplateFunctions({req, res, done:false});
     component.set = _componentSet.bind(component);
     component.mime = _setMime.bind(component);
+    res.isSocket = false;
 
     if (methods.length) {
       callMethod({methods, component, req, res, next})
