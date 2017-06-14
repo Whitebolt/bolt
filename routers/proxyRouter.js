@@ -67,21 +67,21 @@ function _initIntercept(app, proxyConfig) {
     }
 
     if (proxyConfig.intercepts && proxyConfig.intercepts.length) {
-      return interceptCaller(interceptCount).then(options=>callback(null, options.text));
+      return interceptCaller(interceptCount).then(options=>options.text);
     }
 
-    return callback(null, data);
+    return data;
   };
 }
 
 function _initSlugger(app, appProxyConfig, config) {
   let _slugger = bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
-    config.forwardPathAsync = slugger(appProxyConfig);
-    return config.forwardPathAsync;
+    config.proxyReqPathResolver = slugger(appProxyConfig);
+    return config.proxyReqPathResolver;
   });
 
   return (req)=>{
-    return _slugger.then(()=>config.forwardPathAsync(req));
+    return _slugger.then(()=>config.proxyReqPathResolver(req));
   }
 }
 
@@ -92,32 +92,37 @@ function _initInterceptModule(app, appProxyConfig, config) {
   });
 }
 
-function _initDecorateRequest(app, appProxyConfig) {
-  return (proxyReq, req)=>{
-    if (bolt.isPlainObject(proxyReq.bodyContent)) {
-      proxyReq.bodyContent = bolt.objectToQueryString(
-        proxyReq.bodyContent, {
-          addEquals: appProxyConfig.addEqualsToEmptyQueryValues || false
-        });
+function _initBodyDecorateRequest(app, appProxyConfig) {
+  return (bodyContent, srcReq)=>{
+    if (bolt.isPlainObject(bodyContent)) {
+      return bolt.objectToQueryString(bodyContent, {
+        addEquals: appProxyConfig.addEqualsToEmptyQueryValues || false
+      });
     }
-    if (appProxyConfig.host) proxyReq.headers.host = appProxyConfig.host;
-    return proxyReq;
+    return bodyContent;
   };
 }
 
+function _initOptDecorateRequest(app, appProxyConfig) {
+  return (proxyReqOpts, srcReq)=>{
+    if (appProxyConfig.host) proxyReqOpts.headers.host = appProxyConfig.host;
+    return proxyReqOpts;
+  };
+}
 
 function _proxyRouter(app, appProxyConfig) {
   let config = {
     reqAsBuffer: true,
     reqBodyEncoding: null,
-    decorateRequest: _initDecorateRequest(app, appProxyConfig),
-    intercept: _initIntercept(app, appProxyConfig)
+    proxyReqOptDecorator: _initOptDecorateRequest(app, appProxyConfig),
+    proxyReqBodyDecorator: _initBodyDecorateRequest(app, appProxyConfig),
+    userResDecorator: _initIntercept(app, appProxyConfig)
   };
 
   appProxyConfig.intercepts = appProxyConfig.intercepts || [];
 
   if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
-  if (appProxyConfig.slugger) config.forwardPathAsync = _initSlugger(app, appProxyConfig, config);
+  if (appProxyConfig.slugger) config.proxyReqPathResolver = _initSlugger(app, appProxyConfig, config);
   if (appProxyConfig.intercept) _initInterceptModule(app, appProxyConfig, config);
 
   return proxy(appProxyConfig.forwardPath, config);
