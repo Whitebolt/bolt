@@ -40,12 +40,14 @@ function _ejsIntercept(options) {
 }
 
 function _initIntercept(app, proxyConfig) {
-  return (rsp, data, req, res, callback)=>{
+  return (rsp, data, req, res)=>{
     let type = getTypesArray(res);
     let interceptCount = 0;
 
     let options = {
       text:iconv.decode(data, getEncodingOfType(type)),
+      data,
+      sendText: true,
       filename:req.path,
       app,
       options:{},
@@ -67,7 +69,7 @@ function _initIntercept(app, proxyConfig) {
     }
 
     if (proxyConfig.intercepts && proxyConfig.intercepts.length) {
-      return interceptCaller(interceptCount).then(options=>options.text);
+      return interceptCaller(interceptCount).then(options=>options.sendText?options.text:options.data);
     }
 
     return data;
@@ -119,7 +121,7 @@ function _proxyRouter(app, appProxyConfig) {
     userResDecorator: _initIntercept(app, appProxyConfig)
   };
 
-  appProxyConfig.intercepts = appProxyConfig.intercepts || [];
+  appProxyConfig.intercepts = bolt.makeArray(appProxyConfig.intercepts || []);
 
   if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
   if (appProxyConfig.slugger) config.proxyReqPathResolver = _initSlugger(app, appProxyConfig, config);
