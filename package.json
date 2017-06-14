@@ -73,7 +73,7 @@
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --recursive test",
-    "start": "./server.js start",
+    "start": "node ./server.js start",
     "build-docs": "gulp doc"
   },
   "config": {
