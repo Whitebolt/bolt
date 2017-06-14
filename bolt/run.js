@@ -28,7 +28,7 @@ function _runApp(app) {
         app.io = IO(server);
         app.io.sockets.setMaxListeners(50);
       }, 'ioServerLaunch', app).then(()=>{
-        let serverName = bolt.upperFirst(bolt.camelCase(app.config.name));
+        let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
         return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
           console.log(welcome);
           return welcome;
