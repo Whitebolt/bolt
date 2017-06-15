@@ -19,11 +19,24 @@ process.on('message', message=>{
   if (message.type === 'config') appLauncher(message.data);
 });
 
+/**
+ * Start the app loading process.
+ *
+ * @param {Object} config   All the config information for the app to load.
+ * @returns {Promise}       Promise resolving when app has fully loaded.
+ */
 function startApp(config) {
   bolt.hook('afterInitialiseApp', (hook, configPath, app)=>bolt.loadHooks(app));
   return bolt.loadApplication(config);
 }
 
+
+/**
+ * Direct app launcher (not using pm2).  Will basically launch the app detailed in the supplied config.
+ *
+ * @param {Object} config   All the config information for the app to launch.
+ * @returns {Promise}       Promise resolving when app launched.
+ */
 function appLauncher(config) {
   if (!configDone) {
     configDone = true;
@@ -42,6 +55,12 @@ function appLauncher(config) {
   }
 }
 
+/**
+ * PM2 app launcher.  Will launch given app using pm2.  The app launching actually, happens when config is sent via a
+ * process message and then passed to appLauncher().
+ *
+ * @returns {Promise}   Promise resolving when app launched.
+ */
 function pm2Controller() {
   let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
