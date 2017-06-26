@@ -362,14 +362,13 @@ function setMime(mimeType) {
 }
 
 /**
- * The bolt router. This will fire return a router function that fires components, controllers and methods according
- * to the bolt routing rules.
+ * Add socket.io routing, which mimics the ordinary ajax style routing as closely as possible.
  *
- * @public
+ * @private
  * @param {Object} app    Express application object.
- * @returns {Function}    Express router function.
+ * @returns {Object} app  The express application object passed to this function.
  */
-function boltRouter(app) {
+function _boltRouterSocketIo(app) {
   http.METHODS
     .map(method=>method.toLowerCase())
     .forEach(method=> {
@@ -390,7 +389,17 @@ function boltRouter(app) {
         });
       });
     });
+}
 
+/**
+ * The bolt router. This will fire return a router function that fires components, controllers and methods according
+ * to the bolt routing rules.
+ *
+ * @private
+ * @param {Object} app    Express application object.
+ * @returns {Function}    Express router function.
+ */
+function _boltRouterHttp(app) {
   return (req, res, next)=>{
     let methods = _getMethods(app, req);
     let component = bolt.addTemplateFunctions({req, res, done:false});
@@ -407,6 +416,20 @@ function boltRouter(app) {
       next();
     }
   };
+}
+
+/**
+ * The bolt router. This will fire return a router function that fires components, controllers and methods according
+ * to the bolt routing rules. Routing is mimicked as closely as possible in socket.io so routing can transparent
+ * for either ajax or websocket.
+ *
+ * @public
+ * @param {Object} app    Express application object.
+ * @returns {Function}    Express router function.
+ */
+function boltRouter(app) {
+  _boltRouterSocketIo(app);
+  return _boltRouterHttp(app);
 }
 
 boltRouter.priority = 0;
