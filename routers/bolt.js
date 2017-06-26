@@ -162,7 +162,7 @@ function socketIoResJsonMethod(res, message, socket, method) {
 function socketIoSendMethod(res, message, socket, method) {
   return data=>{
     socket.emit(method, {
-      type: 'application/json',
+      type: res.headers['content-type'],
       status: res.statusCode,
       path: message.path,
       body: data
@@ -252,7 +252,7 @@ function _getContentLength(message) {
  * @returns {Object}          The express like request object.
  */
 function _createSocketResquest(message, socket, method) {
-  let req = Object.assign({}, socket.request, {
+  let req = {
     body: message.body || {},
     headers: Object.assign(socket.request, {
       'content-type': 'application/json',
@@ -260,14 +260,19 @@ function _createSocketResquest(message, socket, method) {
       'content-length': _getContentLength(message)
     }),
     is: test=>typeis(req, test), // @todo Test for memory leak here.
+    isWebSocket: true,
     method,
     messageId: message.messageId,
     orginalUrl: message.path,
     path: message.path,
     websocket: socket
-  });
+  };
 
-  return req;
+  return new Proxy(req, {
+    get: (target, property)=>{
+      return target[property] || socket.request[property];
+    }
+  });
 }
 
 /**
