@@ -36,7 +36,7 @@ function ioUse(app, ...middleware) {
 function ioOn(messageName, handler) {
   bolt.hook('afterIoServerLaunch', (event, app)=>{
     app.io.on('connection', socket=>{
-      socket.on(messageName, data=>handler(socket, data));
+      socket.on(messageName, (data, callback)=>handler(socket, data, callback));
     });
   });
 }

@@ -153,20 +153,29 @@ function socketIoResJsonMethod(res, message, socket, method) {
  * Added method duplicates the express send() method for use in socket.io route.
  *
  * @public
- * @param {Object} res        An express like response object.  This is not an express response object but is like one.
- * @param {Object} message    The socket.io message object.
- * @param {Object} socket     The socket.io socket.
- * @param {string} method     The socket.io message type.
- * @returns {Object}          The express like response object, mutated to include send() method.
+ * @param {Object} res            An express like response object.  This is not an express response object
+ *                                but is like one.
+ * @param {Object} message        The socket.io message object.
+ * @param {Object} socket         The socket.io socket.
+ * @param {string} method         The socket.io message type.
+ * @param {Function} [callback]   Socket.io callback method.
+ * @returns {Object}              The express like response object, mutated to include send() method.
  */
-function socketIoSendMethod(res, message, socket, method) {
+function socketIoSendMethod(res, message, socket, method, callback) {
   return data=>{
-    socket.emit(method, {
+    let response = {
       type: res.headers['content-type'],
       status: res.statusCode,
       path: message.path,
       body: data
-    });
+    };
+
+    if (callback) {
+      callback(response);
+    } else {
+      socket.emit(method, response);
+    }
+
     return res;
   };
 }
@@ -280,12 +289,13 @@ function _createSocketResquest(message, socket, method) {
  * so the same routes can be used in socket.io and ajax.
  *
  * @private
- * @param {Object} message    The socket.io message object.
- * @param {Object} socket     The socket.io socket.
- * @param {string} method     The socket.io message type.
- * @returns {Object}          The express like response object.
+ * @param {Object} message        The socket.io message object.
+ * @param {Object} socket         The socket.io socket.
+ * @param {string} method         The socket.io message type.
+ * @param {Function} [callback]   Socket.io callback method.
+ * @returns {Object}              The express like response object.
  */
-function _createSocketResponse(message, socket, method) {
+function _createSocketResponse(message, socket, method, callback) {
   let res = {};
 
   return Object.assign(res, {
@@ -300,7 +310,7 @@ function _createSocketResponse(message, socket, method) {
       message.path = redirect;
       return res.send({messageId:message.messageId});
     },
-    send: socketIoSendMethod(res, message, socket, method),
+    send: socketIoSendMethod(res, message, socket, method, callback),
     set: (headerName, value)=>{
       res.headers[headerName] = value;
     },
@@ -399,14 +409,15 @@ function _addReqResReferences(router, app) {
  * Create res, req and next as found in Express-style routes. This is for use in socket.io routing.
  *
  * @prvate
- * @param {Object} message    The socket.io message received.
- * @param {Object} socket     The socket.io object.
- * @param {string} method     The method name.
+ * @param {Object} message        The socket.io message received.
+ * @param {Object} socket         The socket.io object.
+ * @param {string} method         The method name.
+ * @param {Function} [callback]   Socket.io callback method.
  */
-function _createSocketIoReqResNextObjects(message, socket, method) {
+function _createSocketIoReqResNextObjects(message, socket, method, callback) {
   return {
     req: _createSocketResquest(message, socket, method),
-    res: _createSocketResponse(message, socket, method),
+    res: _createSocketResponse(message, socket, method, callback),
     next: ()=>{}
   };
 }
@@ -415,16 +426,17 @@ function _createSocketIoReqResNextObjects(message, socket, method) {
  * Function to run when a socket.io message is received matching a http method.
  *
  * @private
- * @param {object} app        Express application.
- * @param {string} method     Http method name.
- * @param {object} socket     The socket.io object.
- * @param {object} message    The socket.io message.
+ * @param {Object} app            Express application.
+ * @param {string} method         Http method name.
+ * @param {Object} socket         The socket.io object.
+ * @param {Object} message        The socket.io message.
+ * @param {Function} [callback]   Socket.io callback method.
  */
-function _socketRouterMethod(app, method, socket, message) {
-  let {res, req, next} = _createSocketIoReqResNextObjects(message, socket, method);
+function _socketRouterMethod(app, method, socket, message, callback) {
+  let {res, req, next} = _createSocketIoReqResNextObjects(message, socket, method, callback);
   let methods = _getMethods(app, req);
   let router = _addReqResReferences(_createRouterObject(req, res, socket), app);
-  let config = {methods, router, req, res, next};
+  let config = {methods, router, req, res, next, callback};
 
   if (methods.length) callMethod(config);
 }
