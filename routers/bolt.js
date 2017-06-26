@@ -17,12 +17,12 @@ function _getMethods(app, req) {
   let methods = [];
   _getPaths(req).forEach(route => {
     if (app.controllerRoutes[route]) {
-      app.controllerRoutes[route].forEach(method =>{
-        methods.push((component) => {
+      app.controllerRoutes[route].forEach(method=>{
+        methods.push(router=>{
           bolt.fire('firingControllerMethod', method.method.methodPath, bolt.getPathFromRequest(req));
-          component.__componentName = component.component || method.method.componentName;
-          component.componentPath = method.method.componentPath;
-          return method.method(component);
+          router.__componentName = router.component || method.method.componentName;
+          router.componentPath = method.method.componentPath;
+          return method.method(router);
         });
       });
     }
@@ -34,31 +34,33 @@ function _getMethods(app, req) {
  * Apply current route, sending data back to client.
  *
  * @private
- * @param {Object} config   Route config object.
+ * @param {Object} router   Router object.
  * @returns {*}
  */
-function applyAndSend(config) {
+function applyAndSend(router) {
+  let {req, res} = router;
+
   function send(content={}) {
     let data;
-    if (config.component.sendFields) {
-      data = bolt.pick(config.component.req.doc, bolt.makeArray(config.component.sendFields));
+    if (router.sendFields) {
+      data = bolt.pick(req.doc, bolt.makeArray(router.sendFields));
       if (content) Object.assign(data, {content});
     } else {
       data = content;
     }
 
-    if (config.redirect) data.redirect = config.redirect;
-    if (config.req.isWebSocket) data.messageId = config.req.messageId;
+    if (router.redirect) data.redirect = router.redirect;
+    if (req.isWebSocket) data.messageId = req.messageId;
 
-    return config.res
-      .status(config.component.status || 200)
-      .send(data || config.component.statusMessage)
+    return res
+      .status(router.status || 200)
+      .send(data || router.statusMessage)
       .end();
   }
 
-  if (config.component.template) {
-    return config.req.app.applyTemplate(config.component, config.req).then(send);
-  } else if (config.component.sendFields) {
+  if (router.template) {
+    return req.app.applyTemplate(router, req).then(send);
+  } else if (router.sendFields) {
     return send;
   }
 }
@@ -103,17 +105,18 @@ function _getPaths(req) {
  */
 function callMethod(config) {
   let method = Promise.method(config.methods.shift());
-  return method(config.component).then(component => {
-    if (config.component.redirect) {
+
+  return method(config.router).then(router=>{
+    if (config.router.redirect) {
       return config.res
-        .redirect(config.component.status || 302, config.component.redirect)
+        .redirect(config.router.status || 302, config.router.redirect)
         .end();
-    } else if (config.component.done && !config.component.res.headersSent) {
-      return applyAndSend(config);
-    } else if (config.methods.length && !config.component.done && !config.component.res.headersSent) {
+    } else if (config.router.done && !config.router.res.headersSent) {
+      return applyAndSend(router);
+    } else if (config.methods.length && !config.router.done && !config.router.res.headersSent) {
       return callMethod(config);
     } else {
-      return config.component;
+      return config.router;
     }
   }, error => handleMethodErrors(error, config));
 }
@@ -380,12 +383,12 @@ function _boltRouterSocketIo(app) {
         req.app = app;
 
         let methods = _getMethods(app, req);
-        let component = {req, res, done:false};
-        component.set = _componentSet.bind(component);
-        component.mime = setMime.bind(component);
+        let router = {req, res, done:false};
+        router.set = _componentSet.bind(router);
+        router.mime = setMime.bind(router);
 
         if (methods.length) callMethod({
-          methods, component, req, res, next:()=>{}
+          methods, router, req, res, next:()=>{}
         });
       });
     });
@@ -402,15 +405,15 @@ function _boltRouterSocketIo(app) {
 function _boltRouterHttp(app) {
   return (req, res, next)=>{
     let methods = _getMethods(app, req);
-    let component = bolt.addTemplateFunctions({req, res, done:false});
-    component.set = _componentSet.bind(component);
-    component.mime = setMime.bind(component);
+    let router = bolt.addTemplateFunctions({req, res, done:false});
+    router.set = _componentSet.bind(router);
+    router.mime = setMime.bind(router);
     res.isWebSocket = false;
 
     if (methods.length) {
-      callMethod({methods, component, req, res, next})
-        .then(component=>{
-          if (component && component.res && !component.res.headersSent) next();
+      callMethod({methods, router, req, res, next})
+        .then(router=>{
+          if (router && router.res && !router.res.headersSent) next();
         });
     } else {
       next();
