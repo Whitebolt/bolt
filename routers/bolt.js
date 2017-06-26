@@ -364,6 +364,59 @@ function setMime(mimeType) {
   this.res.set('Content-Type', mime.lookup(mimeType));
 }
 
+
+/**
+ * Create the router object, which is passed around route methods.
+ *
+ * @private
+ * @param {Object} req        Express request object.
+ * @param {Object} res        Express response object.
+ * @param {Object} [socket]   Socket.io object if this is a socket.io route.
+ * @returns {Object}          Router object
+ */
+function _createRouterObject(req, res, socket) {
+  let router = bolt.addTemplateFunctions({req, res, done:false});
+  router.set = _componentSet.bind(router);
+  router.mime = setMime.bind(router);
+
+  res.isWebSocket = !!socket;
+
+  return router;
+}
+
+/**
+ * Add references to each other in the res and req object as is normal for express style resquest and response objects.
+ * This basically mimics express objects in socket.io routes.
+ *
+ * @private
+ * @param {Object} router     Router object containing express req, res and next object/function.
+ * @param {Object} app        Express application object.
+ * @returns {Object}          Router object comprising of {req, res, next}.
+ */
+function _addReqResReferences(router, app) {
+  router.res.req = router.res;
+  router.req.res = router.res;
+  router.req.app = app;
+
+  return router;
+}
+
+/**
+ * Create res, req and next as found in Express-style routes. This is for use in socket.io routing.
+ *
+ * @prvate
+ * @param {Object} message    The socket.io message received.
+ * @param {Object} socket     The socket.io object.
+ * @param {string} method     The method name.
+ */
+function _createSocketIoReqResNextObjects(message, socket, method) {
+  return {
+    req: Object.assign(socket.request, _createSocketResquest(message, socket, method)),
+    res: _createSocketResponse(message, socket, method),
+    next: ()=>{}
+  };
+}
+
 /**
  * Add socket.io routing, which mimics the ordinary ajax style routing as closely as possible.
  *
@@ -373,23 +426,14 @@ function setMime(mimeType) {
  */
 function _boltRouterSocketIo(app) {
   http.METHODS
-    .map(method=>method.toLowerCase())
     .forEach(method=> {
-      bolt.ioOn(method, (socket, message)=> {
-        let res = _createSocketResponse(message, socket, method);
-        let req = Object.assign(socket.request, _createSocketResquest(message, socket, method));
-        res.req = res;
-        req.res = res;
-        req.app = app;
-
+      bolt.ioOn(method.toLowerCase(), (socket, message)=> {
+        let {res, req, next} = _createSocketIoReqResNextObjects(message, socket, method);
         let methods = _getMethods(app, req);
-        let router = {req, res, done:false};
-        router.set = _componentSet.bind(router);
-        router.mime = setMime.bind(router);
+        let router = _addReqResReferences(_createRouterObject(req, res, socket), app);
+        let config = {methods, router, req, res, next};
 
-        if (methods.length) callMethod({
-          methods, router, req, res, next:()=>{}
-        });
+        if (methods.length) callMethod(config);
       });
     });
 }
@@ -405,16 +449,13 @@ function _boltRouterSocketIo(app) {
 function _boltRouterHttp(app) {
   return (req, res, next)=>{
     let methods = _getMethods(app, req);
-    let router = bolt.addTemplateFunctions({req, res, done:false});
-    router.set = _componentSet.bind(router);
-    router.mime = setMime.bind(router);
-    res.isWebSocket = false;
+    let router = _createRouterObject(req, res);
+    let config = {methods, router, req, res, next};
 
     if (methods.length) {
-      callMethod({methods, router, req, res, next})
-        .then(router=>{
-          if (router && router.res && !router.res.headersSent) next();
-        });
+      callMethod(config).then(router=>{
+        if (router && router.res && !router.res.headersSent) next();
+      });
     } else {
       next();
     }
