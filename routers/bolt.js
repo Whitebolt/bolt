@@ -5,6 +5,10 @@ const http = require('http');
 const mime = require('mime');
 const typeis = require('type-is');
 
+const _componentAllowedToSet = [
+  'done', 'status', 'stausMessage', 'header', 'mime'
+];
+
 /**
  * Get an array of methods (in order) to fire for a give request path.
  *
@@ -132,8 +136,8 @@ function callMethod(config) {
  * @param {string} method     The socket.io message type.
  * @returns {Object}          The express like response object, mutated to include json() method.
  */
-function addJsonMethod(res, message, socket, method) {
-  res.json = data=>{
+function socketIoResJsonMethod(res, message, socket, method) {
+  return data=>{
     socket.emit(method, {
       type: 'application/json',
       status: res.statusCode,
@@ -142,7 +146,6 @@ function addJsonMethod(res, message, socket, method) {
     });
     return res;
   };
-  return res;
 }
 
 /**
@@ -156,9 +159,8 @@ function addJsonMethod(res, message, socket, method) {
  * @param {string} method     The socket.io message type.
  * @returns {Object}          The express like response object, mutated to include send() method.
  */
-function addSendMethod(res, message, socket, method) {
-  res.send = data=>{
-    console.log("SENDING", method, message);
+function socketIoSendMethod(res, message, socket, method) {
+  return data=>{
     socket.emit(method, {
       type: 'application/json',
       status: res.statusCode,
@@ -167,7 +169,6 @@ function addSendMethod(res, message, socket, method) {
     });
     return res;
   };
-  return res;
 }
 
 /**
@@ -181,13 +182,11 @@ function addSendMethod(res, message, socket, method) {
  * @param {string} method     The socket.io message type.
  * @returns {Object}          The express like response object, mutated to include type() method.
  */
-function addTypeMethod(res) {
-  res.type = type=>{
+function socetIoTypeMethod(res) {
+  return type=>{
     res.headers['content-type'] = mime.lookup(type);
     return res
   };
-
-  return res;
 }
 
 /**
@@ -198,12 +197,10 @@ function addTypeMethod(res) {
  * @param {Object} res        An express like response object.  This is not an express response object but is like one.
  * @returns {Object}          The express like response object, mutated to include getHeader() method.
  */
-function addGetHeader(res) {
-  res.getHeader = headerName=>{
+function socketIoGetHeaderMethod(res) {
+  return headerName=>{
     res.headers[headerName];
   };
-
-  return res;
 }
 
 /**
@@ -214,52 +211,11 @@ function addGetHeader(res) {
  * @param {Object} res        An express like response object.  This is not an express response object but is like one.
  * @returns {Object}          The express like response object, mutated to include status() method.
  */
-function addStatusMethod(res) {
-  res.status = statusCode=>{
+function socketIoStatusMethod(res) {
+  return statusCode=>{
     res.statusCode=statusCode;
     return res;
   };
-
-  return res;
-}
-
-/**
- * Create an express like response object to use in socket.io routes.  This basically fakes the express response object
- * so the same routes can be used in socket.io and ajax.
- *
- * @private
- * @param {Object} message    The socket.io message object.
- * @param {Object} socket     The socket.io socket.
- * @param {string} method     The socket.io message type.
- * @returns {Object}          The express like response object.
- */
-function _createSocketResponse(message, socket, method) {
-  let res = {
-    headers: {},
-    headersSent: false,
-    end: ()=>{},
-    statusCode: 200,
-    set: (headerName, value)=>{
-      res.headers[headerName] = value;
-    },
-    websocket: socket,
-    isWebSocket: true,
-    redirect:(status, redirect)=>{
-      res.statusCode = status;
-      message.path = redirect;
-      return res.send({messageId:message.messageId});
-    }
-  };
-
-  addJsonMethod(res, message, socket, method);
-  addSendMethod(res, message, socket, method);
-  addTypeMethod(res);
-  addGetHeader(res);
-  addStatusMethod(res);
-
-
-
-  return res;
 }
 
 /**
@@ -296,26 +252,59 @@ function _getContentLength(message) {
  * @returns {Object}          The express like request object.
  */
 function _createSocketResquest(message, socket, method) {
-  let req = Object.assign(socket.request, {
-    method,
-    orginalUrl: message.path,
+  let req = Object.assign({}, socket.request, {
     body: message.body || {},
+    headers: Object.assign(socket.request, {
+      'content-type': 'application/json',
+      'transfer-encoding': 'identity',
+      'content-length': _getContentLength(message)
+    }),
+    is: test=>typeis(req, test), // @todo Test for memory leak here.
+    method,
+    messageId: message.messageId,
+    orginalUrl: message.path,
     path: message.path,
-    websocket: socket,
-    messageId: message.messageId
+    websocket: socket
   });
-
-  req.headers['content-type'] = 'application/json';
-  req.headers['transfer-encoding'] = 'identity';
-  req.headers['content-length'] = _getContentLength(message);
-  req.is = test=>typeis(req, test);
 
   return req;
 }
 
-const _componentAllowedToSet = [
-  'done', 'status', 'stausMessage', 'header', 'mime'
-];
+/**
+ * Create an express like response object to use in socket.io routes.  This basically fakes the express response object
+ * so the same routes can be used in socket.io and ajax.
+ *
+ * @private
+ * @param {Object} message    The socket.io message object.
+ * @param {Object} socket     The socket.io socket.
+ * @param {string} method     The socket.io message type.
+ * @returns {Object}          The express like response object.
+ */
+function _createSocketResponse(message, socket, method) {
+  let res = {};
+
+  return Object.assign(res, {
+    end: ()=>{},
+    getHeader: socketIoGetHeaderMethod(res),
+    headers: {},
+    headersSent: false,
+    isWebSocket: true,
+    json: socketIoResJsonMethod(res, message, socket, method),
+    redirect:(status, redirect)=>{
+      res.statusCode = status;
+      message.path = redirect;
+      return res.send({messageId:message.messageId});
+    },
+    send: socketIoSendMethod(res, message, socket, method),
+    set: (headerName, value)=>{
+      res.headers[headerName] = value;
+    },
+    status: socketIoStatusMethod(res),
+    statusCode: 200,
+    type: socetIoTypeMethod(res),
+    websocket: socket
+  });
+}
 
 /**
  * Set method assigned to component object passed to controller methods. Method can be used to set headers in the
@@ -411,11 +400,30 @@ function _addReqResReferences(router, app) {
  */
 function _createSocketIoReqResNextObjects(message, socket, method) {
   return {
-    req: Object.assign(socket.request, _createSocketResquest(message, socket, method)),
+    req: _createSocketResquest(message, socket, method),
     res: _createSocketResponse(message, socket, method),
     next: ()=>{}
   };
 }
+
+/**
+ * Function to run when a socket.io message is received matching a http method.
+ *
+ * @private
+ * @param {object} app        Express application.
+ * @param {string} method     Http method name.
+ * @param {object} socket     The socket.io object.
+ * @param {object} message    The socket.io message.
+ */
+function _socketRouterMethod(app, method, socket, message) {
+  let {res, req, next} = _createSocketIoReqResNextObjects(message, socket, method);
+  let methods = _getMethods(app, req);
+  let router = _addReqResReferences(_createRouterObject(req, res, socket), app);
+  let config = {methods, router, req, res, next};
+
+  if (methods.length) callMethod(config);
+}
+
 
 /**
  * Add socket.io routing, which mimics the ordinary ajax style routing as closely as possible.
@@ -424,18 +432,8 @@ function _createSocketIoReqResNextObjects(message, socket, method) {
  * @param {Object} app    Express application object.
  * @returns {Object} app  The express application object passed to this function.
  */
-function _boltRouterSocketIo(app) {
-  http.METHODS
-    .forEach(method=> {
-      bolt.ioOn(method.toLowerCase(), (socket, message)=> {
-        let {res, req, next} = _createSocketIoReqResNextObjects(message, socket, method);
-        let methods = _getMethods(app, req);
-        let router = _addReqResReferences(_createRouterObject(req, res, socket), app);
-        let config = {methods, router, req, res, next};
-
-        if (methods.length) callMethod(config);
-      });
-    });
+function _addSocketIoMethodRouters(app) {
+  http.METHODS.forEach(method=>bolt.ioOn(method.toLowerCase(), _socketRouterMethod.bind({}, app, method)));
 }
 
 /**
@@ -446,7 +444,7 @@ function _boltRouterSocketIo(app) {
  * @param {Object} app    Express application object.
  * @returns {Function}    Express router function.
  */
-function _boltRouterHttp(app) {
+function _httpRouter(app) {
   return (req, res, next)=>{
     let methods = _getMethods(app, req);
     let router = _createRouterObject(req, res);
@@ -472,8 +470,8 @@ function _boltRouterHttp(app) {
  * @returns {Function}    Express router function.
  */
 function boltRouter(app) {
-  _boltRouterSocketIo(app);
-  return _boltRouterHttp(app);
+  _addSocketIoMethodRouters(app);
+  return _httpRouter(app);
 }
 
 boltRouter.priority = 0;
