@@ -38,7 +38,7 @@ function _getMethods(app, req) {
  * @returns {*}
  */
 function applyAndSend(config) {
-  function send(content) {
+  function send(content={}) {
     let data;
     if (config.component.sendFields) {
       data = bolt.pick(config.component.req.doc, bolt.makeArray(config.component.sendFields));
@@ -47,6 +47,7 @@ function applyAndSend(config) {
       data = content;
     }
 
+    if (config.redirect) data.redirect = config.redirect;
     if (config.req.isWebSocket) data.messageId = config.req.messageId;
 
     return config.res
@@ -58,7 +59,7 @@ function applyAndSend(config) {
   if (config.component.template) {
     return config.req.app.applyTemplate(config.component, config.req).then(send);
   } else if (config.component.sendFields) {
-    return(send);
+    return send;
   }
 }
 
@@ -154,6 +155,7 @@ function addJsonMethod(res, message, socket, method) {
  */
 function addSendMethod(res, message, socket, method) {
   res.send = data=>{
+    console.log("SENDING", method, message);
     socket.emit(method, {
       type: 'application/json',
       status: res.statusCode,
@@ -238,7 +240,12 @@ function _createSocketResponse(message, socket, method) {
       res.headers[headerName] = value;
     },
     websocket: socket,
-    isSocket: true
+    isWebSocket: true,
+    redirect:(status, redirect)=>{
+      res.statusCode = status;
+      message.path = redirect;
+      return res.send({messageId:message.messageId});
+    }
   };
 
   addJsonMethod(res, message, socket, method);
@@ -246,6 +253,8 @@ function _createSocketResponse(message, socket, method) {
   addTypeMethod(res);
   addGetHeader(res);
   addStatusMethod(res);
+
+
 
   return res;
 }
@@ -387,7 +396,7 @@ function boltRouter(app) {
     let component = bolt.addTemplateFunctions({req, res, done:false});
     component.set = _componentSet.bind(component);
     component.mime = setMime.bind(component);
-    res.isSocket = false;
+    res.isWebSocket = false;
 
     if (methods.length) {
       callMethod({methods, component, req, res, next})
