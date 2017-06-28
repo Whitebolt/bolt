@@ -1,5 +1,8 @@
 'use strict';
 
+const __lookup = new WeakMap();
+const __undefined = Symbol("undefined");
+
 /**
  * @module bolt/bolt
  */
@@ -68,6 +71,23 @@ function pickDeep(obj, properties) {
   return _obj;
 }
 
+function lookup(ref, key=__undefined, value=__undefined) {
+  let _lookup = __lookup.get(ref);
+  if (!_lookup) {
+    __lookup.set(ref, new Map());
+    _lookup = __lookup.get(ref);
+  }
+
+  if (key === __undefined) return _lookup;
+  if (bolt.isString(key)) {
+    if (value !== __undefined) _lookup.set(key, value);
+    return _lookup.get(key);
+  } else {
+    Object.keys(key).forEach(_key=>_lookup.set(_key, key[_key]));
+    return _lookup;
+  }
+}
+
 module.exports = {
-  addDefaultObjects, parseTemplatedJson, pickDeep
+  addDefaultObjects, parseTemplatedJson, pickDeep, lookup
 };

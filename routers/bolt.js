@@ -19,15 +19,28 @@ const _componentAllowedToSet = [
  */
 function _getMethods(app, req) {
   let methods = [];
-  _getPaths(req).forEach(route => {
+  let cascading = new Map();
+
+  _getPaths(req).forEach(route=>{
     if (app.controllerRoutes[route]) {
       app.controllerRoutes[route].forEach(method=>{
-        methods.push(router=>{
-          bolt.fire('firingControllerMethod', method.method.methodPath, bolt.getPathFromRequest(req));
-          router.__componentName = router.component || method.method.componentName;
-          router.componentPath = method.method.componentPath;
-          return method.method(router);
-        });
+        let methodPath = bolt.lookup(method.method, 'methodPath');
+        let add = true;
+
+        if (!cascading.has(methodPath)) {
+          cascading.set(methodPath, !!method.method.cascade);
+        } else {
+          add = cascading.get(methodPath);
+        }
+
+        if (add) {
+          methods.push(router=>{
+            bolt.fire('firingControllerMethod', bolt.lookup(method.method, 'methodPath'), bolt.getPathFromRequest(req));
+            router.__componentName = router.component || bolt.lookup(method.method, 'componentName');
+            router.componentPath = bolt.lookup(method.method, 'componentPath');
+            return method.method(router);
+          });
+        }
       });
     }
   });
@@ -397,9 +410,9 @@ function _createRouterObject(req, res, socket) {
  * This basically mimics express objects in socket.io routes.
  *
  * @private
- * @param {Object} router     Router object containing express req, res and next object/function.
- * @param {Object} app        Express application object.
- * @returns {Object}          Router object comprising of {req, res, next}.
+ * @param {Object} router               Router object containing express req, res and next object/function.
+ * @param {bolt:application} app        Express application object.
+ * @returns {Object}                    Router object comprising of {req, res, next}.
  */
 function _addReqResReferences(router, app) {
   router.res.req = router.res;
@@ -430,11 +443,11 @@ function _createSocketIoReqResNextObjects(message, socket, method, callback) {
  * Function to run when a socket.io message is received matching a http method.
  *
  * @private
- * @param {Object} app            Express application.
- * @param {string} method         Http method name.
- * @param {Object} socket         The socket.io object.
- * @param {Object} message        The socket.io message.
- * @param {Function} [callback]   Socket.io callback method.
+ * @param {bolt:application} app            Express application.
+ * @param {string} method                   Http method name.
+ * @param {Object} socket                   The socket.io object.
+ * @param {Object} message                  The socket.io message.
+ * @param {Function} [callback]             Socket.io callback method.
  */
 function _socketRouterMethod(app, method, socket, message, callback) {
   let {res, req, next} = _createSocketIoReqResNextObjects(message, socket, method, callback);
@@ -450,8 +463,8 @@ function _socketRouterMethod(app, method, socket, message, callback) {
  * Add socket.io routing, which mimics the ordinary ajax style routing as closely as possible.
  *
  * @private
- * @param {Object} app    Express application object.
- * @returns {Object} app  The express application object passed to this function.
+ * @param {bolt:application} app    Express application object.
+ * @returns {bolt:application} app  The express application object passed to this function.
  */
 function _addSocketIoMethodRouters(app) {
   http.METHODS.forEach(method=>bolt.ioOn(method.toLowerCase(), _socketRouterMethod.bind({}, app, method)));
@@ -462,8 +475,8 @@ function _addSocketIoMethodRouters(app) {
  * to the bolt routing rules.
  *
  * @private
- * @param {Object} app    Express application object.
- * @returns {Function}    Express router function.
+ * @param {bolt:application} app    Express application object.
+ * @returns {Function}              Express router function.
  */
 function _httpRouter(app) {
   return (req, res, next)=>{
@@ -487,8 +500,8 @@ function _httpRouter(app) {
  * for either ajax or websocket.
  *
  * @public
- * @param {Object} app    Express application object.
- * @returns {Function}    Express router function.
+ * @param {bolt:application} app    Express application object.
+ * @returns {Function}              Express router function.
  */
 function boltRouter(app) {
   _addSocketIoMethodRouters(app);

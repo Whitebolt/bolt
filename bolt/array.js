@@ -51,6 +51,8 @@ function makeArray(ary, convertFunction=_makeArrayConvertFunction) {
  *                                      is and this is the property to sort on.
  * @param {string} [a.priority]         If only one argument supplied and this property is present return sorter with
  *                                      this as the property to sort on.
+ * @param {string} [a.priority2]        If only one argument supplied and this property is present return sorter with
+ *                                      this as the secondary property to sort on.
  * @param {string} [b.direction='ASC']  If only one argument supplied and this property is present return a sorter, which
  *                                      sorts according to direction here (either: ASC or DESC).
  * @param {Object} [b]                  Second sort item.
@@ -59,16 +61,19 @@ function makeArray(ary, convertFunction=_makeArrayConvertFunction) {
  */
 function prioritySorter(a, b) {
   let sortProperty = 'priority';
+  let sortProperty2 = 'priority2';
   let direction = 'ASC';
 
   let sorter = (a, b)=>{
     let aP = (a !== undefined ? (a.hasOwnProperty(sortProperty) ? a[sortProperty] : 0) : 0);
     let bP = (a !== undefined ? (b.hasOwnProperty(sortProperty) ? b[sortProperty] : 0) : 0);
+    let aP2 = (a !== undefined ? (a.hasOwnProperty(sortProperty2) ? a[sortProperty2] : 0) : 0);
+    let bP2 = (a !== undefined ? (b.hasOwnProperty(sortProperty2) ? b[sortProperty2] : 0) : 0);
 
     if (direction === 'ASC') {
-      return ((aP > bP)?1:((aP < bP)?-1:0));
+      return ((aP > bP)?1:((aP < bP)?-1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));
     } else if (direction === 'DESC') {
-      return ((aP > bP)?-1:((aP < bP)?1:0));
+      return ((aP > bP)?-1:((aP < bP)?1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));
     } else {
       throw new RangeError('Sort direction for prioritySorter() should be either ASC or DESC');
     }
@@ -83,6 +88,7 @@ function prioritySorter(a, b) {
     sortProperty = a;
   } else if (bolt.isObject(a)) {
     if (a.hasOwnProperty('sortProperty')) sortProperty = a.sortProperty.toString();
+    if (a.hasOwnProperty('sortProperty2')) sortProperty2 = a.sortProperty2.toString();
     if (a.hasOwnProperty('direction')) direction = a.direction.toString().toUpperCase().trim();
     if ((direction !== 'ASC') && (direction !== 'DESC')) {
       throw new RangeError('Sort direction for prioritySorter() should be either ASC or DESC');

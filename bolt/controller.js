@@ -38,9 +38,10 @@ function _assignControllerRoutes(component, controller, controllerName) {
   let app = bolt.getApp(component);
   bolt.addDefaultObjects(app, "controllerRoutes");
 
-  Object.keys(controller).map(name => {
+  Object.keys(controller).forEach(name=>{
     let methodPath = component.path + '/' + controllerName + '/' + name;
-    Object.assign(controller[name], {
+
+    bolt.lookup(controller[name],  {
       componentName: component.name,
       componentPath: component.path,
       methodPath: methodPath
@@ -49,11 +50,12 @@ function _assignControllerRoutes(component, controller, controllerName) {
     _getMethodPaths(methodPath).forEach((methodPath, priority) => {
       let _methodPath = methodPath.length?methodPath:'/';
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
-      bolt.remove(
-        app.controllerRoutes[_methodPath],
-        item=>(item.method.methodPath === controller[name].methodPath)
-      );
-      app.controllerRoutes[_methodPath].push({method: controller[name], name, priority});
+
+      app.controllerRoutes[_methodPath].forEach(route=>{
+        if (bolt.lookup(controller[name], 'methodPath') === bolt.lookup(route.method, 'methodPath')) route.priority2++;
+      });
+
+      app.controllerRoutes[_methodPath].push({method: controller[name], name, priority, priority2:0});
     });
   });
 
@@ -69,7 +71,7 @@ function _assignControllerRoutes(component, controller, controllerName) {
  */
 function  _addControllerRoutesToApplication() {
   bolt.once('beforeRunApp', (options, app)=>{
-    Object.keys(app.controllerRoutes).forEach(route => {
+    Object.keys(app.controllerRoutes).forEach(route=>{
       app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
     });
   }, {id:'addControllerRoutesToApplication'});
@@ -87,8 +89,8 @@ function  _addControllerRoutesToApplication() {
  */
 function _addControllerRoutes(component, controllers) {
   controllers.forEach(
-    controller => Object.keys(controller).forEach(
-      controllerName => _assignControllerRoutes(component, controller[controllerName], controllerName)
+    controller=>Object.keys(controller).forEach(
+      controllerName=>_assignControllerRoutes(component, controller[controllerName], controllerName)
     )
   );
 
