@@ -54,7 +54,7 @@ function applyAndSend(router) {
     }
 
     if (router.redirect) data.redirect = router.redirect;
-    if (req.isWebSocket) data.messageId = req.messageId;
+    if (req.isWebSocket && !bolt.isString(data)) data.messageId = req.messageId;
 
     return res
       .status(router.status || 200)
@@ -65,7 +65,7 @@ function applyAndSend(router) {
   if (router.template) {
     return req.app.applyTemplate(router, req).then(send);
   } else if (router.sendFields) {
-    return send;
+    return send();
   }
 }
 
@@ -171,8 +171,10 @@ function socketIoSendMethod(res, message, socket, method, callback) {
     };
 
     if (callback) {
+      console.log("CALLBACK", message);
       callback(response);
     } else {
+      console.log("Emit", message);
       socket.emit(method, response);
     }
 
@@ -263,7 +265,7 @@ function _getContentLength(message) {
 function _createSocketResquest(message, socket, method) {
   let req = {
     body: message.body || {},
-    headers: Object.assign(socket.request, {
+    headers: Object.assign({}, socket.request.headers, {
       'content-type': 'application/json',
       'transfer-encoding': 'identity',
       'content-length': _getContentLength(message)
@@ -276,6 +278,8 @@ function _createSocketResquest(message, socket, method) {
     path: message.path,
     websocket: socket
   };
+
+  return Object.assign(socket.request, req);
 
   return new Proxy(req, {
     get: (target, property)=>{
@@ -306,9 +310,9 @@ function _createSocketResponse(message, socket, method, callback) {
     isWebSocket: true,
     json: socketIoResJsonMethod(res, message, socket, method),
     redirect:(status, redirect)=>{
-      res.statusCode = status;
+      if (res.statusCode !== 401) res.statusCode = status;
       message.path = redirect;
-      return res.send({messageId:message.messageId});
+      return res.send({messageId: message.messageId});
     },
     send: socketIoSendMethod(res, message, socket, method, callback),
     set: (headerName, value)=>{

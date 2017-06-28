@@ -109,16 +109,11 @@ function _getEventChannel(root, level, max) {
  * Create a new express application with the given config object.
  *
  * @private
- * @param {Object} config   A config object.
- * @returns {Object}        The express application instance.
+ * @param {Object} config           A config object.
+ * @returns {bolt:application}      The express application instance.
  */
 function _createApp(config) {
-  const app = express();
-  app.config = config;
-  app.componentType = 'app';
-  bolt.addDefaultObjects(app, ['middleware', 'templates', 'routers', 'controllerRoutes', 'shortcodes']);
-
-  return app;
+  return new boltApplication(config);
 }
 
 /**
@@ -215,6 +210,34 @@ function loadApplication(configPath) {
   return bolt.fire(()=>_loadApplication(configPath), 'initialiseApp', configPath);
 }
 
+/**
+ *  @external express:application
+ *  @see {https://github.com/expressjs/express/blob/master/lib/application.js}
+ *
+ *  @class bolt:application
+ *  @extends external:express:application
+ *  @property {Object} config                 Configuration object for bolt server.
+ *  @property {Object} routers                Routers
+ *  @property {Object} controllerRoutes       Controller routes
+ *  @property {Object} shortcodes             Shortcodes
+ *  @property {Object} templates              Templates
+ *  @property {string} componentType          The componernt type, is constant "app".
+ */
+class boltApplication extends express {
+  constructor(config) {
+    super();
+
+    Object.defineProperties(this, {
+      config: {enumerable: true, configurable: false, value: config, writable: false},
+      routers: {enumerable: true, configurable: false, value: {}, writable: false},
+      controllerRoutes: {enumerable: true, configurable: false, value: {}, writable: true},
+      shortcodes: {enumerable: true, configurable: false, value: {}, writable: false},
+      templates: {enumerable: true, configurable: false, value: {}, writable: false},
+      componentType: {enumerable: true, configurable: false, value: 'app', writable: false}
+    });
+  }
+}
+
 module.exports = {
-  loadApplication, getApp, importIntoObject
+  loadApplication, getApp, importIntoObject, boltApplication
 };
