@@ -8,9 +8,8 @@
  * Load hooks in given directory into the application.
  *
  * @private
- * @param {string} roots    Path to search for hook directory in and then load
- *                          hooks from.
- * @returns {Array}         Array of unregister functions for these hooks.
+ * @param {string|array.<string>} roots    Path to search for hook directory in and then load hooks from.
+ * @returns {Array.<Function>}             Array of unregister functions for these hooks.
  */
 function _loadHooks(roots) {
   return bolt.directoriesInDirectory(roots, ['hooks'])
@@ -35,11 +34,10 @@ function _loadHooks(roots) {
  * of functions to fire on hook.
  *
  * @public
- * @param {Object} app                      Express application.
- * @param {Array} [roots=app.config.roots]  Root folders to search in.
- * @returns {Promise}                       Promise resolving to supplied
- *                                          express app after loading of hooks
- *                                          and firing of related events.
+ * @param {BoltApplication} app                       Express application.
+ * @param {Array.<string>} [roots=app.config.roots]   Root folders to search in.
+ * @returns {Promise.<BoltApplication>}               Promise resolving to supplied express app after loading of hooks
+ *                                                    and firing of related events.
  */
 function loadHooks(app, roots=app.config.root) {
   let fireEvent = 'loadHooks' + (!app.parent?',loadRootHooks':'');

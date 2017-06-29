@@ -9,7 +9,7 @@
  *
  * @private
  * @param {string} methodPath   The main direct route.
- * @returns {Array}             Array of possible paths.
+ * @returns {Array.<string>}    Array of possible paths.
  */
 function _getMethodPaths(methodPath) {
   let methodPaths = [methodPath];
@@ -29,10 +29,10 @@ function _getMethodPaths(methodPath) {
  * with correct priority to the application controller routes.
  *
  * @private
- * @param {Object} component        The component object.
- * @param {Object} controller       The controller object we are working on.
- * @param {string} controllerName   The name of the controller.
- * @returns {Object}                All controller routes for application.
+ * @param {BoltComponent} component     The component object.
+ * @param {Object} controller           The controller object we are working on.
+ * @param {string} controllerName       The name of the controller.
+ * @returns {Object}                    All controller routes for application.
  */
 function _assignControllerRoutes(component, controller, controllerName) {
   let app = bolt.getApp(component);
@@ -83,9 +83,9 @@ function  _addControllerRoutesToApplication() {
  * Cycle through each controller and controller method generating associated routes.
  *
  * @private
- * @param {Object} component    Parent component for given controllers.
- * @param {Array} controllers   Array of controllers.
- * @returns {Array}             The controller array as given in parameters.
+ * @param {BoltComponent} component    Parent component for given controllers.
+ * @param {Array} controllers         Array of controllers.
+ * @returns {Array}                   The controller array as given in parameters.
  */
 function _addControllerRoutes(component, controllers) {
   controllers.forEach(
@@ -103,10 +103,10 @@ function _addControllerRoutes(component, controllers) {
  * the application.
  *
  * @private
- * @param {Object} component    Component object to import into.
- * @param {string|Array} roots  Root folder(s) to search for controllers.
- * @param {Object} importObject Object to import into.
- * @returns {Promise}           Promise resolving to the supplied component.
+ * @param {BoltComponent} component       Component object to import into.
+ * @param {string|Array.<string>} roots   Root folder(s) to search for controllers.
+ * @param {Object} importObject           Object to import into.
+ * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
 function _loadControllers(component, roots, importObj) {
   return bolt
@@ -120,13 +120,10 @@ function _loadControllers(component, roots, importObj) {
  * Search given folders for controllers and import into given component object,
  * running an necessary setup.
  *
- * @param {Object} component                            Component object to
- *                                                      import into.
- * @param {string|Array} roots                          Root folder(s) to
- *                                                      search for controllers.
+ * @param {BoltComponent} component                     Component object to import into.
+ * @param {string|Array.<string>} roots                 Root folder(s) to search for controllers.
  * @param {Object} [controllers=component.controllers]  Object to import into.
- * @returns {Promise}                                   Promise resolving to
- *                                                      the supplied component.
+ * @returns {Promise.<BoltComponent>}                   Promise resolving to the supplied component.
  */
 function loadControllers(component, roots, controllers=component.controllers) {
   return bolt.fire(

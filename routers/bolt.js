@@ -184,10 +184,8 @@ function socketIoSendMethod(res, message, socket, method, callback) {
     };
 
     if (callback) {
-      console.log("CALLBACK", message);
       callback(response);
     } else {
-      console.log("Emit", message);
       socket.emit(method, response);
     }
 

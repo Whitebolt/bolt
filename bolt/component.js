@@ -8,15 +8,14 @@ const path = require('path');
 const Promise = require('bluebird');
 
 const xSlash = /\//g;
-const componentDefaultObjects = ['controllers', 'views', 'components'];
 
 /**
  * Flow up a component tree constructing the path of the supplied component and
  * returning it.
  *
  * @private
- * @param {Object} component    The component to get the path of.
- * @returns {string}            The component path.
+ * @param {BoltComponent} component    The component to get the path of.
+ * @returns {string}                   The component path.
  */
 function _getComponentPath(component) {
   let compPath = [component.name];
@@ -31,55 +30,70 @@ function _getComponentPath(component) {
  * loaded from.
  *
  * @private
- * @param {Object} component  The component to get the file path of.
- * @returns {string}          The component file path.
+ * @param {BoltComponent} component  The component to get the file path of.
+ * @returns {string}                 The component file path.
  */
 function _getRelativeDirectoryPathForComponent(component) {
   return component.path.replace(xSlash, '/components/');
 }
 
 /**
- * Initiate the component object with all its default properties.
- *
- * @private
- * @param {Object} app        The application object.
- * @param {string} name       The name of the component.
- * @param {string} fullPath   The full file path to the component.
- * @returns {Object}          The component object.
+ * @class BoltComponent
+ * @property {BoltComponent|BoltApplication} parent   The component parent.
+ * @property {string} name                            The component name.
+ * @property {Set} fullPath                           The full paths of each component root loaded into this component.
+ * @property {string} componentType                   The component type will always be "component".
+ * @property {Object} controllers                     Object referencing all the component controllers.
+ * @property {Object} views                           Object referencing all the component views.
+ * @property {Object} components                      Object referencing all the component components.
+ * @property {string} path                            The component path.
+ * @property {string} filePath                        The relative file path (from respective root) used to
+ *                                                    load component data.
  */
-function _initComponentProperties(app, name, fullPath) {
-  let component = app.components[name];
-  component.parent = app;
-  component.name = name;
-  component.fullPath = fullPath;
-  component.path = _getComponentPath(component);
-  component.componentType = 'component';
-  component.filePath = _getRelativeDirectoryPathForComponent(component);
-  return bolt.addDefaultObjects(component, componentDefaultObjects);
+class BoltComponent {
+  constructor(parent, name, fullPath) {
+    Object.defineProperties(this, {
+      parent: {enumerable: true, configurable: false, value: parent, writable: false},
+      name: {enumerable: true, configurable: false, value: name, writable: false},
+      fullPath: {enumerable: true, configurable: false, value: new Set(fullPath), writable: false},
+      componentType: {enumerable: true, configurable: false, value: 'component', writable: false},
+      controllers: {enumerable: true, configurable: false, value: {}, writable: false},
+      views: {enumerable: true, configurable: false, value: {}, writable: false},
+      components: {enumerable: true, configurable: false, value: {}, writable: true}
+    });
+
+    Object.defineProperty(this, 'path', {enumerable: true, configurable: false, value: _getComponentPath(this), writable: false});
+    Object.defineProperty(this, 'filePath', {enumerable: true, configurable: false, value: _getRelativeDirectoryPathForComponent(this), writable: false});
+  }
 }
 
 /**
  * Create a new component object.
  *
  * @private
- * @param {Object} app        The application object (or component) to attach
- *                            created object to.
- * @param {string} dirPath    The full directory path of the component.
- * @returns {Object}          The component object.
+ * @param {BoltComponent|BoltApplication} app        The application object (or component) to attach instance to.
+ * @param {string} fullPath                          The full directory path of the component.
+ * @returns {BoltComponent}                          The component object.
  */
-function _createComponent(app, dirPath) {
-  let componentName = path.basename(dirPath);
-  bolt.addDefaultObjects(app.components, componentName);
-  return _initComponentProperties(app, componentName, dirPath);
+function _createComponent(app, fullPath) {
+  let name = path.basename(fullPath);
+
+  if (app.components.hasOwnProperty(name)) {
+    let component = app.components[name];
+    component.fullPath.add(fullPath);
+    return component
+  } else {
+    app.components[name] = new BoltComponent(app, name, fullPath);
+    return app.components[name];
+  }
 }
 
 /**
  * Get the component directories to load from in load order.
  *
  * @private
- * @param {Array} roots   The root directories to search from.
- * @returns {Promise}     Promise resolving to an array of full paths
- *                        to load from.
+ * @param {Array.<string>} roots     The root directories to search from.
+ * @returns {Promise.<string[]>}     Promise resolving to an array of full paths to load from.
  */
 function _getComponentDirectories(roots) {
   return bolt.directoriesInDirectory(roots, ['components'])
@@ -91,38 +105,37 @@ function _getComponentDirectories(roots) {
  * Load components in app from specified roots.
  *
  * @private
- * @param {Object} app    The application object.
- * @param {Array} roots   The roots to load from.
- * @returns {Promise}     Promise fulfilled when all done.
+ * @param {Boltpplication|BoltComponent} app             The application object.
+ * @param {Array.<string>} roots                         The roots to load from.
+ * @returns {Promise.<BoltApplication|BoltComponent>}    Promise fulfilled when all done.
  */
 function _loadComponents(app, roots) {
   bolt.addDefaultObjects(app, 'components');
 
-  return _getComponentDirectories(roots).mapSeries(dirPath=>{
-      let component = _createComponent(app, dirPath);
+  return _getComponentDirectories(roots).mapSeries(fullPath=>{
+      let component = _createComponent(app, fullPath);
       return Promise.all([
-        bolt.fire(()=>bolt.loadHooks(component, component.fullPath), 'loadComponentHooks', app),
-        bolt.fire(()=>bolt.loadControllers(component, component.fullPath), 'loadComponentControllers', app),
-        bolt.fire(()=>bolt.loadComponentViews(component, component.fullPath), 'loadComponentViews', app),
-        bolt.fire(()=>bolt.loadShortcodes(component, component.fullPath), 'loadComponentShortcodes', app),
-        bolt.fire(()=>bolt.loadComponents(component, component.fullPath), 'loadComponentComponents', app)
-      ]).then(()=>component)
+        bolt.fire(()=>bolt.loadHooks(component, fullPath), 'loadComponentHooks', app),
+        bolt.fire(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
+        bolt.fire(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
+        bolt.fire(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
+        bolt.fire(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
+      ]).then(()=>{return {component, fullPath};})
   }).mapSeries(
-    component=>bolt.fire(()=>bolt.loadComponents(component, component.fullPath), 'loadComponentComponents', app)
+    config=>bolt.fire(()=>bolt.loadComponents(config.component, config.fullPath), 'loadComponentComponents', app)
   );
 }
 
 /**
  * Load components from the given roots into the given app.
  *
- * @param {Object} app                      The application object (or component).
- * @param {Array} [roots=app.config.roots]  The roots to load from.
- * @returns {Promise}                       Promise resolving to the supplied
- *                                          app object.
+ * @param {BoltApplication|BoltComponent} app           The application object (or component).
+ * @param {Array.<string>} [roots=app.config.roots]     The roots to load from.
+ * @returns {Promise.<BoltApplication|BoltComponent>}   Promise resolving to the supplied app object.
  */
 function loadComponents(app, roots=app.config.root) {
   let fireEvent = 'loadComponents' + (!app.parent?',loadAllComponents':'');
-  return bolt.fire(()=>_loadComponents(app, roots), fireEvent, app).then(() => app);
+  return bolt.fire(()=>_loadComponents(app, roots), fireEvent, app).then(()=>app);
 }
 
 
