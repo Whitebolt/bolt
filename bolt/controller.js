@@ -41,7 +41,9 @@ function _assignControllerRoutes(component, controller, controllerName) {
   Object.keys(controller).forEach(name=>{
     let methodPath = component.path + '/' + controllerName + '/' + name;
 
-    bolt.lookup(controller[name],  {
+    bolt.metaFromSource(controller[name]);
+
+    bolt.meta(controller[name],  {
       componentName: component.name,
       componentPath: component.path,
       methodPath: methodPath
@@ -52,7 +54,7 @@ function _assignControllerRoutes(component, controller, controllerName) {
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
 
       app.controllerRoutes[_methodPath].forEach(route=>{
-        if (bolt.lookup(controller[name], 'methodPath') === bolt.lookup(route.method, 'methodPath')) route.priority2++;
+        if (bolt.meta(controller[name], 'methodPath') === bolt.meta(route.method, 'methodPath')) route.priority2++;
       });
 
       app.controllerRoutes[_methodPath].push({method: controller[name], name, priority, priority2:0});
