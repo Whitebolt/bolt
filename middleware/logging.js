@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const Writable = require('stream').Writable;
 
 function init(app) {
+  // @annotation priority 50
+
   const stream = new Writable({
     write(chunk, encoding, callback) {
       bolt.broadcast('/logging/access', chunk.toString());
@@ -13,5 +15,4 @@ function init(app) {
   app.use(morgan('combined', {stream}));
 }
 
-init.priority = 50;
 module.exports = init;

@@ -12,6 +12,8 @@ const compare = Promise.promisify(bcrypt.compare);
 
 
 function init(app) {
+  // @annotation priority 3
+
   const hideUserFieldsFromSession = ['password', '_id'];
 
   function loginUser(username, password) {
@@ -124,5 +126,4 @@ function init(app) {
   });
 }
 
-init.priority = 3;
 module.exports = init;

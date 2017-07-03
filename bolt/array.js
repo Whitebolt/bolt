@@ -65,10 +65,10 @@ function prioritySorter(a, b) {
   let direction = 'ASC';
 
   let sorter = (a, b)=>{
-    let aP = (a !== undefined ? (a.hasOwnProperty(sortProperty) ? a[sortProperty] : 0) : 0);
-    let bP = (a !== undefined ? (b.hasOwnProperty(sortProperty) ? b[sortProperty] : 0) : 0);
-    let aP2 = (a !== undefined ? (a.hasOwnProperty(sortProperty2) ? a[sortProperty2] : 0) : 0);
-    let bP2 = (a !== undefined ? (b.hasOwnProperty(sortProperty2) ? b[sortProperty2] : 0) : 0);
+    let aP = (a !== undefined ? (a.hasOwnProperty(sortProperty) ? a[sortProperty] : bolt.annotation(a, sortProperty) || 0) : 0);
+    let bP = (a !== undefined ? (b.hasOwnProperty(sortProperty) ? b[sortProperty] : bolt.annotation(b, sortProperty) || 0) : 0);
+    let aP2 = (a !== undefined ? (a.hasOwnProperty(sortProperty2) ? a[sortProperty2] : bolt.annotation(a, sortProperty2) || 0) : 0);
+    let bP2 = (a !== undefined ? (b.hasOwnProperty(sortProperty2) ? b[sortProperty2] : bolt.annotation(b, sortProperty2) || 0) : 0);
 
     if (direction === 'ASC') {
       return ((aP > bP)?1:((aP < bP)?-1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));

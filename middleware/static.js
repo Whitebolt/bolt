@@ -3,6 +3,8 @@
 const serve = require('serve-static');
 
 function init(app) {
+  // @annotation priority 10
+
   /**
    * @todo check if /public exists first
    */
@@ -11,5 +13,4 @@ function init(app) {
   });
 };
 
-init.priority = 10;
 module.exports = init;
