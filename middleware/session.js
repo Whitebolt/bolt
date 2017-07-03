@@ -4,6 +4,8 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 
 function init(app) {
+  // @annotation priority 1
+
   let sessionMiddleware = session({
     secret: app.config.secret,
     store: new MongoStore({
@@ -33,5 +35,4 @@ function init(app) {
   });
 };
 
-init.priority = 1;
 module.exports = init;

@@ -131,6 +131,8 @@ function _proxyRouter(app, appProxyConfig) {
 }
 
 function proxyRouter(app) {
+  // @annotation priority 10
+
   let routing = [(req, res, next)=>next()];
   if (app.config.proxy && app.config.proxy.forwardPath) {
     bolt.makeArray(app.config.proxy).forEach(proxyConfig=>{
@@ -139,7 +141,5 @@ function proxyRouter(app) {
   }
   return routing;
 }
-
-proxyRouter.priority = 10;
 
 module.exports = proxyRouter;

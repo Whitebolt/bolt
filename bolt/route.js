@@ -12,13 +12,18 @@
  * @param {string} routerName         Router name to decorate.
  * @returns {Function}                Decorated router.
  */
-function _decorateRouterMethod(routers, routerName) {
+function _annotateRouterMethod(routers, routerName) {
   let method = routers[routerName];
   let priority = (method.hasOwnProperty('priority') ? method.priority : 10);
-  method.id = routerName;
-  method.priority = parseInt(priority, 10);
-  method.route = method.route || '/*';
-  method.method = method.method || 'all';
+
+  bolt.annotation(method, {
+    id: routerName,
+    priority: parseInt(priority, 10),
+    route: method.route || '/*',
+    method: method.method || 'all'
+  });
+  bolt.annotationsFromSource(method);
+
   return routers[routerName];
 }
 
@@ -35,12 +40,23 @@ function _loadRoutes(app, roots) {
     .importIntoObject({roots, dirName:'routers', eventName:'loadedRouter'})
     .then(routers=>routers[0])
     .then(routers=>Object.keys(routers)
-      .map(routerName => _decorateRouterMethod(routers, routerName))
+      .map(routerName => _annotateRouterMethod(routers, routerName))
       .sort(bolt.prioritySorter)
     )
     .each(routerBuilder=>{
       bolt.makeArray(routerBuilder(app)).forEach(router=>{
-        app[router.method || routerBuilder.method](router.route || routerBuilder.route, router);
+        let routerAnnotations = bolt.annotation(router);
+        let routerBuilderAnnotations = bolt.annotation(routerBuilder);
+        let method = (routerAnnotations.has('method') ?
+          routerAnnotations.get('method') :
+          routerBuilderAnnotations.get('method')
+        );
+        let route = (routerAnnotations.has('route') ?
+            routerAnnotations.get('route') :
+            routerBuilderAnnotations.get('route')
+        );
+
+        app[method](route, router);
       });
     });
 }

@@ -502,10 +502,10 @@ function _httpRouter(app) {
  * @returns {Function}              Express router function.
  */
 function boltRouter(app) {
+  // @annotation priority 0
+
   _addSocketIoMethodRouters(app);
   return _httpRouter(app);
 }
-
-boltRouter.priority = 0;
 
 module.exports = boltRouter;

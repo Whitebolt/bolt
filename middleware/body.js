@@ -9,6 +9,8 @@ function isMultipartRequest(req) {
 }
 
 function init(app) {
+  // @annotation priority 2
+
   const jsonParser = bodyParser.json();
   const urlParser = bodyParser.urlencoded({extended:true});
   const textParser = bodyParser.text();
@@ -22,5 +24,4 @@ function init(app) {
   );
 };
 
-init.priority = 2;
 module.exports = init;

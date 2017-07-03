@@ -13,11 +13,16 @@
  * @returns {Function}              The middleware function with
  *                                  added properties.
  */
-function _decorateMiddlewareMethod(middleware, middlewareName) {
+function _annotateMiddlewareMethod(middleware, middlewareName) {
   let method = middleware[middlewareName];
   let priority = (method.hasOwnProperty('priority') ? method.priority : 0);
-  method.id = middlewareName;
-  method.priority = parseInt(priority, 10);
+
+  bolt.annotation(method, {
+    id:  middlewareName,
+    priority: parseInt(priority, 10)
+  });
+  bolt.annotationsFromSource(method);
+
   return middleware[middlewareName];
 }
 
@@ -38,12 +43,12 @@ function _loadMiddleware(app, roots, importObj) {
   })
     .then(middleware=>middleware[0])
     .then(middleware=>Object.keys(middleware)
-        .map(middlewareName => _decorateMiddlewareMethod(middleware, middlewareName))
+        .map(middlewareName => _annotateMiddlewareMethod(middleware, middlewareName))
         .sort(bolt.prioritySorter)
     )
     .then(middleware=>{
       middleware.forEach(middleware => {
-        bolt.fire('ranMiddleware', middleware.id.replace(/^\d+_/, ''));
+        bolt.fire('ranMiddleware', bolt.annotation(middleware, 'id').replace(/^\d+_/, ''));
         middleware(app);
       });
       return app
