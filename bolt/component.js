@@ -10,8 +10,7 @@ const Promise = require('bluebird');
 const xSlash = /\//g;
 
 /**
- * Flow up a component tree constructing the path of the supplied component and
- * returning it.
+ * Flow up a component tree constructing the path of the supplied component and returning it.
  *
  * @private
  * @param {BoltComponent} component    The component to get the path of.
@@ -26,8 +25,7 @@ function _getComponentPath(component) {
 }
 
 /**
- * Get the directory path for a component relative to the root it was
- * loaded from.
+ * Get the directory path for a component relative to the root it was loaded from.
  *
  * @private
  * @param {BoltComponent} component  The component to get the file path of.
@@ -105,7 +103,7 @@ function _getComponentDirectories(roots) {
  * Load components in app from specified roots.
  *
  * @private
- * @param {Boltpplication|BoltComponent} app             The application object.
+ * @param {BoltApplication|BoltComponent} app             The application object.
  * @param {Array.<string>} roots                         The roots to load from.
  * @returns {Promise.<BoltApplication|BoltComponent>}    Promise fulfilled when all done.
  */

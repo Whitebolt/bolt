@@ -75,8 +75,8 @@ function _parseEnvValueConvertItem(value, converter) {
  * Parse config, parsing templated values and return the config.
  *
  * @private
- * @param {Object} config   Initial config.
- * @returns {Object}        The parsed config.
+ * @param {BoltConfig} config   Initial config.
+ * @returns {BoltConfig}        The parsed config.
  */
 function _parseConfig(config) {
   config.script = boltRootDir + '/server.js';
@@ -89,9 +89,9 @@ function _parseConfig(config) {
  * Take an array of objects and return the given property from (assuming an array) and merge together.
  *
  * @private
- * @param {Object[]} objects    Objects to get property from.
- * @param {string} property     Property to get.
- * @returns {Array}             Merged array.
+ * @param {BoltConfig[]} objects    Objects to get property from.
+ * @param {string} property         Property to get.
+ * @returns {BoltConfig[]}          Merged array.
  */
 function _concatPropertyArray(objects, property) {
   return bolt.uniq(bolt.flatten(objects.map(_property=>_property[property] || [])));
@@ -101,8 +101,8 @@ function _concatPropertyArray(objects, property) {
  * Assign a new port according to config options.
  *
  * @private
- * @param {Object} config   The config object.
- * @returns {Object}        The config with port assigned.
+ * @param {BoltConfig} config   The config object.
+ * @returns {BoltConfig}      The config with port assigned.
  */
 function _assignPort(config) {
   if (config.assignFreePort) {
@@ -116,10 +116,17 @@ function _assignPort(config) {
   return config;
 }
 
+/**
+ * Join two arrays together, filtering-out duplicates
+ *
+ * @private
+ * @param ary1        First array.
+ * @param ary2        Second Array.
+ * @returns {Array}   Merged array of unique values.
+ */
 function _concatArrayUnique(ary1, ary2) {
   let combined = [].concat(ary1 || []).concat(ary2 || []);
-  let unique = [...new Set(combined)];
-  return unique;
+  return [...new Set(combined)];
 }
 
 const _configMergeOverrides = {
@@ -158,8 +165,8 @@ function _configMerge(objValue, srcValue, key) {
  * Get a config object from package.json and the supplied config.
  *
  * @private
- * @param {Object} config   Config object to act as the last merge item.
- * @returns {Object}        The new constructed config with default available.
+ * @param {BoltConfig} config   Config object to act as the last merge item.
+ * @returns {BoltConfig}        The new constructed config with default available.
  */
 function _getConfig(config) {
   let packageConfigs = [];
@@ -172,14 +179,14 @@ function _getConfig(config) {
 }
 
 /**
- * @typedef boltConfig
+ * @typedef BoltConfig
  * Configuration object for bolt-server.
  *
  * @property {integer} [port]                       Network port to attach app to.
  * @property {string|Array} root                    The directory roots to load server from.
  * @property {string} accessLog                     Location to write access log to.
  * @property {string|Array.<string>} [template]     Named template(s) to apply.
- * @property {Array.<boltConfigDb>} [databases]     Databases to load.
+ * @property {Array.<BoltConfigDb>} [databases]     Databases to load.
  * @property {string} secret                        Cookie encryption string.
  * @property {boolean} [development]                Run in development mode or not?
  * @property {Array.<Object>} [proxy]               Define any proxies.
@@ -188,7 +195,7 @@ function _getConfig(config) {
  */
 
 /**
- * @typedef boltConfigDb
+ * @typedef BoltConfigDb
  * @property {string} type                    Connection type (eg. mongodb,
  *                                            mysql, ...etc).
  * @property {string} [server='localhost']    Server hostname
@@ -203,7 +210,7 @@ function _getConfig(config) {
  * Load config from default locations.
  *
  * @private
- * @returns {Object}    The config object.
+ * @returns {BoltConfig}    The config object.
  */
 function getConfigLoadPaths() {
   const serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile);
@@ -218,7 +225,7 @@ function getConfigLoadPaths() {
  *
  * @private
  * @param {string} dirPath    Path to load from.
- * @returns {Object}          The package object.
+ * @returns {BoltConfig}          The package object.
  */
 function getPackage(dirPath=boltRootDir) {
   try {
@@ -230,7 +237,7 @@ function getPackage(dirPath=boltRootDir) {
  * Grab package.json files and get the specfied properties merging them all together.
  *
  * @public
- *  @param {string[]|string} roots              The directories to load from.
+ * @param {string[]|string} roots              The directories to load from.
  * @param {Array|string} [properties=[]]        Properties to grab.
  * @param {Function} [merger=()=>{}]            Merger function to use.
  * @returns {Object}                            Merged object with selected properties.

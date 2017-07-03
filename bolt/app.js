@@ -10,12 +10,20 @@ const open = Promise.promisify(fs.open);
 const write = Promise.promisify(fs.write);
 const ejs = require('ejs');
 
-const ejsOptions = {
+/**
+ *  @external ejsOptions
+ *  @see {https://github.com/Whitebolt/ejs/blob/master/lib/ejs.js}
+ */
+
+/**
+ * @type {external:ejsOptions}
+ */
+const ejsOptions = Object.freeze({
   strict: true,
   localsName: ['params'],
   awaitPromises: true,
   _with: false
-};
+});
 
 /**
  * Take a config object and register log events according to the the criteria
@@ -23,8 +31,8 @@ const ejsOptions = {
  * broadcasts.  Normally the input object is taken from package.json.
  *
  * @private
- * @param {Object} config   The config object.
- * @returns {Function}      Unreg function.
+ * @param {boltConfig} config   The config object.
+ * @returns {Function}          Unreg function.
  */
 function _registerLogEvent(config) {
   let description = ejs.compile(config.description, ejsOptions);
@@ -49,7 +57,7 @@ function _registerLogEvent(config) {
  * Setup logging both to the console and to the access logs.
  *
  * @private
- * @param {Object} app    The express application.
+ * @param {BoltApplication} app    The express application.
  */
 function _initLogging(app) {
   app.config.eventConsoleLogging.forEach(config => _registerLogEvent(config));
@@ -109,8 +117,8 @@ function _getEventChannel(root, level, max) {
  * Create a new express application with the given config object.
  *
  * @private
- * @param {Object} config           A config object.
- * @returns {bolt:application}      The express application instance.
+ * @param {boltConfig} config      A config object.
+ * @returns {BoltApplication}      The express application instance.
  */
 function _createApp(config) {
   return new boltApplication(config);
@@ -121,8 +129,8 @@ function _createApp(config) {
  * additional modules, ignoring the main root.
  *
  * @private
- * @param {Object} app    The application object.
- * @returns {Promise}     Promise resolving to app when all is loaded.
+ * @param {BoltApplication} app               The application object.
+ * @returns {Promise.<BoltApplication>}       Promise resolving to app when all is loaded.
  */
 function _boltLoader(app) {
   return bolt.directoriesInDirectory(app.config.root, ['bolt'])
@@ -140,9 +148,8 @@ function _boltLoader(app) {
  * Load a new bolt application using the supplied config path.
  *
  * @private
- * @param {string} configPath   Path to server config.
- * @returns {Promise}           Promise resolving to app object once it
- *                              is loaded.
+ * @param {string} configPath                Path to server config.
+ * @returns {Promise.<BoltApplication>}      Promise resolving to app object once it is loaded.
  */
 function _loadApplication(configPath) {
   return (bolt.isString(configPath) ? bolt.require(configPath) : Promise.resolve(configPath))
@@ -159,12 +166,11 @@ function _loadApplication(configPath) {
  * Import a given set of paths into the app.
  *
  * @public
- * @param {Object} options                Options object for this import.
- * @param {Array|string} options.roots    Root folder(s) to start imports from.
- * @param {string} options.dirName        Directory name within each root to
- *                                        import from.
- * @param {Object} options.importObject   The object to import into.
- * @param {string} options.eventName      The event to fire once import is complete.
+ * @param {Object} options                         Options object for this import.
+ * @param {Array.<string>|string} options.roots    Root folder(s) to start imports from.
+ * @param {string} options.dirName                 Directory name within each root to import from.
+ * @param {Object} options.importObject            The object to import into.
+ * @param {string} options.eventName               The event to fire once import is complete.
  * @returns {Promise}
  */
 function importIntoObject(options) {
@@ -183,8 +189,8 @@ function importIntoObject(options) {
  * Get the root parent of the given component object. Scale through the
  * hierarchy till the first object is reached.
  *
- * @param {Object} component    Application or component object.
- * @returns {Object}            Express application instance.
+ * @param {BoltComponent|BoltApplication} component    Application or component object.
+ * @returns {BoltApplication}                                   Express application instance.
  */
 function getApp(component) {
   let app = component;
@@ -214,9 +220,9 @@ function loadApplication(configPath) {
  *  @external express:application
  *  @see {https://github.com/expressjs/express/blob/master/lib/application.js}
  *
- *  @class bolt:application
+ *  @class BoltApplication
  *  @extends external:express:application
- *  @property {Object} config                 Configuration object for bolt server.
+ *  @property {BoltConfig} config             Configuration object for bolt server.
  *  @property {Object} routers                Routers
  *  @property {Object} controllerRoutes       Controller routes
  *  @property {Object} shortcodes             Shortcodes
