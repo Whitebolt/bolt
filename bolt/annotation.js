@@ -4,8 +4,8 @@ const __lookup = new WeakMap();
 const __undefined = Symbol("undefined");
 const xSourceGetBlockStart = /^.*?\{/;
 const xSourceGetBlockEnd = /\}.*?$/;
-const xStartsWithMetaDef = /^\s*?\/\/\s*?\@annotation/;
-const xGetMeta = /.*?\@annotation\s+(.*?)\s(.*)/;
+const xStartsWithAnnotationDef = /^\s*?\/\/\s*?\@annotation/;
+const xGetAnnotation = /.*?\@annotation\s+(.*?)\s(.*)/;
 
 /**
  * Set an annotation against an object.  Generally, we would pass a function in here but in theory any object that is
@@ -55,14 +55,14 @@ function annotationsFromSource(func, ref=func) {
     .replace(xSourceGetBlockEnd,'')
     .trim();
 
-  if (xStartsWithMetaDef.test(source)) {
+  if (xStartsWithAnnotationDef.test(source)) {
     let lines = source.split(/\n/).filter(line=>(line.trim() !== ''));
     let current = 0;
-    while (xStartsWithMetaDef.test(lines[current])) {
-      let [undefined, propertyName, value] = xGetMeta.exec(lines[current]);
+    while (xStartsWithAnnotationDef.test(lines[current])) {
+      let [undefined, propertyName, value] = xGetAnnotation.exec(lines[current]);
       value = bolt.toBool(value);
       if (bolt.isNumeric(value)) value = bolt.toTypedNumber(value);
-      annotation(func, propertyName, value);
+      annotation(ref, propertyName, value);
       current++;
     }
   }

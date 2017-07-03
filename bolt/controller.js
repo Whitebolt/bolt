@@ -23,7 +23,13 @@ function _getMethodPaths(methodPath) {
   return methodPaths;
 }
 
-const injectors = {
+/**
+ * Object of methods to map dynamic inclusion parameters in controllers to what should be actually supplied to the
+ * controller method.
+ *
+ * @type {Object}
+ */
+const injectors = Object.freeze({
   req: component=>component.req,
   res: component=>component.res,
   component: component=>component,
@@ -36,7 +42,7 @@ const injectors = {
   db: component=>component.req.app.db,
   view: component=>component.view,
   config: component=>component.req.app.config
-};
+});
 
 
 
@@ -59,10 +65,12 @@ function _assignControllerRoutes(component, controller, controllerName) {
 
     let params = bolt.parseParameters(controller[name]);
 
-    let method = component=>controller[name].apply(
-      controller,
-      params.map(param=>(injectors.hasOwnProperty(param) ? injectors[param](component) : undefined))
-    );
+    let method = component=>{
+      return controller[name].apply(controller, params.map(param=>{
+        if (injectors.hasOwnProperty(param)) return injectors[param](component);
+        if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
+      }));
+    };
 
     bolt.annotationsFromSource(controller[name], method);
 
