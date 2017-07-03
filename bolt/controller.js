@@ -23,6 +23,22 @@ function _getMethodPaths(methodPath) {
   return methodPaths;
 }
 
+const injectors = {
+  req: component=>component.req,
+  res: component=>component.res,
+  component: component=>component,
+  doc: component=>(component.req.doc || {}),
+  done: component=>{
+    return (value=true)=>{component.done = !!value}
+  },
+  app: component=>component.req.app,
+  path: component=>bolt.getPathFromRequest(component.req),
+  db: component=>component.req.app.db,
+  view: component=>component.view,
+  config: component=>component.req.app.config
+};
+
+
 
 /**
  * Calculate all possible routes for a given controller and then assign these
@@ -41,9 +57,16 @@ function _assignControllerRoutes(component, controller, controllerName) {
   Object.keys(controller).forEach(name=>{
     let methodPath = component.path + '/' + controllerName + '/' + name;
 
-    bolt.metaFromSource(controller[name]);
+    let params = bolt.parseParameters(controller[name]);
 
-    bolt.meta(controller[name],  {
+    let method = component=>controller[name].apply(
+      controller,
+      params.map(param=>(injectors.hasOwnProperty(param) ? injectors[param](component) : undefined))
+    );
+
+    bolt.metaFromSource(controller[name], method);
+
+    bolt.meta(method,  {
       componentName: component.name,
       componentPath: component.path,
       methodPath: methodPath
@@ -54,10 +77,10 @@ function _assignControllerRoutes(component, controller, controllerName) {
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
 
       app.controllerRoutes[_methodPath].forEach(route=>{
-        if (bolt.meta(controller[name], 'methodPath') === bolt.meta(route.method, 'methodPath')) route.priority2++;
+        if (bolt.meta(method, 'methodPath') === bolt.meta(route.method, 'methodPath')) route.priority2++;
       });
 
-      app.controllerRoutes[_methodPath].push({method: controller[name], name, priority, priority2:0});
+      app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
     });
   });
 
