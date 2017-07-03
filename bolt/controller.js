@@ -66,6 +66,12 @@ function _assignControllerRoutes(component, controller, controllerName) {
     let params = bolt.parseParameters(controller[name]);
 
     let method = component=>{
+      let methods = bolt.annotation(method, 'methods');
+      if (methods) {
+        let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
+        if (!methods.has(httpMethod)) return component;
+      }
+
       return controller[name].apply(controller, params.map(param=>{
         if (injectors.hasOwnProperty(param)) return injectors[param](component);
         if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
@@ -74,11 +80,21 @@ function _assignControllerRoutes(component, controller, controllerName) {
 
     bolt.annotationsFromSource(controller[name], method);
 
-    bolt.annotation(method,  {
+    let annotations = bolt.annotation(method,  {
       componentName: component.name,
       componentPath: component.path,
       methodPath: methodPath
     });
+
+    if (annotations.has('methods')) {
+      annotations.set('methods', new Set(annotations
+        .get('methods')
+        .toLowerCase()
+        .split(',')
+        .map(method=>method.trim())
+        .filter(method=>(method.trim() !== '')))
+      );
+    }
 
     _getMethodPaths(methodPath).forEach((methodPath, priority) => {
       let _methodPath = methodPath.length?methodPath:'/';

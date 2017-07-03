@@ -48,6 +48,7 @@ function annotation(ref, key=__undefined, value=__undefined) {
  * @public
  * @param {Function|string} func        Function or source code of function to get from.
  * @param {Function|Object} [ref=func]  Reference to set annotation against.  Defaults to the given function.
+ * @returns {Map|undefined}             The annotations maps for the given reference function/object.
  */
 function annotationsFromSource(func, ref=func) {
   let source = (bolt.isString(func) ? func : func.toString())
@@ -66,6 +67,8 @@ function annotationsFromSource(func, ref=func) {
       current++;
     }
   }
+
+  return annotation(ref);
 }
 
 module.exports = {
