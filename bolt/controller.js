@@ -44,7 +44,105 @@ const injectors = Object.freeze({
   config: component=>component.req.app.config
 });
 
+/**
+ * Object of methods to map parse specfic annotations.  Some annotations may have bespoke structure; here we set methods
+ * to parse these.
+ *
+ * @type {Object}
+ */
+const annotationParser = Object.freeze({
+  methods: annotations=>annotations.set('methods', new Set(annotations
+    .get('methods')
+    .toLowerCase()
+    .split(',')
+    .map(method=>method.trim())
+    .filter(method=>(method.trim() !== '')))
+  )
+});
 
+/**
+ * Set annotations on given method by using default values and extracting from the method source.
+ *
+ * @private
+ * @param {Object} config                         Config object.
+ * @param {BoltComponent} config.component        The component parent of  this controller method.
+ * @param {Function} config.method                The method to be invoked in routes.
+ * @param {Function|string} config.sourceMethod   The original source method from which, method is derived.
+ *                                                Can be method source.
+ * @param {string} config.methodPath              The path to the method in the app.
+ * @returns {Map}                                 The annotations map for given method.
+ */
+function _addAnnotationsToControllerMethods(config) {
+  let {component, method, sourceMethod, methodPath} = config;
+
+  let annotations = bolt.annotationsFromSource(sourceMethod, method);
+
+  bolt.annotation(method,  {
+    componentName: component.name,
+    componentPath: component.path,
+    methodPath
+  });
+
+  annotations.forEach((value, annotation)=>{
+    if (annotationParser.hasOwnProperty(annotation)) annotationParser[annotation](annotations);
+  });
+
+  return annotations;
+}
+
+/**
+ * Create the method, which is invoked for given controller method.
+ *
+ * @private
+ * @param {Object} config                         Config object.
+ * @param {Function} config.sourceMethod          The original source method from which, method is derived.
+ * @param {Object} config.controller              The parent controller.
+ * @returns {Function}                            The method to fire for given controller method.
+ */
+function _getControllerMethod(config) {
+  let {sourceMethod, controller} = config;
+  let params = bolt.parseParameters(sourceMethod);
+
+  let method = component=>{
+    let methods = bolt.annotation(method, 'methods');
+    if (methods) {
+      let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
+      if (!methods.has(httpMethod)) return component;
+    }
+
+    return sourceMethod.apply(controller, params.map(param=>{
+      if (injectors.hasOwnProperty(param)) return injectors[param](component);
+      if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
+    }));
+  };
+
+  return method;
+}
+
+/**
+ * Set the controller routes for the given method.
+ *
+ * @private
+ * @param {Object} config                  Config object.
+ * @param {Function} config.method         The method to be invoked in routes.
+ * @param {BoltApplication} config.app     The application object.
+ * @param {string} config.name             The method name.
+ * @param {string} config.methodPath       The path to the method in the app.
+ */
+function _setControllerRoutes(config) {
+  let {methodPath, app, method, name} = config;
+
+  _getMethodPaths(methodPath).forEach((methodPath, priority) => {
+    let _methodPath = methodPath.length?methodPath:'/';
+    bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
+
+    app.controllerRoutes[_methodPath].forEach(route=>{
+      if (bolt.annotation(method, 'methodPath') === bolt.annotation(route.method, 'methodPath')) route.priority2++;
+    });
+
+    app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
+  });
+}
 
 /**
  * Calculate all possible routes for a given controller and then assign these
@@ -61,51 +159,11 @@ function _assignControllerRoutes(component, controller, controllerName) {
   bolt.addDefaultObjects(app, "controllerRoutes");
 
   Object.keys(controller).forEach(name=>{
+    let sourceMethod = controller[name];
     let methodPath = component.path + '/' + controllerName + '/' + name;
-
-    let params = bolt.parseParameters(controller[name]);
-
-    let method = component=>{
-      let methods = bolt.annotation(method, 'methods');
-      if (methods) {
-        let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
-        if (!methods.has(httpMethod)) return component;
-      }
-
-      return controller[name].apply(controller, params.map(param=>{
-        if (injectors.hasOwnProperty(param)) return injectors[param](component);
-        if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
-      }));
-    };
-
-    bolt.annotationsFromSource(controller[name], method);
-
-    let annotations = bolt.annotation(method,  {
-      componentName: component.name,
-      componentPath: component.path,
-      methodPath: methodPath
-    });
-
-    if (annotations.has('methods')) {
-      annotations.set('methods', new Set(annotations
-        .get('methods')
-        .toLowerCase()
-        .split(',')
-        .map(method=>method.trim())
-        .filter(method=>(method.trim() !== '')))
-      );
-    }
-
-    _getMethodPaths(methodPath).forEach((methodPath, priority) => {
-      let _methodPath = methodPath.length?methodPath:'/';
-      bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
-
-      app.controllerRoutes[_methodPath].forEach(route=>{
-        if (bolt.annotation(method, 'methodPath') === bolt.annotation(route.method, 'methodPath')) route.priority2++;
-      });
-
-      app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
-    });
+    let method = _getControllerMethod({sourceMethod, controller});
+    _addAnnotationsToControllerMethods({component, methodPath, method, sourceMethod});
+    _setControllerRoutes({methodPath, app, name, method});
   });
 
   return app.controllerRoutes;
