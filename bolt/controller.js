@@ -64,9 +64,9 @@ function _assignControllerRoutes(component, controller, controllerName) {
       params.map(param=>(injectors.hasOwnProperty(param) ? injectors[param](component) : undefined))
     );
 
-    bolt.metaFromSource(controller[name], method);
+    bolt.annotationsFromSource(controller[name], method);
 
-    bolt.meta(method,  {
+    bolt.annotation(method,  {
       componentName: component.name,
       componentPath: component.path,
       methodPath: methodPath
@@ -77,7 +77,7 @@ function _assignControllerRoutes(component, controller, controllerName) {
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
 
       app.controllerRoutes[_methodPath].forEach(route=>{
-        if (bolt.meta(method, 'methodPath') === bolt.meta(route.method, 'methodPath')) route.priority2++;
+        if (bolt.annotation(method, 'methodPath') === bolt.annotation(route.method, 'methodPath')) route.priority2++;
       });
 
       app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
