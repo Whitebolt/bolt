@@ -7,6 +7,22 @@ const xSourceGetBlockEnd = /\}.*?$/;
 const xStartsWithMetaDef = /^\s*?\/\/\s*?\@annotation/;
 const xGetMeta = /.*?\@annotation\s+(.*?)\s(.*)/;
 
+/**
+ * Set an annotation against an object.  Generally, we would pass a function in here but in theory any object that is
+ * acceptable as a key-reference in a WeakMap can be used.
+ *
+ * If a value is given, assume we want to set a key; whereas with no value, assume a get.
+ *
+ * @note A symbol called __undefined is used here for default parameter values.  This is so the actual value of
+ * undefined can be based in ant be seen as no value passed.
+ *
+ * @public
+ * @param {Function|Object} ref                       Reference object, usually an function.
+ * @param {string|Object|Symbol} [key=__undefined]    Annotation name to set on given function/object.  If set to
+ *                                                    __undefined then return the Map object, referenced by ref.
+ * @param {*} [value=__undefined]                     The value to set for given key against given reference.
+ * @returns {*|Map}                                   The key value (if no value given) or the Map for given reference.
+ */
 function annotation(ref, key=__undefined, value=__undefined) {
   let _lookup = __lookup.get(ref);
   if (!_lookup) {
@@ -24,7 +40,16 @@ function annotation(ref, key=__undefined, value=__undefined) {
   }
 }
 
-function annotationsFromSource(func, ref) {
+/**
+ * Get annotations from the source of the given function and set them against it.
+ *
+ * @example "@annotation visibility private" will set the visibility key to private for given function/object reference.
+ *
+ * @public
+ * @param {Function|string} func        Function or source code of function to get from.
+ * @param {Function|Object} [ref=func]  Reference to set annotation against.  Defaults to the given function.
+ */
+function annotationsFromSource(func, ref=func) {
   let source = (bolt.isString(func) ? func : func.toString())
     .replace(xSourceGetBlockStart,'')
     .replace(xSourceGetBlockEnd,'')
@@ -37,7 +62,7 @@ function annotationsFromSource(func, ref) {
       let [undefined, propertyName, value] = xGetMeta.exec(lines[current]);
       value = bolt.toBool(value);
       if (bolt.isNumeric(value)) value = bolt.toTypedNumber(value);
-      annotation(ref || func, propertyName, value);
+      annotation(func, propertyName, value);
       current++;
     }
   }
