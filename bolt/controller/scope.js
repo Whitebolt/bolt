@@ -65,14 +65,86 @@ function set() {
 /**
  * Proxy ownKeys() method
  *
- * @param {Object} controller    gi Controller to do has() check on.
- * @returns {Array}               The controller keys.
+ * @param {Object} controller    Controller to get keys for.
+ * @returns {Array}              The controller keys.
  */
 function ownKeys(controller) {
   let casscade = _getControllerCascade(controller);
   let keys = new Set();
   casscade.forEach(controller=>Object.keys(controller=>keys.add(key)));
   return Array.from(keys);
+}
+
+/**
+ * Proxy setPrototypeOf() method.  This blocks setting of the prototype.
+ *
+ * @returns {boolean}     Returns false.
+ */
+function setPrototypeOf() {
+  return false;
+}
+
+/**
+ * Proxy isExtensible() method.  Always returns false.
+ *
+ * @returns {boolean}     Returns false.
+ */
+function isExtensible() {
+  return false;
+}
+
+/**
+ * Proxy preventExtensions() method.  Always returns true.
+ *
+ * @returns {boolean}     Returns true.
+ */
+function preventExtensions() {
+  return true;
+}
+
+/**
+ * Proxy getOwnPropertyDescriptor() method.
+ *
+ * @returns {Object}     Property descriptor.
+ */
+function getOwnPropertyDescriptor(controller, name) {
+  Object.getOwnPropertyDescriptor(get(controller, name));
+}
+
+/**
+ * Proxy defineProperty() method.  Always returns false.
+ *
+ * @returns {boolean}     Returns false.
+ */
+function defineProperty() {
+  return false;
+}
+
+/**
+ * Proxy deleteProperty() method.  Always returns false.
+ *
+ * @returns {boolean}     Returns false.
+ */
+function deleteProperty() {
+  return false;
+}
+
+/**
+ * Proxy getPrototypeOf() method.  Always returns the prototype of Object.
+ *
+ * @returns {Object}     Returns Object.prototype.
+ */
+function getPrototypeOf() {
+  return Object.prototype;
+}
+
+/**
+ * Proxy apply() method.  Always throws.
+ *
+ * @throws SyntaxError
+ */
+function apply() {
+  throw new SyntaxError('Cannot run controller as if it is a function.')
 }
 
 /**
@@ -83,7 +155,23 @@ function ownKeys(controller) {
  * @returns {Proxy}
  */
 function createControllerScope(controller) {
-  return new Proxy(controller, {get, has, set, ownKeys});
+  let component = bolt.annotation(controller, 'parent');
+  let name = bolt.annotation(controller, 'name');
+
+  return new Proxy(component.controllers[name], {
+    apply,
+    defineProperty,
+    deleteProperty,
+    get,
+    getOwnPropertyDescriptor,
+    getPrototypeOf,
+    has,
+    isExtensible,
+    ownKeys,
+    preventExtensions,
+    set,
+    setPrototypeOf
+  });
 }
 
 module.exports = createControllerScope;

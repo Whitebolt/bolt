@@ -27,6 +27,20 @@ function addDefaultObjects(obj, properties, defaultIsArray=false) {
 }
 
 /**
+ * Perform a freeze on an object, freezing recursively though dependant objects.
+ *
+ * @param {Object} obj      Object to deep freeze.
+ * @returns {Object}        Frozen object.
+ */
+function deepFreeze(obj) {
+  Object.getOwnPropertyNames(obj).forEach(name=>{
+    let prop = obj[name];
+    if ((typeof prop == 'object') && (prop !== null)) deepFreeze(prop);
+  });
+  return Object.freeze(obj);
+}
+
+/**
  * Parse a json string/object applying each property as a template with itself
  * as the source.  This means that properties can refer to each other with
  * values being constructed from other properties.  Uses lodash templates for
@@ -67,5 +81,5 @@ function pickDeep(obj, properties) {
 }
 
 module.exports = {
-  addDefaultObjects, parseTemplatedJson, pickDeep
+  addDefaultObjects, parseTemplatedJson, pickDeep, deepFreeze
 };

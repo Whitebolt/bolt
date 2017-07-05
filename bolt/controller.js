@@ -193,6 +193,21 @@ function _setComponentAndControllerAnnotations(component, controller, controller
 }
 
 /**
+ * Deep freeze controller methods and properties.
+ *
+ * @private
+ * @param {BoltApplication|BoltComponent} app     Application or component to freeze controllers on.
+ */
+function _freezeControllers(app) {
+  Object.keys(app.components || {}).forEach(componentName=>{
+    Object.keys(app.components[componentName].controllers).forEach(controllerName=>{
+      bolt.deepFreeze(app.components[componentName].controllers[controllerName]);
+      _freezeControllers(app.components[componentName]);
+    });
+  });
+}
+
+/**
  * Setup event callback to add routes to controller just before the app is run.
  *
  * @private
@@ -204,6 +219,7 @@ function  _addControllerRoutesToApplication() {
     Object.keys(app.controllerRoutes).forEach(route=>{
       app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
     });
+    _freezeControllers(app);
   }, {id:'addControllerRoutesToApplication'});
 
   return true;
@@ -219,9 +235,11 @@ function  _addControllerRoutesToApplication() {
  */
 function _addControllerRoutes(component, controllers) {
   controllers.forEach(
-    controller=>Object.keys(controller).forEach(
-      controllerName=>_assignControllerRoutes(component, controller[controllerName], controllerName)
-    )
+    controller=>{
+      return Object.keys(controller).forEach( controllerName=>{
+        _assignControllerRoutes(component, controller[controllerName], controllerName);
+      })
+    }
   );
 
   return controllers;
