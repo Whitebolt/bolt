@@ -46,6 +46,28 @@ function loadDatabases(interfaces, app) {
 }
 
 /**
+ * Import interface methods, including the loader into supplied export object. Each named export will be a loader
+ * function. Extra methods on the interface will be properties of that loader function.
+ *
+ * @private
+ * @param {Object} interfaces         Loaded database interfaces.
+ * @param {Object} exports            Exports object to import into.
+ * @returns {Object}                  The exports object, mutated to include interface methods.
+ */
+function _importInterfaces(interfaces, exports) {
+  Object.keys(interfaces).forEach(interfaceName=>{
+    exports[interfaces[interfaceName].name] = interfaces[interfaceName];
+    Object.keys(interfaces[interfaceName]).forEach(loaderProp=>{
+      if (bolt.isFunction(interfaces[interfaceName][loaderProp])) {
+        exports[loaderProp] = interfaces[interfaceName][loaderProp];
+      }
+    });
+  });
+
+  return exports;
+}
+
+/**
  * Create exports object.
  *
  * @public
@@ -53,12 +75,8 @@ function loadDatabases(interfaces, app) {
  */
 function exports() {
   return requireX.importDirectory('./database/interfaces/', {merge: true, useSyncRequire: true}).then(interfaces=>{
-    let exports = {
-      loadDatabases: loadDatabases.bind({}, interfaces),
-      mongoId:interfaces.mongodb.mongoId,
-      loadMongo:interfaces.mongodb
-    };
-
+    let exports = {loadDatabases: loadDatabases.bind({}, interfaces)};
+    _importInterfaces(interfaces, exports)
     return Object.assign(exports, collectionLogic);
   });
 }

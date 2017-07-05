@@ -203,7 +203,7 @@ function _getConfig(config) {
  * @property {string} database                Database name.
  * @property {string} [username]              Username to connect as.
  * @property {string} [password]              Password to use.
- * @property {string} [adminDatabase='admin'] Admin database t use (mongo specfic).
+ * @property {string} [adminDatabase='admin'] Admin database to use (mongo specfic).
  */
 
 /**
