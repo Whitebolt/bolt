@@ -119,6 +119,7 @@ function _getControllerMethod(config) {
   };
 
   bolt.annotation(sourceMethod, 'controllerMethod', method);
+  bolt.annotation(method, 'sourceMethod', sourceMethod);
 
   return method;
 }
@@ -263,6 +264,22 @@ function _addControllerRoutes(component, controllers) {
 }
 
 /**
+ * Set file paths as annotations on controller methods for later reference.
+ *
+ * @private
+ * @param {string} filePath     The full file path.
+ * @param {object} controller   The controller to set method file paths on.
+ */
+function _setControllerMethodFilePathAnnotation(filePath, controller) {
+  Object.keys(controller).forEach(controllerName=>{
+    Object.keys(controller[controllerName]).forEach(methodName=>{
+      let _filePath = bolt.annotation(controller[controllerName][methodName], 'filePath');
+      if (!_filePath) bolt.annotation(controller[controllerName][methodName], 'filePath', filePath);
+    });
+  })
+}
+
+/**
  * Controllers load function.  Load controllers from given root(s) folder into
  * the given import object.  Generate any associated roots and connect these to
  * the application.
@@ -274,6 +291,9 @@ function _addControllerRoutes(component, controllers) {
  * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
 function _loadControllers(component, roots, importObj) {
+  //_setControllerMethodFilePathAnnotation(undefined, importObj)
+  bolt.hook('loadedController', (undefined, filePath)=>_setControllerMethodFilePathAnnotation(filePath, importObj));
+
   return bolt
     .importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'})
     .then(controllers=>_addControllerRoutes(component, controllers))

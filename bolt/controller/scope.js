@@ -1,7 +1,10 @@
 'use strict';
 
 const util = require('util');
-const _memory = new WeakMap();
+const Memory = require('../memory').Memory;
+
+const _memory = new Memory();
+const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;
 
 /**
  * Get the controller cascade for a given controller.
@@ -12,8 +15,14 @@ const _memory = new WeakMap();
  * @returns {Set|Array}                   The cascade as a Set object unless an array requested.
  */
 function _getControllerCascade(controller, returnArray=false) {
-  let component = bolt.annotation(controller, 'parent');
-  let cascade = _getNamedControllerCascade(component, bolt.annotation(controller, 'name'));
+  let cascade;
+  if (_memory.has(controller, 'cascade')) {
+    cascade = _memory.get(controller, 'cascade')
+  } else {
+    let component = bolt.annotation(controller, 'parent');
+    cascade = _getNamedControllerCascade(component, bolt.annotation(controller, 'name'));
+    _memory.set(controller, 'cascade', cascade);
+  }
   return ((returnArray===true) ? Array.from(cascade) : cascade);
 }
 
@@ -26,7 +35,7 @@ function _getControllerCascade(controller, returnArray=false) {
  * @returns {Set}                       The controller cascade.
  */
 function _getNamedControllerCascade(component, name) {
-  return bolt.annotation(component).get("controllers").get(name)
+  return bolt.annotation(component).get("controllers").get(name);
 }
 
 /**
@@ -40,6 +49,13 @@ function _getNamedControllerCascade(component, name) {
  */
 function get(controller, name) {
   if (name === '$parent') return createComponentScope(controller);
+  if (name === '$me') {
+    let callee = xStackFindProxy.exec((new Error).stack);
+    let cascade = _getControllerCascade(controller, true)
+        .map(controller=>controller[callee[1]])
+        .filter(method=>method);
+    if (cascade.find(method=>(bolt.annotation(method, 'filePath') === callee[2]))) return new Set(cascade);
+  }
   if (controller.hasOwnProperty(name)) return controller[name];
   let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
   if (found) return found[name];
@@ -240,7 +256,7 @@ function ownKeysComponent(controllers) {
 function createComponentScope(controller) {
   let component = ((controller instanceof bolt.BoltComponent) ? controller : bolt.annotation(controller, 'parent'));
 
-  if (_memory.has(component.controllers)) return _memory.get(component.controllers);
+  if (_memory.has(component.controllers, 'componentScope')) return _memory.get(component.controllers, 'componentScope');
   let scope = new Proxy(component.controllers, {
     apply: applyComponent,
     defineProperty,
@@ -255,7 +271,7 @@ function createComponentScope(controller) {
     set: setComponent,
     setPrototypeOf
   });
-  _memory.set(component.controllers, scope);
+  _memory.set(component.controllers, scope, 'componentScope');
 
   return scope;
 }
@@ -271,7 +287,7 @@ function createControllerScope(controller) {
   let component = bolt.annotation(controller, 'parent');
   let name = bolt.annotation(controller, 'name');
 
-  if (_memory.has(component.controllers[name])) return _memory.get(component.controllers[name]);
+  if (_memory.has(component.controllers[name], 'controllerScope')) return _memory.get(component.controllers[name], 'controllerScope');
   let scope = new Proxy(component.controllers[name], {
     apply,
     defineProperty,
@@ -286,7 +302,7 @@ function createControllerScope(controller) {
     set,
     setPrototypeOf
   });
-  _memory.set(scope);
+  _memory.set(component.controllers[name], scope, 'controllerScope');
 
   return scope;
 }

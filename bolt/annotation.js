@@ -1,6 +1,7 @@
 'use strict';
 
-const __lookup = new WeakMap();
+const Memory = require('./memory').Memory;
+const _memory = new Memory();
 const __undefined = Symbol("undefined");
 const xSourceGetBlockStart = /^.*?\{/;
 const xSourceGetBlockEnd = /\}.*?$/;
@@ -24,12 +25,7 @@ const xGetAnnotation = /.*?\@annotation\s+(.*?)\s(.*)/;
  * @returns {*|Map}                                   The key value (if no value given) or the Map for given reference.
  */
 function annotation(ref, key=__undefined, value=__undefined) {
-  let _lookup = __lookup.get(ref);
-  if (!_lookup) {
-    __lookup.set(ref, new Map());
-    _lookup = __lookup.get(ref);
-  }
-
+  let _lookup = _memory.get(ref);
   if (key === __undefined) return _lookup;
   if (bolt.isString(key)) {
     if (value !== __undefined) _lookup.set(key, value);
