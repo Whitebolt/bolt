@@ -138,5 +138,5 @@ function loadComponents(app, roots=app.config.root) {
 
 
 module.exports = {
-  loadComponents
+  loadComponents, BoltComponent
 };

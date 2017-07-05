@@ -1,5 +1,8 @@
 'use strict';
 
+const util = require('util');
+const _memory = new WeakMap();
+
 /**
  * Get the controller cascade for a given controller.
  *
@@ -27,7 +30,7 @@ function _getNamedControllerCascade(component, name) {
 }
 
 /**
- * Proxy get() function.
+ * Proxy get() method for controller..
  *
  * @throws ReferenceError
  *
@@ -36,34 +39,47 @@ function _getNamedControllerCascade(component, name) {
  * @returns {*}                   The property value.
  */
 function get(controller, name) {
+  if (name === '$parent') return createComponentScope(controller);
   if (controller.hasOwnProperty(name)) return controller[name];
   let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
   if (found) return found[name];
-  throw new ReferenceError(`Property/Method ${name} does not exist for given controller.`)
+  if (!bolt.isSymbol(name) && (name !== "inspect")) {
+    throw new ReferenceError(`Property/Method ${name} does not exist for given controller.`);
+  }
 }
 
 /**
- * Proxy has() method
+ * Proxy has() method for controller.
  *
  * @param {Object} controller     Controller to do has() check on.
  * @param {string} name           The property to check.
  * @returns {boolean}             Does the controller have the given property/method?
  */
 function has(controller, name) {
-  return _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
+  let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
+  return (found || controller.hasOwnProperty(name));
 }
 
 /**
- * Proxy set() method.  Will throw an error as no setting allowed.
+ * Proxy set() method for controller.  Will throw an error as no setting allowed.
  *
  * @throws RangeError
  */
 function set() {
-  throw new RangeError('Cannot set properties or methods on controllers after initialisation');
+  throw new RangeError('Cannot set properties or methods on controllers after initialisation.');
 }
 
 /**
- * Proxy ownKeys() method
+ * Proxy set() method for component.  Will throw an error as no setting allowed.
+ *
+ * @throws RangeError
+ */
+function setComponent() {
+  throw new RangeError('Cannot set new controllers after initialisation.');
+}
+
+/**
+ * Proxy ownKeys() for method for controller.
  *
  * @param {Object} controller    Controller to get keys for.
  * @returns {Array}              The controller keys.
@@ -72,6 +88,7 @@ function ownKeys(controller) {
   let casscade = _getControllerCascade(controller);
   let keys = new Set();
   casscade.forEach(controller=>Object.keys(controller=>keys.add(key)));
+  Object.keys(controller).forEach(key=>keys.add(key));
   return Array.from(keys);
 }
 
@@ -103,12 +120,14 @@ function preventExtensions() {
 }
 
 /**
- * Proxy getOwnPropertyDescriptor() method.
+ * Proxy getOwnPropertyDescriptor() method for controller.
  *
- * @returns {Object}     Property descriptor.
+ * @param {Object} controller   The controller to get for.
+ * @param {string} name         The controller method/property to get for.
+ * @returns {Object}            Property descriptor.
  */
 function getOwnPropertyDescriptor(controller, name) {
-  Object.getOwnPropertyDescriptor(get(controller, name));
+  return Object.getOwnPropertyDescriptor(controller, name);
 }
 
 /**
@@ -139,12 +158,106 @@ function getPrototypeOf() {
 }
 
 /**
- * Proxy apply() method.  Always throws.
+ * Proxy apply() method for controller.  Always throws.
  *
  * @throws SyntaxError
  */
 function apply() {
   throw new SyntaxError('Cannot run controller as if it is a function.')
+}
+
+/**
+ * Proxy apply() method for component.  Always throws.
+ *
+ * @throws SyntaxError
+ */
+function applyComponent() {
+  throw new SyntaxError('Cannot run component as if it is a function.')
+}
+
+/**
+ * Proxy get() method for component.
+ *
+ * @throws ReferenceError
+ *
+ * @param {Object} controllers      The controllers of given component.
+ * @param {string} name             The controller to get.
+ * @returns {Proxy}                 The controller scope to get.
+ */
+function componentGet(controllers, name) {
+  if (name === '$parent') {
+    let controllerNames = ownKeysComponent(controllers);
+    if (controllerNames.length) {
+      let component = bolt.annotation(get(controllers, controllerNames[0]));
+      if (component.parent) return createComponentScope(component.parent);
+    }
+  } else {
+    if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
+    if (!bolt.isSymbol(name) && (name !== "inspect")) {
+      throw new ReferenceError(`Controller ${name} does not exist on given component`);
+    }
+  }
+}
+
+/**
+ * Proxy getOwnPropertyDescriptor() method  for component.
+ *
+ * @param {Object} controllers    Controllers object.
+ * @param {string} name           The controller name to check.
+ * @returns {Object}              Property descriptor.
+ */
+function getOwnPropertyDescriptorComponent(controllers, name) {
+  return Object.getOwnPropertyDescriptor(controllers, name);
+}
+
+/**
+ * Proxy has() method for component.
+ *
+ * @param {Object} controllers    Controllers object.
+ * @param {string} name           The controller name to check.
+ * @returns {boolean}             Does the component have the given controller?
+ */
+function hasComponent(controllers, name) {
+  return controllers.hasOwnProperty(name);
+}
+
+/**
+ * Proxy ownKeys() for method for component.
+ *
+ * @param {Object} controllers   Controllers object to get keys on.
+ * @returns {Array}              The controller names.
+ */
+function ownKeysComponent(controllers) {
+  return Object.keys(controllers);
+}
+
+/**
+ * Create a scope for given component.  This is just in the controller scope.$parent.
+ *
+ * @param {Object|BoltComponent} controller     Controller to create a $parent for (or the actual component).
+ * @returns {Proxy}
+ */
+function createComponentScope(controller) {
+  let component = ((controller instanceof bolt.BoltComponent) ? controller : bolt.annotation(controller, 'parent'));
+
+  if (_memory.has(component.controllers)) return _memory.get(component.controllers);
+  let scope = new Proxy(component.controllers, {
+    apply: applyComponent,
+    defineProperty,
+    deleteProperty,
+    get: componentGet,
+    getOwnPropertyDescriptor: getOwnPropertyDescriptorComponent,
+    getPrototypeOf,
+    has: hasComponent,
+    isExtensible,
+    ownKeys: ownKeysComponent,
+    preventExtensions,
+    set: setComponent,
+    setPrototypeOf
+  });
+  _memory.set(component.controllers, scope);
+
+  return scope;
 }
 
 /**
@@ -158,7 +271,8 @@ function createControllerScope(controller) {
   let component = bolt.annotation(controller, 'parent');
   let name = bolt.annotation(controller, 'name');
 
-  return new Proxy(component.controllers[name], {
+  if (_memory.has(component.controllers[name])) return _memory.get(component.controllers[name]);
+  let scope = new Proxy(component.controllers[name], {
     apply,
     defineProperty,
     deleteProperty,
@@ -172,6 +286,9 @@ function createControllerScope(controller) {
     set,
     setPrototypeOf
   });
+  _memory.set(scope);
+
+  return scope;
 }
 
 module.exports = createControllerScope;

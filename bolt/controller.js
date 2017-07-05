@@ -208,6 +208,22 @@ function _freezeControllers(app) {
 }
 
 /**
+ * Set annotations on controllers
+ *
+ * @private
+ * @param {BoltApplication|BoltComponent} app     Application or component to set controller anotations on.
+ */
+function _setAnnotations(app) {
+  Object.keys(app.components || {}).forEach(componentName=>{
+    Object.keys(app.components[componentName].controllers).forEach(controllerName=>{
+      bolt.annotation(app.components[componentName].controllers[controllerName], 'parent', app.components[componentName]);
+      bolt.annotation(app.components[componentName].controllers[controllerName], 'name', controllerName);
+      _setAnnotations(app.components[componentName]);
+    });
+  });
+}
+
+/**
  * Setup event callback to add routes to controller just before the app is run.
  *
  * @private
@@ -220,6 +236,7 @@ function  _addControllerRoutesToApplication() {
       app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
     });
     _freezeControllers(app);
+    _setAnnotations(app);
   }, {id:'addControllerRoutesToApplication'});
 
   return true;
