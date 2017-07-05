@@ -1,5 +1,7 @@
 'use strict';
 
+const createControllerScope = require('./controller/scope');
+
 /**
  * @module bolt/bolt
  */
@@ -110,11 +112,13 @@ function _getControllerMethod(config) {
       if (!methods.has(httpMethod)) return component;
     }
 
-    return sourceMethod.apply(controller, params.map(param=>{
+    return sourceMethod.apply(createControllerScope(controller), params.map(param=>{
       if (injectors.hasOwnProperty(param)) return injectors[param](component);
       if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
     }));
   };
+
+  bolt.annotation(sourceMethod, 'controllerMethod', method);
 
   return method;
 }
@@ -157,6 +161,7 @@ function _setControllerRoutes(config) {
 function _assignControllerRoutes(component, controller, controllerName) {
   let app = bolt.getApp(component);
   bolt.addDefaultObjects(app, "controllerRoutes");
+  _setComponentAndControllerAnnotations(component, controller, controllerName);
 
   Object.keys(controller).forEach(name=>{
     let sourceMethod = controller[name];
@@ -167,6 +172,24 @@ function _assignControllerRoutes(component, controller, controllerName) {
   });
 
   return app.controllerRoutes;
+}
+
+/**
+ * Add annotations to controllers and components to allow linking between them and referencing of different
+ * cascading controllers.
+ *
+ * @param {BoltComponent} component       The component to annotate.
+ * @param {Object} controller             The controller to annotate.
+ * @param {string} controllerName         The controller name.
+ */
+function _setComponentAndControllerAnnotations(component, controller, controllerName) {
+  bolt.annotation(controller, 'parent', component);
+  bolt.annotation(controller, 'name', controllerName);
+  let componentAnnotations = bolt.annotation(component);
+  if (!componentAnnotations.has('controllers')) componentAnnotations.set('controllers', new Map());
+  let componentControllers = componentAnnotations.get('controllers');
+  if (!componentControllers.has(controllerName)) componentControllers.set(controllerName, new Set());
+  componentControllers.get(controllerName).add(controller);
 }
 
 /**
