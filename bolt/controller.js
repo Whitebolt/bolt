@@ -2,6 +2,7 @@
 
 const createControllerScope = require('./controller/scope');
 
+
 /**
  * @module bolt/bolt
  */
@@ -103,8 +104,9 @@ function _addAnnotationsToControllerMethods(config) {
  */
 function _getControllerMethod(config) {
   let {sourceMethod, controller} = config;
-  let params = bolt.parseParameters(sourceMethod);
+  if (bolt.annotation(sourceMethod, 'controllerMethod')) return bolt.annotation(sourceMethod, 'controllerMethod');
 
+  let params = bolt.parseParameters(sourceMethod);
   let method = component=>{
     let methods = bolt.annotation(method, 'methods');
     if (methods) {
