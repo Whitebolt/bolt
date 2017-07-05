@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const util = require('util');
 const Memory = require('../memory').Memory;
 

@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const __undefined = Symbol("undefined");
 
 /**

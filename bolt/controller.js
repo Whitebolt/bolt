@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const createControllerScope = require('./controller/scope');
 
 
@@ -315,7 +319,7 @@ function _loadControllers(component, roots, importObj) {
 function loadControllers(component, roots, controllers=component.controllers) {
   return bolt.fire(
     ()=>_loadControllers(component, roots, controllers), 'loadControllers', component
-  ).then(() => component);
+  ).then(()=>component);
 }
 
 module.exports = {

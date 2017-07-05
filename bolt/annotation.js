@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @module bolt/bolt
+ */
+
 const Memory = require('./memory').Memory;
 const _memory = new Memory();
 const __undefined = Symbol("undefined");
