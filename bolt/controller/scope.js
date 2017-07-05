@@ -65,7 +65,7 @@ function set() {
 /**
  * Proxy ownKeys() method
  *
- * @param {Object} controller     Controller to do has() check on.
+ * @param {Object} controller    gi Controller to do has() check on.
  * @returns {Array}               The controller keys.
  */
 function ownKeys(controller) {
