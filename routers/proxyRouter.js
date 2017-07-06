@@ -5,12 +5,27 @@ const proxy = require('express-http-proxy');
 const ejs = require('ejs');
 const iconv = require('iconv-lite');
 
-
+/**
+ * Test if content matches a type in a given array.
+ *
+ * @private
+ * @param {string} type               Type to lookup.
+ * @param {Array|string} matchType    Types to match against.
+ * @returns {boolean}                 Is it a match?
+ */
 function contentIsType(type, matchType) {
   let matchTypes = bolt.makeArray(matchType);
   return ((type.filter(_type=>(bolt.indexOf(matchTypes, _type) !== -1))).length > 0);
 }
 
+/**
+ * Get encoding in types array.
+ *
+ * @private
+ * @param {Array} type                        The types array to search for encoding in.
+ * @param {string} [defaultEncoding='utf-8']  The default encoding to return if encoding not found.
+ * @returns {string}                          The encoding string.
+ */
 function getEncodingOfType(type, defaultEncoding='utf-8') {
   if (type.length <= 1) return defaultEncoding;
   let encodings = type
@@ -20,16 +35,38 @@ function getEncodingOfType(type, defaultEncoding='utf-8') {
   return (encodings.length ? encodings.shift() : defaultEncoding);
 }
 
+/**
+ * Get content types.
+ *
+ * @private
+ * @param {external:express:request} res      The response object.
+ * @returns {Array}                           Content typesarray.
+ */
 function getTypesArray(res) {
   return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
 }
 
+/**
+ * Function to parse returned data for ejs.
+ *
+ * @private
+ * @param {Object} options                    Ejs options.
+ * @param {external:express:response} req     The request object.
+ * @returns {Promise.<string>}                Parsed data.
+ */
 function parseReturnedData(options, req) {
   if (options.text.indexOf('<'+options.options.delimiter) === -1) return Promise.resolve(options.text);
   let template = bolt.compileTemplate(options);
   return Promise.resolve(template({}, req, {}));
 }
 
+/**
+ * Parse ejs content where type is set for paring before sending back to user.
+ *
+ * @private
+ * @param {Object} options    Options.
+ * @returns {Object}          Promise resolving to options after content parsed (or not).
+ */
 function _ejsIntercept(options) {
   if (!contentIsType(options.type, options.proxyConfig.proxyParseForEjs)) return Promise.resolve(options);
 
@@ -39,6 +76,14 @@ function _ejsIntercept(options) {
   });
 }
 
+/**
+ * Intercept handler.
+ *
+ * @private
+ * @param {BoltApplication} app     The bolt application.
+ * @param {Object} appProxyConfig   Proxy options.
+ * @returns {Function}              The intercept function.
+ */
 function _initIntercept(app, proxyConfig) {
   return (rsp, data, req, res)=>{
     let type = getTypesArray(res);
@@ -76,6 +121,15 @@ function _initIntercept(app, proxyConfig) {
   };
 }
 
+/**
+ * Create and add a request path resolver function if one or mote is defined in the config.
+ *
+ * @private
+ * @param {BoltApplication} app     The bolt application.
+ * @param {Object} appProxyConfig   Proxy options.
+ * @param {Object} config           Proxy config object.
+ * @returns {Function}              The request path resolver function.
+ */
 function _initSlugger(app, appProxyConfig, config) {
   let _slugger = bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
     config.proxyReqPathResolver = slugger(appProxyConfig);
@@ -87,6 +141,15 @@ function _initSlugger(app, appProxyConfig, config) {
   }
 }
 
+/**
+ * Create and add an intercept function if one or more are defined in the config.
+ *
+ * @private
+ * @param {BoltApplication} app     The bolt application.
+ * @param {Object} appProxyConfig   Proxy options.
+ * @param {Object} config           Proxy config object.
+ * @returns {Promise.<Object>}      Promise resolving to mutated config object.
+ */
 function _initInterceptModule(app, appProxyConfig, config) {
   return bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
     appProxyConfig.intercepts.push(intercept);
@@ -94,6 +157,14 @@ function _initInterceptModule(app, appProxyConfig, config) {
   });
 }
 
+/**
+ * Create a decorate body function.
+ *
+ * @private
+ * @param {BoltApplication} app     The bolt application.
+ * @param {Object} appProxyConfig   Proxy options.
+ * @returns {Function}              The decorate body function.
+ */
 function _initBodyDecorateRequest(app, appProxyConfig) {
   return (bodyContent, srcReq)=>{
     if (bolt.isPlainObject(bodyContent)) {
@@ -105,6 +176,14 @@ function _initBodyDecorateRequest(app, appProxyConfig) {
   };
 }
 
+/**
+ * Create a decorate request function.
+ *
+ * @private
+ * @param {BoltApplication} app     The bolt application.
+ * @param {Object} appProxyConfig   Proxy options.
+ * @returns {Function}              Decorate request function.
+ */
 function _initOptDecorateRequest(app, appProxyConfig) {
   return (proxyReqOpts, srcReq)=>{
     if (appProxyConfig.host) proxyReqOpts.headers.host = appProxyConfig.host;
@@ -112,6 +191,13 @@ function _initOptDecorateRequest(app, appProxyConfig) {
   };
 }
 
+/**
+ *
+ * @private
+ * @param {BoltApplication} app     The bolt application to apply router to.
+ * @param appProxyConfig            Proxy options.
+ * @returns {*}
+ */
 function _proxyRouter(app, appProxyConfig) {
   let config = {
     reqAsBuffer: true,
@@ -130,6 +216,13 @@ function _proxyRouter(app, appProxyConfig) {
   return proxy(appProxyConfig.forwardPath, config);
 }
 
+/**
+ * The proxy router.  Router,which can use bolt as a proxy server.
+ *
+ * @public
+ * @param {BoltApplication} app     The bolt application to apply router to.
+ * @returns {Object}                The router object.
+ */
 function proxyRouter(app) {
   // @annotation priority 10
 
