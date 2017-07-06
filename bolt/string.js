@@ -13,8 +13,7 @@ const dateFormat = require('dateformat');
  * @param {string} txt        Text string to search.
  * @param {string} searcher   What to search for.
  * @param {string} replacer   What to replace with.
- * @returns {string}          The original text with the last occurrence of
- *                            'search' replaced with 'replace'.
+ * @returns {string}          The original text with the last occurrence of 'search' replaced with 'replace'.
  */
 function replaceLast(txt, searcher, replacer) {
   const n = txt.lastIndexOf(searcher);
@@ -46,8 +45,8 @@ function randomString(length=32) {
 }
 
 /**
- * Split a string using the given separator and trim the array items of
- * leading/trailing spaces. Also remove empty items.
+ * Split a string using the given separator and trim the array items of leading/trailing spaces. Also remove
+ * empty items.
  *
  * @public
  * @param {string} value      Text to split and trim.

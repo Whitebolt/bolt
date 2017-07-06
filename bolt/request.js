@@ -40,33 +40,18 @@ function getPathPartsFromRequest(req) {
  *
  * @public
  * @param {Object} obj                                Object to convert.
- * @param {string|Object} [splitter='&']              Splitter between
- *                                                    string values.
- *                                                    If object then
- *                                                    assume options object.
- * @param {string} splitter.splitter                  Splitter between
- *                                                    string values.
- * @param {string} [splitter.defaultValue=undefined]  Default value when key
- *                                                    is present but has
- *                                                    no value.
- * @param {boolean} [splitter.addEquals=false]        Whether to add an equals
- *                                                    if no value, sometimes
- *                                                    equals is needed
+ * @param {string|Object} [splitter='&']              Splitter between string values. If object then assume
+ *                                                    options object.
+ * @param {string} splitter.splitter                  Splitter between string values.
+ * @param {string} [splitter.defaultValue=undefined]  Default value when key is present but has no value.
+ * @param {boolean} [splitter.addEquals=false]        Whether to add an equals if no value, sometimes equals is needed
  *                                                    when proxying.
- * @param {string} [defaultValue=undefined]           Default value when key
- *                                                    is present but has no
- *                                                    value.  If undefined
- *                                                    then leave blank. This
- *                                                    means you can have
- *                                                    properties without
- *                                                    values, eg.
- *                                                    field1=1&field2&field3
- * @param {boolean} [addEquals=false]                 Whether to add an equals
- *                                                    if no value, sometimes
- *                                                    equals is needed
+ * @param {string} [defaultValue=undefined]           Default value when key is present but has no value.  If undefined
+ *                                                    then leave blank. This means you can have properties without
+ *                                                    values, eg. field1=1&field2&field3
+ * @param {boolean} [addEquals=false]                 Whether to add an equals if no value, sometimes equals is needed
  *                                                    when proxying.
- * @returns {string}                                  The url query
- *                                                    style string.
+ * @returns {string}                                  The url query style string.
  */
 function objectToQueryString(obj, splitter='&', defaultValue=undefined, addEquals=false) {
   let queryString = [];
@@ -86,14 +71,12 @@ function objectToQueryString(obj, splitter='&', defaultValue=undefined, addEqual
 }
 
 /**
- * This is the opposite of objectToQueryString and converts a url query
- * string to an object.
+ * This is the opposite of objectToQueryString and converts a url query string to an object.
  *
  * @public
  * @param queryString               The query string to parse.
  * @param {string} [splitter='&']   Splitter between string values.
- * @param {string} [defaultValue]   Default value when key is present but has
- *                                  no value.  This defines what the object
+ * @param {string} [defaultValue]   Default value when key is present but has no value.  This defines what the object
  *                                  value is set to for these items.
  * @returns {Object}                The parse query object.
  */
@@ -124,8 +107,7 @@ function getUrlQueryObject(url) {
 }
 
 /**
- * Add a query to the url,maintaining any query already present but add or
- * overwriting from the supplied query object.
+ * Add a query to the url,maintaining any query already present but add or overwriting from the supplied query object.
  *
  * @public
  * @param {string} url          The url to add to.

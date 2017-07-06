@@ -9,9 +9,9 @@ const parser = require('shortcode-insert')();
  * @public
  * @param {BoltComponent} component    Component object that the shortcode relates to.
  * @param doc {Object}                 Document to parse for shortcodes.
- * @param [properties=[]]               Document properties to parse shortcodes in. Optional, if not supplied just
- *                                      returns fulfilled promise.
- * @returns {Promise}           Promise resolving when all shortcode parsing done.
+ * @param [properties=[]]              Document properties to parse shortcodes in. Optional, if not supplied just
+ *                                     returns fulfilled promise.
+ * @returns {Promise}                  Promise resolving when all shortcode parsing done.
  */
 function parseShortcodes(component, doc, properties=[]) {
   return Promise.all(properties.map(property=>{

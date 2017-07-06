@@ -14,7 +14,11 @@ const __undefined = Symbol("undefined");
  */
 class Memory extends WeakMap {
   constructor(...params) {
-    super(...params);
+    if ((params.length === 1) && Array.isArray(params[0])) {
+      super(params[0]);
+    } else {
+      super(params);
+    }
   }
 
   /**

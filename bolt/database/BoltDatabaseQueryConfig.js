@@ -1,6 +1,6 @@
 'use strict';
 
-const {FreezeSet} = require('../array');
+const {FreezeSet} = require('../FreezeSet');
 
 const defaults = Object.freeze({
   accessLevel: 'read',

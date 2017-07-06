@@ -62,7 +62,7 @@ function _loadRoutes(app, roots) {
 }
 
 /**
- * Load routers for suplied bolt application.
+ * Load routers for supplied bolt application.
  *
  * @fires beforeLoadRoutes
  * @fires afterLoadRoutes

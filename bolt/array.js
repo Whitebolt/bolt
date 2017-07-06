@@ -4,8 +4,6 @@
  * @module bolt/bolt
  */
 
-const frozen = new WeakSet();
-
 /**
  * Convert a non-array to an array using the formula: if =undefined then make empty array, otherwise create new array
  * making the first item the supplied value.
@@ -116,38 +114,6 @@ function indexOfEquiv(ary, value) {
   return bolt.findIndex(ary, _value=>bolt.isEqual(value, _value));
 }
 
-/**
- * A set, which can be frozen. Once the freeze method is called, no other values can be added or removed.
- *
- * @class
- * @extends Set
- */
-class FreezeSet extends Set {
-  constructor(...params) {
-    if ((params.length === 1) && Array.isArray(params[0])) {
-      super(params[0]);
-    } else {
-      super(params);
-    }
-  }
-
-  add(value) {
-    if (!frozen.has(this)) return super.add(value);
-  }
-
-  clear() {
-    if (!frozen.has(this)) return super.clear();
-  }
-
-  delete(value) {
-    if (!frozen.has(this)) return super.delete(value);
-  }
-
-  freeze() {
-    frozen.add(this);
-  }
-}
-
 module.exports = {
-  makeArray, prioritySorter, indexOfEquiv, FreezeSet
+  makeArray, prioritySorter, indexOfEquiv
 };

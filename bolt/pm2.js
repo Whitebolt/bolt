@@ -9,8 +9,7 @@ const processFileProperties = Object.keys(require('pm2/lib/API/schema.json'));
 
 
 /**
- * Remove current named instance that matches app named in supplied config (if
- * it exists).
+ * Remove current named instance that matches app named in supplied config (if it exists).
  *
  * @private
  * @param {Object} pm2Config    The pm2 application object.
@@ -58,8 +57,7 @@ function _startInstance(pm2Config, boltConfig) {
  * @static
  * @public
  * @param {boltConfig} siteConfig   The bolt configuration options.
- * @returns {Promise.<Object>}      Promise resolving to pm2
- *                                  application object.
+ * @returns {Promise.<Object>}      Promise resolving to pm2 application object.
  */
 function pm2LaunchApp(siteConfig) {
   const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root || []) || {}).boltConfigProperties;

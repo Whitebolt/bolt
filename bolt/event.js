@@ -46,9 +46,8 @@ function hook(hookName, hookFunction, options) {
 }
 
 /**
- * Connect to a specific event.  Events will fire and then the code continues
- * not waiting for connected functions to run.  These functions will run when
- * server is able to process them.
+ * Connect to a specific event.  Events will fire and then the code continues not waiting for connected functions to
+ * run.  These functions will run when server is able to process them.
  *
  * @public
  * @param {string} eventName                Hook name to connect to.
@@ -78,21 +77,18 @@ function once(eventName, eventCallback, options) {
 }
 
 /**
- * Subscribe to a specific topic.  Topics are not the same as events or hooks.
- * Events and hooks are about stuff that has happened, topics are designed for
- * data streams.  Although, events and topics could be used inter-changeably,
- * they exist separately so streaming data has it's own methods.
+ * Subscribe to a specific topic.  Topics are not the same as events or hooks. Events and hooks are about stuff that has
+ * happened, topics are designed for data streams.  Although, events and topics could be used inter-changeably, they
+ * exist separately so streaming data has it's own methods.
  *
- * A good example of a topic might be the event log itself, one method could
- * subscribe to this stream to output to the console;  another method might
- * link the same stream to web-socket to be streamed to an admin users
- * browser console.
+ * A good example of a topic might be the event log itself, one method could subscribe to this stream to output to the
+ * console;  another method might link the same stream to web-socket to be streamed to an admin users browser console.
  *
- * Topic also, have a hierarchy so messages submitted on channel /A/AA/AAA will
- * be heard by handlers for /A, /A/AA and /A/AA/AAA.
+ * Topic also, have a hierarchy so messages submitted on channel /A/AA/AAA will be heard by handlers for /A, /A/AA
+ * and /A/AA/AAA.
  *
- * @note All topics will also fire a hook of the same name; so, you can hook into
- * topics; although, you would normally only hook into events.
+ * @note All topics will also fire a hook of the same name; so, you can hook into topics; although, you would normally
+ * only hook into events.
  *
  * @public
  * @param {string} topicName                Topic name to subscribe to.
@@ -109,14 +105,9 @@ function subscribe(topicName, topicHandler, options) {
  * Switch off any subscriptions for given event/hook/topic for given type.
  *
  * @public
- * @param {string} hookName                             Hookname(s) to
- *                                                      unsuscribe from. Hooks
- *                                                      seperated by commas.
- * @param {string} [hookTypes=[events, topics, hooks]]  The event type to
- *                                                      unsubscribe from
- *                                                      (event, topic,
- *                                                      or hook). Types
- *                                                      seperated by commas.
+ * @param {string} hookName                             Hookname(s) to unsuscribe from. Hooks seperated by commas.
+ * @param {string} [hookTypes=[events, topics, hooks]]  The event type to unsubscribe from (event, topic, or hook).
+ *                                                      Types separated by commas.
  */
 function off(hookName, hookTypes) {
   let hookNames = bolt.splitAndTrim(hookName, ',');
@@ -131,28 +122,20 @@ function off(hookName, hookTypes) {
 }
 
 /**
- * Fire a specified event/hook, passing the given params to any
- * subscribed functions.  Here events and hooks are the same.  Any fired
- * data here can be connected to via either or 'on' or 'hook'; the only
- * difference is whether fire waits for a return before continuing. Fire waits
- * for hooks but not ons.
+ * Fire a specified event/hook, passing the given params to and subscribed functions.  Here events and hooks are the
+ * same.  Any fired data here can be connected to via either or 'on' or 'hook'; the only difference is whether fire
+ * waits for a return before continuing. Fire waits for hooks but not ons.
  *
- * If a function is passed in then fire a before and after event with the
- * supplied function executing between them. So if you have an function
- * passed-in with a hookName of 'init': fire 'beforeInit', fire the function,
- * then fire 'afterInit'.  The resolved value of the function is also passed
- * onto the end of the parameters to the after event. The passed function
- * should return a promise.
+ * If a function is passed in then fire a before and after event with the supplied function executing between them. So
+ * if you have an function passed-in with a hookName of 'init': fire 'beforeInit', fire the function, then fire
+ * 'afterInit'.  The resolved value of the function is also passed onto the end of the parameters to the after event.
+ * The passed function should return a promise.
  *
  * @public
- * @param {string|Function}   hookName  Hook name to fire. If a function is
- *                                      passed, assume a call-through is
- *                                      required and receive the hookname from
- *                                      the first item in the params array.
- * @param {Array} ...params             Parameters to pass to the subscribed
- *                                      functions.
- * @returns {Promise}                   Promise fulfilled when all hooks fired.
- *                                      The in-sequence running will only work
+ * @param {string|Function}   hookName  Hook name to fire. If a function is passed, assume a call-through is required
+ *                                      and receive the hookname from the first item in the params array.
+ * @param {Array} ...params             Parameters to pass to the subscribed functions.
+ * @returns {Promise}                   Promise fulfilled when all hooks fired. The in-sequence running will only work
  *                                      if you wait for this promise to return.
  */
 function fire(hookName, ...params) {
@@ -165,9 +148,8 @@ function fire(hookName, ...params) {
 }
 
 /**
- * Test whether a hook (or event/topic) has fired at least once. If a hook has
- * already fired you may actually want to run the callback instead of setting
- * it as an on.
+ * Test whether a hook (or event/topic) has fired at least once. If a hook has already fired you may actually want to
+ * run the callback instead of setting it as an on.
  *
  * @todo  Provide a means of always firing a hook when hook already fired or waiting till it fires if not.
  *
@@ -186,23 +168,16 @@ function fired(hookName, type='hooks') {
 /**
  * Stream the given data via the given topic channel.
  *
- * If a function is passed in then fire a before and after event with the
- * supplied function executing between them. So if you have an function
- * passed-in with a hookName of 'init': fire 'beforeInit', fire the function,
- * then fire 'afterInit'.  The resolved value of the function is also passed
- * onto the end of the parameters to the after event. The passed function
- * should return a promise.
+ * If a function is passed in then fire a before and after event with the supplied function executing between them. So
+ * if you have an function passed-in with a hookName of 'init': fire 'beforeInit', fire the function, then fire
+ * 'afterInit'.  The resolved value of the function is also passed onto the end of the parameters to the after event.
+ * The passed function should return a promise.
  *
  * @public
- * @param {string|Function} topicName   Topic name to fire. If a function is
- *                                      passed, assume a call-through is
- *                                      required and receive the topic name
- *                                      from the first item in the
- *                                      params array.
- * @param {Array} ...params                Parameters to pass to the subscribed
- *                                      functions.
- * @returns {Promise}                   Promise fulfilled when all hooks fired.
- *                                      The in-sequence running will only work
+ * @param {string|Function} topicName   Topic name to fire. If a function is passed, assume a call-through is required
+ *                                      and receive the topic name from the first item in the params array.
+ * @param {Array} ...params             Parameters to pass to the subscribed functions.
+ * @returns {Promise}                   Promise fulfilled when all hooks fired. The in-sequence running will only work
  *                                      if you wait for this promise to return.
  */
 function broadcast(topicName, ...params) {
@@ -218,12 +193,9 @@ function broadcast(topicName, ...params) {
  * Retrieve the eventName and call-through function.
  *
  * @private
- * @param eventName {string|Function}                 The event name or call-
- *                                                    through function.
- * @param params {Array}                              Parameters to pass to
- *                                                    the event.
- * @returns {Array}   The calculated event
- *                                                    name nd call-through.
+ * @param eventName {string|Function}       The event name or call- through function.
+ * @param params {Array}                    Parameters to pass to the event.
+ * @returns {Array}                         The calculated event name nd call-through.
  */
 function _getCallerAndEventName(eventName, params) {
   let callThrough;
@@ -255,13 +227,11 @@ function _getTopicNames(topicName) {
 }
 
 /**
- * Setup a subscription for a specific hook, event or topic with given handler
- * function and options.
+ * Setup a subscription for a specific hook, event or topic with given handler function and options.
  *
  * @private
  * @param {string} hookName     Hook/Event/Topic name to connect to.
- * @param {Function} handler    Handler function to call when hook, event or
- *                              topic is fired.
+ * @param {Function} handler    Handler function to call when hook, event or topic is fired.
  * @param {Object} options      Options object for this on setup.
  * @param {Map} lookup          Map object to lookup handlers in.
  * @returns {Function}          An unregister function for this connection.
@@ -276,8 +246,7 @@ function _on(hookName, handler, options, lookup) {
  *
  * @private
  * @param {string} hookName     Hook/Event/Topic name to connect to.
- * @param {Function} handler    Handler function to call when hook, event or
- *                              topic is fired.
+ * @param {Function} handler    Handler function to call when hook, event or topic is fired.
  * @param {Object} options      Options object for this on setup.
  * @param {Map} lookup          Map object to lookup handlers in.
  * @returns {string}            A id for this specific on.
@@ -327,9 +296,8 @@ function _onCreateUnregister(hookName, lookup, id) {
 }
 
 /**
- * Sorter for an array of hooks or events according to their priority.  This is
- * not so important with events which are run as and when.  However, specific
- * order could be vital with hooks.
+ * Sorter for an array of hooks or events according to their priority.  This is not so important with events which are
+ * run as and when.  However, specific order could be vital with hooks.
  *
  * @param {number} a          First array item to compare.
  * @param {number} b          Second array item to compare.
@@ -341,14 +309,13 @@ function _hookPrioritySorter(a, b) {
 }
 
 /**
- * Fire a given hook/event/topic with the given parameters. Hooks are fired
- * in-sequence where-as events and topics are fired as and when.
+ * Fire a given hook/event/topic with the given parameters. Hooks are fired in-sequence where-as events and topics are
+ * fired as and when.
  *
  * @private
  * @param {string} hookName Event(s), Hook(s) or Topic(s) to fire.
  * @param {Array} params    Parameters to pass to any handlers.
- * @param {Map} lookup      Lookup to use (either topics or events - never
- *                          hooks as this is always fired).
+ * @param {Map} lookup      Lookup to use (either topics or events - never hooks as this is always fired).
  * @returns {Promise}       The promise fulfilled when all hooks fired.
  */
 function _fire(hookName, params, lookup) {
@@ -362,18 +329,16 @@ function _fire(hookName, params, lookup) {
 }
 
 /**
- * Fire an event/topic/hook through a function.  So if I have function and a
- * hookname: fire a before event, fire the function, then fire an after event.
- * The resolved value of the function is also passed onto the end of the
- * parameters to the after event. The passed function should return a promise.
+ * Fire an event/topic/hook through a function.  So if I have function and a hookname: fire a before event, fire the
+ * function, then fire an after event. The resolved value of the function is also passed onto the end of the parameters
+ * to the after event. The passed function should return a promise.
  *
  * @private
  * @param {string} hookName         The hook name(s).
  * @param {Function} callThrough    The call-through function.
  * @param {Array} params            The params to pass.
  * @param {Map} lookup              The events/hooks/topics lookup map to use.
- * @returns {Promise}               Promise resolved after call-through done
- *                                  both the before and after events fired.
+ * @returns {Promise}               Promise resolved after call-through done both the before and after events fired.
  */
 function _fireThrough(hookName, callThrough, params, lookup) {
   hookName = bolt.splitAndTrim(hookName, ',');
@@ -393,8 +358,7 @@ function _fireThrough(hookName, callThrough, params, lookup) {
  * @private
  * @param {string} hookName Event, Hook or Topic to fire.
  * @param {Array} params    Parameters to pass to any handlers.
- * @param {Map} lookup      Lookup to use (either topics or events - never
- *                          hooks as this is always fired).
+ * @param {Map} lookup      Lookup to use (either topics or events - never hooks as this is always fired).
  */
 function _fireEvents(hookName, params, lookup) {
   if (lookup.has(hookName)) {
@@ -413,8 +377,7 @@ function _fireEvents(hookName, params, lookup) {
  * @private
  * @param {string} hookName Event, Hook or Topic to fire.
  * @param {Array} params    Parameters to pass to any handlers.
- * @returns {Promise}       Promise fulfilled when all hooks fired.  The
- *                          in-sequence running will only work if you wait
+ * @returns {Promise}       Promise fulfilled when all hooks fired.  The in-sequence running will only work if you wait
  *                          for this promise to return.
  */
 function _fireHooks(hookName, params) {

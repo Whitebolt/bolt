@@ -6,7 +6,7 @@
 
 const string = require('./string');
 
-const Memory = require('./memory').Memory;
+const {Memory} = require('./Memory');
 const _memory = new Memory();
 const __undefined = Symbol("undefined");
 const xSourceGetBlockStart = /^.*?\{/;
