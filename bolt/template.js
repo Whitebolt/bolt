@@ -15,7 +15,7 @@ const rxStartEndSlash = /^\/|\/$/g;
 
 const templateFunctions = {
   component: function (componentName, doc, req, parent) {
-    let _componentName = ('/' + componentName.replace(rxRelativeDir, this.__componentName)).replace('//', '/');
+    let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
     let method = _getMethod(_componentName, req.app);
     if (method) {
       Object.assign(this, {req, parent, doc});
@@ -221,10 +221,11 @@ function _getComponentOverridePaths(component) {
 function _getView2(viewName, componentName, req) {
   let parts = viewName.split('/');
   let _viewName = parts.pop();
-  let _componentName = (parts.join('/') + '/')
-    .replace(rxRelativeDir, componentName)
-    .replace(rxStartEndSlash, '')
-    .replace('/', '.components.');
+  let _componentName = bolt.replaceSequence(parts.join('/') + '/', [
+    [rxRelativeDir, componentName],
+    [rxStartEndSlash],
+    ['/', '.components.']
+  ]);
   return bolt.get(req, `app.components.${_componentName}.views.${_viewName}`);
 }
 

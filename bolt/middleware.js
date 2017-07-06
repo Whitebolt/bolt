@@ -4,6 +4,8 @@
  * @module bolt/bolt
  */
 
+const xStartDigitUnderscore = /^\d+_/;
+
 /**
  * Add properties to each method used by bolt.
  *
@@ -48,7 +50,7 @@ function _loadMiddleware(app, roots, importObj) {
     )
     .then(middleware=>{
       middleware.forEach(middleware => {
-        bolt.fire('ranMiddleware', bolt.annotation(middleware, 'id').replace(/^\d+_/, ''));
+        bolt.fire('ranMiddleware', bolt.annotation(middleware, 'id').replace(xStartDigitUnderscore, ''));
         middleware(app);
       });
       return app

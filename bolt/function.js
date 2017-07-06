@@ -1,7 +1,10 @@
 'use strict';
 
+const string = require('./string');
+
 const xPreFunctionParams = /\)[\s\S]*/;
 const xPostFunctionParams = /^.*?\(/;
+const getParameters = string.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
 
 /**
  * Parse the source of a function returning an array of parameter names.
@@ -11,11 +14,7 @@ const xPostFunctionParams = /^.*?\(/;
  * @returns {Array.<string>}           Array of parameter names.
  */
 function parseParameters(func) {
-  return (bolt.isString(func) ? func : func.toString())
-    .replace(xPreFunctionParams, '')
-    .replace(xPostFunctionParams, '')
-    .split(',')
-    .map(param=>param.trim());
+  return getParameters(func).split(',').map(param=>param.trim());
 }
 
 module.exports = {

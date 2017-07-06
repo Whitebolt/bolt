@@ -4,6 +4,8 @@
  * @module bolt/bolt
  */
 
+const string = require('./string');
+
 const Memory = require('./memory').Memory;
 const _memory = new Memory();
 const __undefined = Symbol("undefined");
@@ -11,6 +13,7 @@ const xSourceGetBlockStart = /^.*?\{/;
 const xSourceGetBlockEnd = /\}.*?$/;
 const xStartsWithAnnotationDef = /^\s*?\/\/\s*?\@annotation/;
 const xGetAnnotation = /.*?\@annotation\s+(.*?)\s(.*)/;
+const getSourceClosure = string.replaceSequence([[xSourceGetBlockStart],[xSourceGetBlockEnd]]);
 
 /**
  * Set an annotation against an object.  Generally, we would pass a function in here but in theory any object that is
@@ -51,10 +54,7 @@ function annotation(ref, key=__undefined, value=__undefined) {
  * @returns {Map|undefined}             The annotations maps for the given reference function/object.
  */
 function annotationsFromSource(func, ref=func) {
-  let source = (bolt.isString(func) ? func : func.toString())
-    .replace(xSourceGetBlockStart,'')
-    .replace(xSourceGetBlockEnd,'')
-    .trim();
+  let source = getSourceClosure(func).trim();
 
   if (xStartsWithAnnotationDef.test(source)) {
     let lines = source.split(/\n/).filter(line=>(line.trim() !== ''));

@@ -61,7 +61,33 @@ function splitAndTrim(value, splitter) {
     .filter(value=>(value!==''));
 }
 
+/**
+ * Perform a series of replacements on a string in sequence.
+ *
+ * @public
+ * @param {string|*} [txt]      Text to do replacements on.  If it is not a string try to convert to string
+ *                              via toString() method.
+ * @param {Array} sequence      Replacement sequence as an array in format
+ *                              [[<search-for>,<replacement>], [<search-for>,<replacement>]]. If replacement is not
+ *                              present then replace with a blank string. If txt is not supplied then return a
+ *                              replacer function that will accept text perform the given replacements.
+ * @returns {string}            Replacement text.
+ */
+function replaceSequence(txt, sequence) {
+  let _sequence = (sequence?sequence:txt);
+
+  let _replaceSequence = txt=>{
+    let _txt = (bolt.isString(txt) ? txt : txt.toString());
+    _sequence.forEach(operation=>{
+      _txt = _txt.replace(operation[0], operation[1] || '');
+    });
+    return _txt;
+  };
+
+  return (sequence?_replaceSequence(txt):_replaceSequence)
+}
+
 
 module.exports = {
-  replaceLast, randomString, splitAndTrim, dateFormat
+  replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence
 };

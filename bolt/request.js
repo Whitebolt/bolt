@@ -4,6 +4,8 @@
  * @module bolt/bolt
  */
 
+const xEndSlash = /\/$/;
+
 /**
  * Get the path from a url removing an trailing slashes.
  *
@@ -15,7 +17,7 @@
  * @returns {string}        The found path or '/'.
  */
 function getPathFromRequest(req) {
-  let path = req.path.trim().replace(/\/$/, '');
+  let path = req.path.trim().replace(xEndSlash, '');
 
   return ((path === '') ? '/' : path);
 }

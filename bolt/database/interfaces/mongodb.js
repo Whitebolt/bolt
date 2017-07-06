@@ -7,28 +7,28 @@ const mongo = require('mongodb');
  * Get a mongo url from given config object.
  *
  * @private
- * @param {BoltConfigDb} options    The database config connection object
+ * @param {BoltConfigDb} config     The database config connection object
  * @returns {string}                The connection url or blank string.
  */
-function _createMongoUrl(options) {
-  options.server = options.server || 'localhost';
-  options.port = options.port || 27017;
+function _createMongoUrl(config) {
+  config.server = config.server || 'localhost';
+  config.port = config.port || 27017;
 
-  return `mongodb://${_createMongoAuthenticationPart(options)}${options.server}:${options.port}/${options.database}${options.username ? '?authSource=' + options.adminDatabase : ''}`
+  return `mongodb://${_createMongoAuthenticationPart(config)}${config.server}:${config.port}/${config.database}${config.username ? '?authSource=' + config.adminDatabase : ''}`
 }
 
 /**
  * Create the authentication part of a database connection url from a database config object.
  *
  * @private
- * @param {BoltConfigDb} options    The database config connection object.
+ * @param {BoltConfigDb} config     The database config connection object.
  * @returns {string}                The authentication section of a database url.
  */
-function _createMongoAuthenticationPart(options) {
-  if (options.username) {
-    options.adminDatabase = options.adminDatabase || 'admin';
-    return encodeURIComponent(options.username)
-      + (options.password ? ':' + encodeURIComponent(options.password) : '')
+function _createMongoAuthenticationPart(config) {
+  if (config.username) {
+    config.adminDatabase = config.adminDatabase || 'admin';
+    return encodeURIComponent(config.username)
+      + (config.password ? ':' + encodeURIComponent(config.password) : '')
       + '@';
   }
 
@@ -44,15 +44,15 @@ function _createMongoAuthenticationPart(options) {
  * Connect to a mongo database.
  *
  * @public
- * @param {BoltConfigDb} options        The database config object.
- * @returns {Promise.<external:Db>}     The  mongo database instance object.
+ * @param {BoltConfigDb} config        The database config object.
+ * @returns {Promise.<external:Db>}    The  mongo database instance object.
  */
-function loadMongo(options) {
-  return mongo.MongoClient.connect(_createMongoUrl(options), {
+function loadMongo(config) {
+  return mongo.MongoClient.connect(_createMongoUrl(config), {
     uri_decode_auth: true,
     promiseLibrary: Promise
   }).then(results=>{
-    if (global.bolt && bolt.fire) bolt.fire('mongoConnected', options.database);
+    if (global.bolt && bolt.fire) bolt.fire('mongoConnected', config.database);
     return results;
   })
 }
