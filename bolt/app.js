@@ -121,7 +121,7 @@ function _getEventChannel(root, level, max) {
  * @returns {BoltApplication}      The express application instance.
  */
 function _createApp(config) {
-  return new boltApplication(config);
+  return new BoltApplication(config);
 }
 
 /**
@@ -229,7 +229,7 @@ function loadApplication(configPath) {
  *  @property {Object} templates              Templates
  *  @property {string} componentType          The componernt type, is constant "app".
  */
-class boltApplication extends express {
+class BoltApplication extends express {
   constructor(config) {
     super();
 
@@ -245,5 +245,5 @@ class boltApplication extends express {
 }
 
 module.exports = {
-  loadApplication, getApp, importIntoObject, boltApplication
+  loadApplication, getApp, importIntoObject, BoltApplication
 };

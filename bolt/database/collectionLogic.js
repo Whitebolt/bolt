@@ -2,7 +2,18 @@
 
 const rrulestr = require('rrule').rrulestr;
 const dateParser = require('ical-date-parser');
+const BoltDatabaseQueryConfig = require('./BoltDatabaseQueryConfig');
+const {prioritySorter} = require('../array');
+const _prioritySorter = prioritySorter({sortProperty:'_priority'});
 
+/**
+ * Get lookup ids for given access level.  These cascade so read includes edit and admin; edit includes read ...etc.
+ *
+ * @private
+ * @param {Object} acl              Acl field value.
+ * @param {string} accessLevel      Access level.
+ * @returns {Array.<string>}        The allowed ids for that level given acl object supplied.
+ */
 function _getAccessLevelLookup(acl, accessLevel) {
   if (accessLevel === 'read') {
     return (acl.security.administrators || []).concat(acl.security.readers || []).concat(acl.security.editors || [])
@@ -15,12 +26,29 @@ function _getAccessLevelLookup(acl, accessLevel) {
   return [];
 }
 
+/**
+ * Get the ids of the groups the current session user belongs to.
+ *
+ * @private
+ * @param {Object} session      Session object.
+ * @returns {Array.<string>}    Ids of groups session user belongs to.
+ */
 function _getAccessGroups(session) {
   let ids = (session.groups || []).map(group=>group._id).filter(id=>id);
   if (session && session.passport && session.passport.user) ids.unshift(session.passport.user);
   return ids;
 }
 
+/**
+ * Does at least one id a series of authorised ids fall within given group ids.
+ *
+ * @todo refactor to use find().
+ *
+ * @private
+ * @param {Array.<string>} groupIds         Group ids to test within.
+ * @param {Array.<string>} authorisedIds    Ids to test for.
+ * @returns {boolean}                       Is there a match?
+ */
 function _idIsInGroup(groupIds, authorisedIds) {
   let found;
   groupIds.every(groupId=>{
@@ -34,7 +62,16 @@ function _idIsInGroup(groupIds, authorisedIds) {
   return (found !== undefined);
 }
 
-function _isAuthorised(doc, session, accessLevel) {
+/**
+ * Is session user authjorised to view given document int its acl?
+ *
+ * @private
+ * @param {Object} doc                     The document to test authorisation on.
+ * @param {Object} session                 The session object.
+ * @param {string} [accessLevel='read']    The access level.
+ * @returns {boolean}                      Is session user authorised?
+ */
+function _isAuthorised(doc, session, accessLevel='read') {
   if (!doc) return false;
   if (!doc._acl) return false;
   if (!doc._acl.security) return false;
@@ -48,6 +85,13 @@ function _isAuthorised(doc, session, accessLevel) {
   return false;
 }
 
+/**
+ * Should current doc be visible at this moment in time according to the iCall RRules defined in the document acl.
+ *
+ * @private
+ * @param {Object} doc        The document to test authorisation on.
+ * @returns {boolean}         Should document be visible?
+ */
 function _isAuthorisedVisibility(doc) {
   if (doc && doc._acl && doc._acl.visibility && acl.visibility) {
     let ruleString = '';
@@ -87,30 +131,35 @@ function _isAuthorisedVisibility(doc) {
   return true;
 }
 
-function _parseOptions(options) {
-  options.accessLevel = options.accessLevel || 'read';
-  options.collection = options.collection || 'pages';
-  options.app = ((options.req && !options.app) ? options.req.app : options.app);
-  options.db = ((bolt.isString(options.db) && options.app) ? options.app.dbs[options.db] : options.db);
-  options.db = ((!options.db && options.app) ? options.app.db : options.db);
-  options.session = options.session || (options.req ? options.req.session : {});
-  if (options.id) options.id = bolt.mongoId(options.id);
-  if (Array.isArray(options.projection)) {
-    let temp = {};
-    options.projection.forEach(key=>{temp[key] = true;});
-    options.projection = temp;
-  }
-  if (!options.hasOwnProperty('filterByVisibility')) options.filterByVisibility = true;
-  if (!options.hasOwnProperty('filterByAccessLevel')) options.filterByAccessLevel = true;
-  if (!options.hasOwnProperty('filterUnauthorisedFields')) options.filterUnauthorisedFields = true;
+/**
+ *  @external express:request
+ *  @see {https://github.com/expressjs/express/blob/master/lib/request.js}
+ *
+ * @external ObjectId
+ * @see {https://github.com/mongodb/js-bson/blob/1.0-branch/lib/bson/objectid.js}
+*/
 
-  return options;
+/**
+ * Create a database config object from given options.
+ *
+ * @private
+ * @param {Object|BoltDatabaseQueryConfig} options      Config to pass to BoltDatabaseQueryConfig constructor.
+ * @returns {BoltDatabaseQueryConfig}                   The new BoltDatabaseQueryConfig instance or the original
+ *                                                      supplied parameter if it was a BoltDatabaseQueryConfig already.
+ */
+function _createBoltDatabaseQueryConfig(options) {
+  return ((options instanceof BoltDatabaseQueryConfig) ? options : new BoltDatabaseQueryConfig(options));
 }
 
-function _prioritySorter(a, b) {
-  return bolt.prioritySorter({priority: a._priority}, {priority: b._priority});
-}
-
+/**
+ * Remove fields that given session user should not see.
+ *
+ * @private
+ * @param {Object} doc            Doc to filter fields on.
+ * @param {Object} session        Session object.
+ * @param {string} accessLevel    Access level to apply
+ * @returns {Object}              Filtered doc.
+ */
 function _removeUnauthorisedFields(doc, session, accessLevel) {
   if (doc && doc._acl && doc._acl.fields) {
     Object.keys(doc._acl.fields || {})
@@ -130,90 +179,183 @@ function _removeUnauthorisedFields(doc, session, accessLevel) {
   return doc;
 }
 
+/**
+ * Remove fields added to doc during querying operation.
+ *
+ * @private
+ * @param {Object} doc            Document to filter fields from.
+ * @param {Object} projection     Projection object.
+ * @returns {Object}              The filtered document.
+ */
 function _removeAddedFields(doc, projection={}) {
   if (!projection._acl) delete doc._acl;
   if (!projection._id) delete doc._id;
   return doc;
 }
 
-function _getDoc(options, noFilters=false) {
-  let getDoc;
-  let projection = (options.projection ?
-    Object.assign({}, options.projection, {'_acl':true, '_id':true}) :
-    undefined
+/**
+ * Create a projection object from the given queryConfig.
+ *
+ * @private
+ * @param {BoltDatabaseQueryConfig} queryConfig     The query config instance.
+ * @returns {Object|undefined}                      The projection object.
+ */
+function _createProjection(queryConfig) {
+  return (queryConfig.projection ?
+      Object.assign({}, queryConfig.projection, {'_acl':true, '_id':true}) :
+      undefined
   );
-  if (options.id) {
-    let query = Object.assign({_id: options.id}, options.query || {});
-    getDoc = options.db.collection(options.collection).findOne(query, projection);
-  } else {
-    let results = options.db.collection(options.collection).find(options.query, projection);
-    if (options.sort) {
-      getDoc = results.sort(options.sort).toArray();
-    } else {
-      getDoc = results.toArray();
-    }
-  }
+}
 
-  return getDoc
+/**
+ * Get a collection instance for given query config instance.
+ *
+ * @private
+ * @param {BoltDatabaseQueryConfig} queryConfig     The query config to use.
+ * @returns {Object}                                The collection instance.
+ */
+function _getCollection(queryConfig) {
+  return queryConfig.db.collection(queryConfig.collection);
+}
+
+/**
+ * Perform a query given the supplied query config.
+ *
+ * @private
+ * @param {BoltDatabaseQueryConfig} queryConfig     Query config to use.
+ * @returns {Object}                                Results set.
+ */
+function _doQuery(queryConfig) {
+  let method = (queryConfig.id?'findOne':'find');
+  let projection = _createProjection(queryConfig);
+  let query = (queryConfig.id ?
+    Object.assign({_id: queryConfig.id}, queryConfig.query || {}) :
+    queryConfig.query || {}
+  );
+  return _getCollection(queryConfig)[method](query, projection);
+}
+
+/**
+ * Convert results object into array of documents (or just document if one was requested).
+ *
+ * @private
+ * @param {BoltDatabaseQueryConfig} queryConfig       Query config to use.
+ * @returns {Array|Object}                            Document(s).
+ */
+function _getResults(queryConfig) {
+  let results = _doQuery(queryConfig, false);
+  if (queryConfig.id) return results;
+  return (queryConfig.sort ? results.sort(queryConfig.sort).toArray() : results.toArray());
+}
+
+/**
+ * Get a doc(s) using the given query config instance.
+ *
+ * @param {BoltDatabaseQueryConfig} queryConfig     Query config to use.
+ * @param {boolean} [noFilters=false]               Skip all filtering so it can be done manually.
+ * @returns {Array|Object}                          Document(s).
+ * @private
+ */
+function _getDoc(queryConfig, noFilters=false) {
+  return _getResults(queryConfig)
     .then(docs=>bolt.makeArray(docs))
-    .then(docs=>((options.filterByAccessLevel && !noFilters) ? docs.filter(doc=>_isAuthorised(doc, options.session, options.accessLevel)) : docs))
-    .then(docs=>((options.filterByVisibility && !noFilters) ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))
-    .map(doc=>((options.filterUnauthorisedFields && !noFilters) ? _removeUnauthorisedFields(doc, options.session, options.accessLevel) : doc))
+    .then(docs=>((queryConfig.filterByAccessLevel && !noFilters) ? docs.filter(doc=>_isAuthorised(doc, queryConfig.session, queryConfig.accessLevel)) : docs))
+    .then(docs=>((queryConfig.filterByVisibility && !noFilters) ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))
+    .map(doc=>((queryConfig.filterUnauthorisedFields && !noFilters) ? _removeUnauthorisedFields(doc, queryConfig.session, queryConfig.accessLevel) : doc))
     .map(_addCreatedField)
-    .map(doc=>(!noFilters ? _removeAddedFields(doc, options.projection) : doc));
+    .map(doc=>(!noFilters ? _removeAddedFields(doc, queryConfig.projection) : doc));
 }
 
-function getDocs(options) {
-  let _options = _parseOptions(options);
-
-  return _getDoc(_options);
-}
-
+/**
+ * Added a created field to the doc if it does not exist using the mongo objectId.
+ *
+ * @private
+ * @param {Object}  doc                 The document.
+ * @param {Object} [projection={}]      The projection object.
+ * @returns {Object}                    The modigfied document.
+ */
 function _addCreatedField(doc, projection={}) {
   if (projection._created && doc && doc._id) doc._created = new Date(parseInt(doc._id.toString().substring(0, 8), 16) * 1000);
   return doc;
 }
 
-function updateDoc(options) {
-  let _options = _parseOptions(options);
-  let collection = _options.db.collection(_options.collection);
-  _options.accessLevel = options.accessLevel || 'edit';
-  _options.projection = {_id:true};
+/**
+ * Perform an insert/update on the given collection usig the data in the query config instance supplied.
+ *
+ * @pubic
+ * @param {BoltDatabaseQueryConfig} _queryConfig    The query config instance.
+ * @returns {*}                                     Query result.
+ */
+function updateDoc(_queryConfig) {
+  let queryConfig = _createBoltDatabaseQueryConfig({
+    accessLevel: queryConfig.accessLevel || 'edit',
+    projection: {_id:true}
+  }, _queryConfig);
 
-  if (!_options.query) return collection.insert(options.doc);
-  return _getDoc(_options, true).then(docs=>{
+  let collection = _getCollection(queryConfig);
+
+  if (!queryConfig.query) return collection.insert(queryConfig.doc);
+  return _getDoc(queryConfig, true).then(docs=>{
     if (docs.length) {
       return Promise.all(docs.map(doc=>{
-        if (!options.filterByAccessLevel || (_options.filterByAccessLevel && _isAuthorised(doc, _options.session, _options.accessLevel))) {
-          let _doc = Object.assign({}, _options.doc, {_acl: doc._acl});
-          if (options.filterUnauthorisedFields) {
-            _doc = _removeUnauthorisedFields(_doc, _options.session, _options.accessLevel);
+        if (!queryConfig.filterByAccessLevel || (queryConfig.filterByAccessLevel && _isAuthorised(doc, queryConfig.session, queryConfig.accessLevel))) {
+          let _doc = Object.assign({}, queryConfig.doc, {_acl: doc._acl});
+          if (queryConfig.filterUnauthorisedFields) {
+            _doc = _removeUnauthorisedFields(_doc, queryConfig.session, queryConfig.accessLevel);
           }
           return collection.update({_id: doc._id}, {$set:_doc});
         }
       }));
     } else {
-      return collection.insert(options.doc);
+      return collection.insert(queryConfig.doc);
     }
   });
 }
 
-function getDoc(options) {
-  let _options = _parseOptions(options);
+/**
+ * Get documents according to given query config.
+ *
+ * @pubic
+ * @param {BoltDatabaseQueryConfig} queryConfig     The query config instance.
+ * @returns {*}                                     Docs.
+ */
+function getDocs(queryConfig) {
+  return _getDoc(_createBoltDatabaseQueryConfig(queryConfig));
+}
 
-  return _getDoc(_options)
+/**
+ * Get one document according to given query config.
+ *
+ * @pubic
+ * @param {BoltDatabaseQueryConfig} queryConfig     The query config instance.
+ * @returns {*}                                     Doc.
+ */
+function getDoc(queryConfig) {
+  return getDocs(queryConfig)
     .then(docs=>docs.sort(_prioritySorter))
     .then(docs=>docs[0]);
 }
 
-function removeUnauthorisedFields(options) {
-  let _options = _parseOptions(options);
+/**
+ * Remove unauthorised fields in supplied document (in query config) according to query config settngs.
+ *
+ * @param {BoltDatabaseQueryConfig} queryConfig     Query config to use.
+ * @returns {Object}                                The filtered document.
+ */
+function removeUnauthorisedFields(queryConfig) {
+  let _options = _createBoltDatabaseQueryConfig(queryConfig);
   return _removeUnauthorisedFields(_options.doc, _options.session, _options.accessLevel);
 }
 
-function isAuthorised(options) {
-  let _options = _parseOptions(options);
-  return _getDoc(options).then(
+/**
+ * Is the given session user allowed to access the given document (in query config supplied).
+ *
+ * @param {BoltDatabaseQueryConfig} queryConfig     Query config to use.
+ * @returns {boolean}                               Is the user authorised?
+ */
+function isAuthorised(queryConfig) {
+  let _options = _createBoltDatabaseQueryConfig(queryConfig);
+  return _getDoc(queryConfig).then(
     doc=>_isAuthorised(doc, _options.session, _options.accessLevel)
   );
 }
@@ -223,5 +365,6 @@ module.exports = {
   getDoc,
   getDocs,
   isAuthorised,
-  removeUnauthorisedFields
+  removeUnauthorisedFields,
+  BoltDatabaseQueryConfig
 };
