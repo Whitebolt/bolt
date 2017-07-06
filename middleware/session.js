@@ -3,6 +3,12 @@
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 
+/**
+ * Create the session object using mongo store. Duplicate session to websocket routes.
+ *
+ * @public
+ * @param {BoltApplication} app   The bolt application instance.
+ */
 function init(app) {
   // @annotation priority 1
 
@@ -22,7 +28,7 @@ function init(app) {
   bolt.ioUse(app, (req, res, next)=>{
     req.isWebSocket = true;
     next();
-  })
+  });
 
   bolt.use(app, sessionMiddleware, (req, res, next)=>{
     if (req.session) {

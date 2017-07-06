@@ -3,11 +3,24 @@
 const bodyParser = require('body-parser');
 
 
-function isMultipartRequest(req) {
+/**
+ * Test if given request is multipart-mime.
+ *
+ * @private
+ * @param {external:express:request} req    The request to test on.
+ * @returns {boolean}                       Is it mulipart or not?
+ */
+function _isMultipartRequest(req) {
   const contentTypeHeader = req.headers['content-type'];
   return (contentTypeHeader && (contentTypeHeader.indexOf('multipart') > -1));
 }
 
+/**
+ * Parse the body property of request. Parses json, url, text and raw data.
+ *
+ * @public
+ * @param {BoltApplication} app   The bolt application instance.
+ */
 function init(app) {
   // @annotation priority 2
 
@@ -17,10 +30,10 @@ function init(app) {
   const rawParser = bodyParser.raw();
 
   app.use(
-    (req, res, next)=>(isMultipartRequest(req) ? next() : urlParser(req, res, next)),
-    (req, res, next)=>(isMultipartRequest(req) ? next() : jsonParser(req, res, next)),
-    (req, res, next)=>(isMultipartRequest(req) ? next() : textParser(req, res, next)),
-    (req, res, next)=>(isMultipartRequest(req) ? next() : rawParser(req, res, next))
+    (req, res, next)=>(_isMultipartRequest(req) ? next() : urlParser(req, res, next)),
+    (req, res, next)=>(_isMultipartRequest(req) ? next() : jsonParser(req, res, next)),
+    (req, res, next)=>(_isMultipartRequest(req) ? next() : textParser(req, res, next)),
+    (req, res, next)=>(_isMultipartRequest(req) ? next() : rawParser(req, res, next))
   );
 };
 

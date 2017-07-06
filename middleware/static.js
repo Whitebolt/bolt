@@ -2,6 +2,12 @@
 
 const serve = require('serve-static');
 
+/**
+ * Serve static content on all public directories inside root directories.
+ *
+ * @public
+ * @param {BoltApplication} app   The bolt application instance.
+ */
 function init(app) {
   // @annotation priority 10
 
