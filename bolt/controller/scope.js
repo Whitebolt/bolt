@@ -5,7 +5,7 @@
  */
 
 const util = require('util');
-const {Memory} = require('../Memory');
+const {Memory} = require('map-watch');
 
 const _memory = new Memory();
 const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;

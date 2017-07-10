@@ -9,6 +9,8 @@ global.express = require('express');
 global.bolt = require('lodash');
 global.boltAppID = require('./bolt/string').randomString();
 
+Object.assign(global.bolt, require("map-watch"));
+
 const packageConfig = require('./package.json').config || {};
 
 let configDone = false;

@@ -1,6 +1,6 @@
 'use strict';
 
-const {FreezeSet} = require('../FreezeSet');
+const {FreezeSet} = require('map-watch');
 
 const defaults = Object.freeze({
   accessLevel: 'read',

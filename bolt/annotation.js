@@ -6,7 +6,7 @@
 
 const string = require('./string');
 
-const {Memory} = require('./Memory');
+const {Memory} = require('map-watch');
 const _memory = new Memory();
 const __undefined = Symbol("undefined");
 const xSourceGetBlockStart = /^.*?\{/;
