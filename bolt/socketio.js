@@ -55,5 +55,5 @@ function use(app, ...middleware) {
 }
 
 module.exports = {
- ioUse, use, ioOn
+  ioUse, use, ioOn
 };

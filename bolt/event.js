@@ -112,8 +112,8 @@ function subscribe(topicName, topicHandler, options) {
 function off(hookName, hookTypes) {
   let hookNames = bolt.splitAndTrim(hookName, ',');
   (hookTypes ?
-    bolt.splitAndTrim(hookTypes.toLowerCase(), '/').map(hookType=>reverseLookup.get(hookType)) :
-    reverseLookup
+      bolt.splitAndTrim(hookTypes.toLowerCase(), '/').map(hookType=>reverseLookup.get(hookType)) :
+      reverseLookup
   ).forEach(lookup=>{
     hookNames.forEach(hookName=>{
       if (lookup.has(hookName)) lookup.delete(hookName);

@@ -423,7 +423,7 @@ function loadComponentViewsTemplateOverrides(component) {
 }
 
 /**
- * Load all the viewsfor a given component.
+ * Load all the views for a given component.
  *
  * @public
  * @param {BoltComponent} component     The component to load from.
@@ -445,7 +445,7 @@ function loadComponentViews(component, dirPath) {
  * @returns {Promise.<BoltApplication>}     The bolt application that was supplied.
  */
 function loadTemplates(app, options={}) {
-  return bolt.fire(()=>_loadTemplates(app, options), 'loadTemplates', app).then(() => app);
+  return bolt.fire(()=>_loadTemplates(app, options), 'loadTemplates', app).then(()=>app);
 }
 
 /**

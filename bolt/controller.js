@@ -297,7 +297,6 @@ function _setControllerMethodFilePathAnnotation(filePath, controller) {
  * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
 function _loadControllers(component, roots, importObj) {
-  //_setControllerMethodFilePathAnnotation(undefined, importObj)
   bolt.hook('loadedController', (undefined, filePath)=>_setControllerMethodFilePathAnnotation(filePath, importObj));
 
   return bolt
