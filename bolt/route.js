@@ -45,17 +45,8 @@ function _loadRoutes(app, roots) {
     )
     .each(routerBuilder=>{
       bolt.makeArray(routerBuilder(app)).forEach(router=>{
-        let routerAnnotations = bolt.annotation(router);
-        let routerBuilderAnnotations = bolt.annotation(routerBuilder);
-        let method = (routerAnnotations.has('method') ?
-          routerAnnotations.get('method') :
-          routerBuilderAnnotations.get('method')
-        );
-        let route = (routerAnnotations.has('route') ?
-            routerAnnotations.get('route') :
-            routerBuilderAnnotations.get('route')
-        );
-
+        let method = bolt.annotation(router, 'method') || bolt.annotation(routerBuilder, 'method');
+        let route = bolt.annotation(router, 'route') || bolt.annotation(routerBuilder, 'route');
         app[method](route, router);
       });
     });

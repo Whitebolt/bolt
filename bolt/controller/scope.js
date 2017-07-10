@@ -39,7 +39,7 @@ function _getControllerCascade(controller, returnArray=false) {
  * @returns {Set}                       The controller cascade.
  */
 function _getNamedControllerCascade(component, name) {
-  return bolt.annotation(component).get("controllers").get(name);
+  return bolt.annotation(component, "controllers").get(name);
 }
 
 /**

@@ -8,12 +8,12 @@ const string = require('./string');
 
 const {Memory} = require('map-watch');
 const _memory = new Memory();
-const __undefined = Symbol("undefined");
 const xSourceGetBlockStart = /^.*?\{/;
 const xSourceGetBlockEnd = /\}.*?$/;
 const xStartsWithAnnotationDef = /^\s*?\/\/\s*?\@annotation/;
 const xGetAnnotation = /.*?\@annotation\s+(.*?)\s(.*)/;
 const getSourceClosure = string.replaceSequence([[xSourceGetBlockStart],[xSourceGetBlockEnd]]);
+const __undefined = Symbol('undefined');
 
 /**
  * Set an annotation against an object.  Generally, we would pass a function in here but in theory any object that is
@@ -26,22 +26,24 @@ const getSourceClosure = string.replaceSequence([[xSourceGetBlockStart],[xSource
  *
  * @public
  * @param {Function|Object} ref                       Reference object, usually an function.
- * @param {string|Object|Symbol} [key=__undefined]    Annotation name to set on given function/object.  If set to
- *                                                    __undefined then return the Map object, referenced by ref.
- * @param {*} [value=__undefined]                     The value to set for given key against given reference.
+ * @param {string|Object} key                         Annotation name to set on given function/object. If this is an
+ *                                                    object, cycle through  the key/values to set each in the
+ *                                                    annotation lookup.
+ * @param {*} [value=__undefined]                     The value to set for given key against given reference.  If key
+ *                                                    is an object then this should be undefined and is ignored anyway.
+ *                                                    If value is equal to Symbol('undefined') then assume we wish to
+ *                                                    get an annotation, not set it.
  * @returns {*|Map}                                   The key value (if no value given) or the Map for given reference.
  */
-function annotation(ref, key=__undefined, value=__undefined) {
-  let _lookup = _memory.get(ref);
-  if (key === __undefined) return _lookup;
-  if (bolt.isString(key)) {
-    if (value !== __undefined) _lookup.set(key, value);
-    return _lookup.get(key);
-  } else {
-    Object.keys(key).forEach(_key=>_lookup.set(_key, key[_key]));
-    return _lookup;
+function annotation(ref, key, value=__undefined) {
+  if (value === __undefined) {
+    if (!bolt.isString(key)) return Object.keys(key).map(_key=>_memory.set(ref, _key, key[_key]));
+    return _memory.get(ref, key);
   }
+  return _memory.set(ref, key, value);
 }
+
+annotation.forEach = _memory.forEach.bind(_memory);
 
 /**
  * Get annotations from the source of the given function and set them against it.
@@ -51,7 +53,6 @@ function annotation(ref, key=__undefined, value=__undefined) {
  * @public
  * @param {Function|string} func        Function or source code of function to get from.
  * @param {Function|Object} [ref=func]  Reference to set annotation against.  Defaults to the given function.
- * @returns {Map|undefined}             The annotations maps for the given reference function/object.
  */
 function annotationsFromSource(func, ref=func) {
   let source = getSourceClosure(func).trim();
@@ -67,8 +68,6 @@ function annotationsFromSource(func, ref=func) {
       current++;
     }
   }
-
-  return annotation(ref);
 }
 
 module.exports = {

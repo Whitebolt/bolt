@@ -58,8 +58,7 @@ const injectors = Object.freeze({
  * @type {Object}
  */
 const annotationParser = Object.freeze({
-  methods: annotations=>annotations.set('methods', new Set(annotations
-    .get('methods')
+  methods: ref=>bolt.annotation(ref, 'methods', new Set(bolt.annotation(ref, 'methods')
     .toLowerCase()
     .split(',')
     .map(method=>method.trim())
@@ -90,8 +89,8 @@ function _addAnnotationsToControllerMethods(config) {
     methodPath
   });
 
-  annotations.forEach((value, annotation)=>{
-    if (annotationParser.hasOwnProperty(annotation)) annotationParser[annotation](annotations);
+  bolt.annotation.forEach(method, (value, annotation)=>{
+    if (annotationParser.hasOwnProperty(annotation)) annotationParser[annotation](method);
   });
 
   return annotations;
@@ -192,9 +191,8 @@ function _assignControllerRoutes(component, controller, controllerName) {
 function _setComponentAndControllerAnnotations(component, controller, controllerName) {
   bolt.annotation(controller, 'parent', component);
   bolt.annotation(controller, 'name', controllerName);
-  let componentAnnotations = bolt.annotation(component);
-  if (!componentAnnotations.has('controllers')) componentAnnotations.set('controllers', new Map());
-  let componentControllers = componentAnnotations.get('controllers');
+  if (!bolt.annotation(component, 'controllers')) bolt.annotation(component, 'controllers', new Map());
+  let componentControllers = bolt.annotation(component, 'controllers');
   if (!componentControllers.has(controllerName)) componentControllers.set(controllerName, new Set());
   componentControllers.get(controllerName).add(controller);
 }
