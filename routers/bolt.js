@@ -24,20 +24,20 @@ function _getMethods(app, req) {
   _getPaths(req).forEach(route=>{
     if (app.controllerRoutes[route]) {
       app.controllerRoutes[route].forEach(method=>{
-        let methodPath = bolt.annotation(method.method, 'methodPath');
+        let methodPath = bolt.annotation.get(method.method, 'methodPath');
         let add = true;
 
         if (!cascading.has(methodPath)) {
-          cascading.set(methodPath, !!bolt.annotation(method.method, 'cascade'));
+          cascading.set(methodPath, !!bolt.annotation.get(method.method, 'cascade'));
         } else {
           add = cascading.get(methodPath);
         }
 
         if (add) {
           methods.push(router=>{
-            bolt.fire('firingControllerMethod', bolt.annotation(method.method, 'methodPath'), bolt.getPathFromRequest(req));
-            router.__componentName = router.component || bolt.annotation(method.method, 'componentName');
-            router.componentPath = bolt.annotation(method.method, 'componentPath');
+            bolt.fire('firingControllerMethod', bolt.annotation.get(method.method, 'methodPath'), bolt.getPathFromRequest(req));
+            router.__componentName = router.component || bolt.annotation.get(method.method, 'componentName');
+            router.componentPath = bolt.annotation.get(method.method, 'componentPath');
             return method.method(router);
           });
         }

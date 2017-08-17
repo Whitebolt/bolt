@@ -18,11 +18,11 @@ function _annotateMiddlewareMethod(middleware, middlewareName) {
   let method = middleware[middlewareName];
   let priority = (method.hasOwnProperty('priority') ? method.priority : 0);
 
-  bolt.annotation(method, {
-    id:  middlewareName,
+  bolt.annotation.setFrom(method, {
+    id: middlewareName,
     priority: parseInt(priority, 10)
   });
-  bolt.annotation(method);
+  bolt.annotation.from(method);
 
   return middleware[middlewareName];
 }
@@ -47,7 +47,7 @@ function _loadMiddleware(app, roots, importObj) {
     )
     .then(middleware=>{
       middleware.forEach(middleware => {
-        bolt.fire('ranMiddleware', bolt.annotation(middleware, 'id').replace(xStartDigitUnderscore, ''));
+        bolt.fire('ranMiddleware', bolt.annotation.get(middleware, 'id').replace(xStartDigitUnderscore, ''));
         middleware(app);
       });
       return app

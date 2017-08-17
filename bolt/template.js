@@ -28,7 +28,7 @@ const templateFunctions = {
     if (method) {
       Object.assign(this, {req, parent, doc});
       req.doc = req.doc || doc;
-      bolt.fire("firingControllerMethod", bolt.annotation(method, 'methodPath'), bolt.getPathFromRequest(req));
+      bolt.fire("firingControllerMethod", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
       return method(this);
     } else {
       Promise.resolve('Could not find component: ' + componentName);
@@ -238,7 +238,7 @@ function _getTemplate(app, control) {
  * @returns {Object}                The view.
  */
 function _getView(app, control, tag ={}) {
-  const componentName = bolt.annotation(control, 'componentPath') || control.component || tag.component;
+  const componentName = bolt.annotation.get(control, 'componentPath') || control.component || tag.component;
   const component = _getComponent(componentName, app);
   const viewName = control.view || tag.view;
   if (component && component.views[viewName]) return component.views[viewName];

@@ -16,13 +16,13 @@ function _annotateRouterMethod(routers, routerName) {
   let method = routers[routerName];
   let priority = (method.hasOwnProperty('priority') ? method.priority : 10);
 
-  bolt.annotation(method, {
+  bolt.annotation.setFrom(method, {
     id: routerName,
     priority: parseInt(priority, 10),
     route: method.route || '/*',
     method: method.method || 'all'
   });
-  bolt.annotation(method);
+  bolt.annotation.from(method);
 
   return routers[routerName];
 }
@@ -45,8 +45,8 @@ function _loadRoutes(app, roots) {
     )
     .each(routerBuilder=>{
       bolt.makeArray(routerBuilder(app)).forEach(router=>{
-        let method = bolt.annotation(router, 'method') || bolt.annotation(routerBuilder, 'method');
-        let route = bolt.annotation(router, 'route') || bolt.annotation(routerBuilder, 'route');
+        let method = bolt.annotation.get(router, 'method') || bolt.annotation.get(routerBuilder, 'method');
+        let route = bolt.annotation.get(router, 'route') || bolt.annotation.get(routerBuilder, 'route');
         app[method](route, router);
       });
     });

@@ -5,6 +5,7 @@
  */
 
 const createControllerScope = require('./controller/scope');
+const xSpaceOrComma = /,| /;
 
 
 /**
@@ -51,19 +52,12 @@ const injectors = Object.freeze({
   config: component=>component.req.app.config
 });
 
-/**
- * Object of methods to map parse specfic annotations.  Some annotations may have bespoke structure; here we set methods
- * to parse these.
- *
- * @type {Object}
- */
-const annotationParser = Object.freeze({
-  methods: ref=>bolt.annotation(ref, 'methods', new Set(bolt.annotation(ref, 'methods')
-    .toLowerCase()
-    .split(',')
-    .map(method=>method.trim())
-    .filter(method=>(method.trim() !== '')))
-  )
+bolt.annotation.addParser((value, annotation)=>{
+  // @annotation key methods
+
+  return new Set(
+    value.toLowerCase().split(xSpaceOrComma).map(method=>method.trim()).filter(method=>(method.trim() !== ''))
+  );
 });
 
 /**
@@ -80,17 +74,12 @@ const annotationParser = Object.freeze({
  */
 function _addAnnotationsToControllerMethods(config) {
   let {component, method, sourceMethod, methodPath} = config;
+  let annotations = bolt.annotation.from(sourceMethod, method);
 
-  let annotations = bolt.annotation(sourceMethod, method);
-
-  bolt.annotation(method,  {
+  bolt.annotation.setFrom(method,  {
     componentName: component.name,
     componentPath: component.path,
     methodPath
-  });
-
-  bolt.annotation.forEach(method, (value, annotation)=>{
-    if (annotationParser.hasOwnProperty(annotation)) annotationParser[annotation](method);
   });
 
   return annotations;
@@ -107,11 +96,11 @@ function _addAnnotationsToControllerMethods(config) {
  */
 function _getControllerMethod(config) {
   let {sourceMethod, controller} = config;
-  if (bolt.annotation(sourceMethod, 'controllerMethod')) return bolt.annotation(sourceMethod, 'controllerMethod');
+  if (bolt.annotation.has(sourceMethod, 'controllerMethod')) return bolt.annotation.get(sourceMethod, 'controllerMethod');
 
   let params = bolt.parseParameters(sourceMethod);
   let method = component=>{
-    let methods = bolt.annotation(method, 'methods');
+    let methods = bolt.annotation.get(method, 'methods');
     if (methods) {
       let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
       if (!methods.has(httpMethod)) return component;
@@ -123,8 +112,8 @@ function _getControllerMethod(config) {
     }));
   };
 
-  bolt.annotation(sourceMethod, 'controllerMethod', method);
-  bolt.annotation(method, 'sourceMethod', sourceMethod);
+  bolt.annotation.set(sourceMethod, 'controllerMethod', method);
+  bolt.annotation.set(method, 'sourceMethod', sourceMethod);
 
   return method;
 }
@@ -147,7 +136,7 @@ function _setControllerRoutes(config) {
     bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
 
     app.controllerRoutes[_methodPath].forEach(route=>{
-      if (bolt.annotation(method, 'methodPath') === bolt.annotation(route.method, 'methodPath')) route.priority2++;
+      if (bolt.annotation.get(method, 'methodPath') === bolt.annotation.get(route.method, 'methodPath')) route.priority2++;
     });
 
     app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
@@ -189,10 +178,12 @@ function _assignControllerRoutes(component, controller, controllerName) {
  * @param {string} controllerName         The controller name.
  */
 function _setComponentAndControllerAnnotations(component, controller, controllerName) {
-  bolt.annotation(controller, 'parent', component);
-  bolt.annotation(controller, 'name', controllerName);
-  if (!bolt.annotation(component, 'controllers')) bolt.annotation(component, 'controllers', new Map());
-  let componentControllers = bolt.annotation(component, 'controllers');
+  bolt.annotation.setFrom(controller, {
+    parent: component,
+    name: controllerName
+  });
+  if (!bolt.annotation.get(component, 'controllers')) bolt.annotation.set(component, 'controllers', new Map());
+  let componentControllers = bolt.annotation.get(component, 'controllers');
   if (!componentControllers.has(controllerName)) componentControllers.set(controllerName, new Set());
   componentControllers.get(controllerName).add(controller);
 }
@@ -221,8 +212,8 @@ function _freezeControllers(app) {
 function _setAnnotations(app) {
   Object.keys(app.components || {}).forEach(componentName=>{
     Object.keys(app.components[componentName].controllers).forEach(controllerName=>{
-      bolt.annotation(app.components[componentName].controllers[controllerName], 'parent', app.components[componentName]);
-      bolt.annotation(app.components[componentName].controllers[controllerName], 'name', controllerName);
+      bolt.annotation.set(app.components[componentName].controllers[controllerName], 'parent', app.components[componentName]);
+      bolt.annotation.set(app.components[componentName].controllers[controllerName], 'name', controllerName);
       _setAnnotations(app.components[componentName]);
     });
   });
@@ -277,8 +268,8 @@ function _addControllerRoutes(component, controllers) {
 function _setControllerMethodFilePathAnnotation(filePath, controller) {
   Object.keys(controller).forEach(controllerName=>{
     Object.keys(controller[controllerName]).forEach(methodName=>{
-      let _filePath = bolt.annotation(controller[controllerName][methodName], 'filePath');
-      if (!_filePath) bolt.annotation(controller[controllerName][methodName], 'filePath', filePath);
+      let _filePath = bolt.annotation.get(controller[controllerName][methodName], 'filePath');
+      if (!_filePath) bolt.annotation.get(controller[controllerName][methodName], 'filePath') || filePath;
     });
   })
 }

@@ -9,7 +9,12 @@ global.express = require('express');
 global.bolt = require('lodash');
 global.boltAppID = require('./bolt/string').randomString();
 
-Object.assign(global.bolt, require('map-watch'), {annotation: require('object-annotations')});
+Object.assign(
+  global.bolt,
+  require('map-watch'), {
+    annotation: new (require('object-annotations'))()
+  }
+);
 
 const packageConfig = require('./package.json').config || {};
 
