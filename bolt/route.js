@@ -22,7 +22,7 @@ function _annotateRouterMethod(routers, routerName) {
     route: method.route || '/*',
     method: method.method || 'all'
   });
-  bolt.annotationsFromSource(method);
+  bolt.annotation(method);
 
   return routers[routerName];
 }

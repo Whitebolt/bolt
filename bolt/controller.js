@@ -81,7 +81,7 @@ const annotationParser = Object.freeze({
 function _addAnnotationsToControllerMethods(config) {
   let {component, method, sourceMethod, methodPath} = config;
 
-  let annotations = bolt.annotationsFromSource(sourceMethod, method);
+  let annotations = bolt.annotation(sourceMethod, method);
 
   bolt.annotation(method,  {
     componentName: component.name,

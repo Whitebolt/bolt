@@ -22,7 +22,7 @@ function _annotateMiddlewareMethod(middleware, middlewareName) {
     id:  middlewareName,
     priority: parseInt(priority, 10)
   });
-  bolt.annotationsFromSource(method);
+  bolt.annotation(method);
 
   return middleware[middlewareName];
 }
