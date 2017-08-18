@@ -125,9 +125,8 @@ function callMethod(config) {
 
   return method(config.router).then(router=>{
     if (config.router.redirect) {
-      return config.res
-        .redirect(config.router.status || 302, config.router.redirect)
-        .end();
+      let redirect = config.res.redirect(config.router.status || 302, config.router.redirect);
+      return ((redirect && redirect.end)?redirect.end():redirect);
     } else if (config.router.done && !config.router.res.headersSent) {
       return applyAndSend(router);
     } else if (config.methods.length && !config.router.done && !config.router.res.headersSent) {
@@ -290,11 +289,25 @@ function _createSocketResquest(message, socket, method) {
     websocket: socket
   };
 
-  return Object.assign(socket.request, req);
+  return new Proxy(Object.assign({}, socket.request, req), {
+    has: (target, prop)=>{
+      if (prop === 'session') return socket.request.hasOwnProperty(prop);
+      return (target.hasOwnProperty(prop) || socket.request.hasOwnProperty(prop));
+    },
 
-  return new Proxy(req, {
-    get: (target, property)=>{
-      return target[property] || socket.request[property];
+    get: (target, prop)=>{
+      if (prop === 'session') return socket.request.session;
+      return ((prop in target) ? target[prop] : ((prop in socket.request) ? socket.request[prop] : undefined));
+    },
+
+    set:(target, prop, value)=>{
+      if ((prop === 'session') || (!(prop in target) && (prop in socket.request))) {
+        socket.request[prop] = value;
+      } else {
+        target[prop] = value;
+      }
+
+      return value;
     }
   });
 }
