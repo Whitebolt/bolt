@@ -3,3 +3,8 @@ node_modules/
 Thumbs.db
 server.json
 docs/
+
+#Allow localhost testing
+server.crt
+server.csr
+server.key

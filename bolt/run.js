@@ -8,6 +8,7 @@ const Promise = require('bluebird');
 const IO = require('socket.io');
 const figlet =  Promise.promisify(require('figlet'));
 
+
 /**
  * Run the given express app, binding to correct port.
  *
@@ -21,21 +22,42 @@ function _runApp(app) {
     process.setuid(app.config.uid);
   }
 
-  return new Promise(resolve => {
-    let server = app.listen(app.config.port, () => {
+  return new Promise(resolve=>{
+    let server;
+
+    if (app.config.development) {
+      try {
+        const fs = require('fs');
+        let options = {
+          key: fs.readFileSync(boltRootDir + '/server.key'),
+          cert: fs.readFileSync(boltRootDir + '/server.crt'),
+          requestCert: false,
+          rejectUnauthorized: false
+        };
+        server = require('https').createServer(options, app);
+      } catch(err) {}
+    }
+    if (!server) server = require('http').createServer(app);
+
+    server.listen(app.config.port, ()=>{
       bolt.fire('appListening', app.config.port);
       return bolt.fire(()=>{
         app.io = IO(server);
         app.io.sockets.setMaxListeners(50);
       }, 'ioServerLaunch', app).then(()=>{
-        let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
-        return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
-          console.log(welcome);
-          return welcome;
-        });
-      })
+          let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
+          return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
+            console.log(welcome);
+            return welcome;
+          });
+        })
         .then(() => resolve(app));
     });
+
+
+    /*let server = app.listen(app.config.port, () => {
+
+    });*/
   });
 }
 
