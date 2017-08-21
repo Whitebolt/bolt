@@ -33,6 +33,7 @@
     "figlet": "^1.2.0",
     "find-free-port": "^1.0.2",
     "gulp-jsdoc3": "^1.0.1",
+    "helmet": "^3.8.1",
     "ical-date-parser": "^4.0.0",
     "iconv-lite": "^0.4.15",
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
@@ -56,9 +57,9 @@
     "rrule": "git+https://github.com/jkbrzt/rrule.git",
     "serve-static": "^1.11.2",
     "shortcode-insert": "^1.0.1",
+    "snyk": "^1.39.0",
     "socket.io": "^2.0.3",
-    "yargs": "^8.0.2",
-    "snyk": "^1.39.0"
+    "yargs": "^8.0.2"
   },
   "main": "./server.js",
   "repository": {
@@ -131,7 +132,12 @@
       "object"
     ],
     "csp": {
-      "sandbox": ["allow-forms", "allow-scripts", "allow-popups", "allow-same-origin"]
+      "sandbox": [
+        "allow-forms",
+        "allow-scripts",
+        "allow-popups",
+        "allow-same-origin"
+      ]
     },
     "eventConsoleLogging": [
       {
