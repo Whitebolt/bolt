@@ -18,7 +18,7 @@ const compare = Promise.promisify(bcrypt.compare);
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-  // @annotation priority 3
+  // @annotation priority 4
 
   const hideUserFieldsFromSession = ['password', '_id'];
 

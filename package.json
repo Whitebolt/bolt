@@ -108,7 +108,9 @@
       "logLevel",
       "version",
       "name",
-      "serverName"
+      "serverName",
+      "domains",
+      "csp"
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [
@@ -128,6 +130,9 @@
       "files",
       "object"
     ],
+    "csp": {
+      "sandbox": ["allow-forms", "allow-scripts", "allow-popups", "allow-same-origin"]
+    },
     "eventConsoleLogging": [
       {
         "event": "configLoaded",

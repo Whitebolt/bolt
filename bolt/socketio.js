@@ -1,8 +1,98 @@
 'use strict';
 
+const mime = require('mime');
+
 /**
  * @module bolt/bolt
  */
+
+/**
+ * Add type() method to socket response object.  This is part of faking the express response object in socket.io routes.
+ * Added method duplicates the express type() method for use in socket.io route.
+ *
+ * @public
+ * @param {Object} res        An express like response object.  This is not an express response object but is like one.
+ * @param {Object} message    The socket.io message object.
+ * @param {Object} socket     The socket.io socket.
+ * @param {string} method     The socket.io message type.
+ * @returns {Object}          The express like response object, mutated to include type() method.
+ */
+function socetIoTypeMethod(res) {
+  return type=>{
+    res.headers['content-type'] = mime.lookup(type);
+    return res
+  };
+}
+
+/**
+ * Add getHeader() method to socket response object.  This is part of faking the express response object in
+ * socket.io routes. Added method duplicates the express getHeader() method for use in socket.io route.
+ *
+ * @public
+ * @param {Object} res        An express like response object.  This is not an express response object but is like one.
+ * @returns {Object}          The express like response object, mutated to include getHeader() method.
+ */
+function socketIoGetHeaderMethod(res) {
+  return headerName=>{
+    res.headers[headerName];
+  };
+}
+
+/**
+ * Add setHeader() method to socket response object.  This is part of faking the express response object in
+ * socket.io routes. Added method duplicates the express setHeader() method for use in socket.io route.
+ *
+ * @public
+ * @param {Object} res        An express like response object.  This is not an express response object but is like one.
+ * @returns {Object}          The express like response object, mutated to include setHeader() method.
+ */
+function socketIoSetHeaderMethod(res) {
+  return (headerName, value)=>{
+    res.headers[headerName] = value;
+  };
+}
+
+/**
+ * Add status() method to socket response object.  This is part of faking the express response object in socket.io
+ * routes. Added method duplicates the express status() method for use in socket.io route.
+ *
+ * @public
+ * @param {Object} res        An express like response object.  This is not an express response object but is like one.
+ * @returns {Object}          The express like response object, mutated to include status() method.
+ */
+function socketIoStatusMethod(res) {
+  return statusCode=>{
+    res.statusCode=statusCode;
+    return res;
+  };
+}
+
+/**
+ * Create an express like response object to use in socket.io requests.  This basically fakes the express
+ * response object.
+ *
+ * @private
+ * @param {Object} socket         The socket.io socket.
+ * @returns {Object}              The express like response object.
+ */
+function createSocketIoResponse(socket) {
+  let res = {};
+
+  return Object.assign(res, {
+    end: ()=>{},
+    getHeader: socketIoGetHeaderMethod(res),
+    get: socketIoGetHeaderMethod,
+    headers: {},
+    headersSent: false,
+    isWebSocket: true,
+    set: socketIoSetHeaderMethod,
+    status: socketIoStatusMethod(res),
+    statusCode: 200,
+    type: socetIoTypeMethod(res),
+    websocket: socket,
+    setHeader: socketIoSetHeaderMethod
+  });
+}
 
 /**
  * Set middleware on a given socket after sockets are available.
@@ -17,7 +107,7 @@ function ioUse(app, ...middleware) {
       middleware.forEach(middleware=>{
         socket.use((packet, next)=>{
           socket.request.websocket = socket;
-          middleware(socket.request, {}, next);
+          middleware(socket.request, createSocketIoResponse(socket), next);
         });
       });
     });

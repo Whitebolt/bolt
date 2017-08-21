@@ -333,7 +333,10 @@ function _createSocketResponse(message, socket, method, callback) {
     status: socketIoStatusMethod(res),
     statusCode: 200,
     type: socetIoTypeMethod(res),
-    websocket: socket
+    websocket: socket,
+    setHeader: (headerName, value)=>{
+      res.headers[headerName] = value;
+    }
   });
 }
 
