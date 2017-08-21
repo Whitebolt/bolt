@@ -1,6 +1,13 @@
 'use strict';
 
 const csp = require('helmet-csp');
+const hidePoweredBy = require('hide-powered-by');
+const hsts = require('hsts');
+const ienoopen = require('ienoopen');
+const nosniff = require('dont-sniff-mimetype');
+const frameguard = require('frameguard');
+const xssFilter = require('x-xss-protection');
+const express_enforces_ssl = require('express-enforces-ssl');
 
 function _getConnectSrc(app, domains) {
   const connectSrc = [].concat(app.config.domains).map(domain=>'https://'+domain);
@@ -53,7 +60,32 @@ function init(app) {
     browserSniff: true
   });
 
-  app.use(cspMiddleware);
+  let hstsMiddleware = hsts({
+    maxAge: 19 * 7 *24 * 60 * 60,
+    includeSubDomains: true,
+    preload: true
+  });
+
+  let hidePoweredByMiddleware = hidePoweredBy({
+    setTo: 'PHP 7.2.0'
+  });
+
+  let framegardMiddleware = frameguard({
+    action: 'deny'
+  });
+
+  app.enable('trust proxy');
+
+  app.use(
+    cspMiddleware,
+    hidePoweredByMiddleware,
+    express_enforces_ssl(),
+    hstsMiddleware,
+    ienoopen(),
+    nosniff(),
+    framegardMiddleware,
+    xssFilter()
+  );
 };
 
 module.exports = init;

@@ -28,6 +28,7 @@
     "dateformat": "^2.0.0",
     "ejs": "git+https://github.com/Whitebolt/ejs.git",
     "express": "^4.13.4",
+    "express-enforces-ssl": "^1.1.0",
     "express-http-proxy": "^1.0.0",
     "express-session": "^1.15.0",
     "figlet": "^1.2.0",
