@@ -296,6 +296,7 @@ function _createSocketResquest(message, socket, method) {
     },
 
     get: (target, prop)=>{
+      if (prop === '_packRequestObject') return target;
       if (prop === 'session') return socket.request.session;
       return ((prop in target) ? target[prop] : ((prop in socket.request) ? socket.request[prop] : undefined));
     },
@@ -307,7 +308,7 @@ function _createSocketResquest(message, socket, method) {
         target[prop] = value;
       }
 
-      return value;
+      return true;
     }
   });
 }
