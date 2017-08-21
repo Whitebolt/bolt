@@ -29,7 +29,7 @@ function init(app) {
   const textParser = bodyParser.text();
   const rawParser = bodyParser.raw();
 
-  app.use(
+  bolt.use(app,
     (req, res, next)=>(_isMultipartRequest(req) ? next() : urlParser(req, res, next)),
     (req, res, next)=>(_isMultipartRequest(req) ? next() : jsonParser(req, res, next)),
     (req, res, next)=>(_isMultipartRequest(req) ? next() : textParser(req, res, next)),

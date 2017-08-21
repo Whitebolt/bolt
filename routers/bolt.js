@@ -8,6 +8,9 @@ const typeis = require('type-is');
 const _componentAllowedToSet = [
   'done', 'status', 'stausMessage', 'header', 'mime'
 ];
+const _authMethods = [
+  'login', 'logIn', 'logout', 'logOut', 'isAuthenticated', 'isUnauthenticated'
+];
 
 /**
  * Get an array of methods (in order) to fire for a give request path.
@@ -289,26 +292,10 @@ function _createSocketResquest(message, socket, method) {
     websocket: socket
   };
 
-  return new Proxy(Object.assign({}, socket.request, req), {
-    has: (target, prop)=>{
-      if (prop === 'session') return socket.request.hasOwnProperty(prop);
-      return (target.hasOwnProperty(prop) || socket.request.hasOwnProperty(prop));
-    },
-
-    get: (target, prop)=>{
-      if (prop === '_packRequestObject') return target;
-      if (prop === 'session') return socket.request.session;
-      return ((prop in target) ? target[prop] : ((prop in socket.request) ? socket.request[prop] : undefined));
-    },
-
-    set:(target, prop, value)=>{
-      if ((prop === 'session') || (!(prop in target) && (prop in socket.request))) {
-        socket.request[prop] = value;
-      } else {
-        target[prop] = value;
-      }
-
-      return true;
+  return bolt.mergeWith({}, socket.request, req, (objValue, srcValue, key, object)=>{
+    if (bolt.isFunction(srcValue)) {
+      if (bolt.indexOf(_authMethods, key) !== -1) return srcValue.bind(socket.request);
+      return srcValue.bind(object);
     }
   });
 }

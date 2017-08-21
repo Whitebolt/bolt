@@ -18,7 +18,7 @@ function init(app) {
       callback();
     }
   });
-  app.use(morgan('combined', {stream}));
+  bolt.use(app, morgan('combined', {stream}));
 }
 
 module.exports = init;
