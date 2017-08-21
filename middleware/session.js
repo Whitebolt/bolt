@@ -12,8 +12,16 @@ const MongoStore = require('connect-mongo')(session);
 function init(app) {
   // @annotation priority 1
 
+  app.set('trust proxy', 1);
+
   let sessionMiddleware = session({
+    name: 'sessionId',
     secret: app.config.secret,
+    cookie: {
+      secure: true,
+      expires: new Date(Date.now() + 60 * 60 * 1000),
+      httpOnly: true
+    },
     store: new MongoStore({
       db: app.dbs.main
     }),
