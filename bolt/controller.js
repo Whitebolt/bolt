@@ -52,14 +52,6 @@ const injectors = Object.freeze({
   config: component=>component.req.app.config
 });
 
-bolt.annotation.addParser((value, annotation)=>{
-  // @annotation key methods
-
-  return new Set(
-    value.toLowerCase().split(xSpaceOrComma).map(method=>method.trim()).filter(method=>(method.trim() !== ''))
-  );
-});
-
 /**
  * Set annotations on given method by using default values and extracting from the method source.
  *
@@ -100,11 +92,7 @@ function _getControllerMethod(config) {
 
   let params = bolt.parseParameters(sourceMethod);
   let method = component=>{
-    let methods = bolt.annotation.get(method, 'methods');
-    if (methods) {
-      let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
-      if (!methods.has(httpMethod)) return component;
-    }
+    if (!_testControllerAnnotationSecurity(method, component)) return component;
 
     return sourceMethod.apply(createControllerScope(controller), params.map(param=>{
       if (injectors.hasOwnProperty(param)) return injectors[param](component);
@@ -117,6 +105,69 @@ function _getControllerMethod(config) {
 
   return method;
 }
+
+function _testControllerAnnotationSecurity(method, component) {
+  return !_testControllerAnnotationSecurityTests.find(test=>!test(method, component));
+}
+
+const _testControllerAnnotationSecurityTests = [
+  function _annotationMethods(method, component) {
+    let methods = bolt.annotation.get(method, 'methods');
+    if (methods) {
+      let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
+      if (!methods.has(httpMethod)) return false;
+    }
+    return true;
+  },
+  function _annotationAuthenticated(method, component) {
+    if (!bolt.annotation.get(method, 'authenticated')) return true;
+    if (component && component.req && component && component.req.isAuthenticated) return component.req.isAuthenticated();
+    return false;
+  },
+  function _annotationAcceptedFields(method, component) {
+    let acceptedFields = bolt.annotation.get(method, 'accepted-fields');
+    if (!acceptedFields) return true;
+    if (!(component && component.req)) return false;
+    let bodyFields = bolt.without(Object.keys(component.req.body || {}), ...Array.from(acceptedFields));
+    return (bodyFields.length === 0);
+  },
+  function _annotationRequiredFields(method, component) {
+    let requiredFields = bolt.annotation.get(method, 'required-fields');
+    if (!requiredFields) return true;
+    if (!(component && component.req)) return false;
+    let bodyFields = bolt.without(Array.from(requiredFields), ...Object.keys(component.req.body || {}));
+    return (bodyFields.length === 0);
+  }
+];
+
+function _parseAnnotationSet(value, lowecase=false) {
+  let _value = (lowecase?value.toLocaleString():value);
+  return new Set(
+    _value.split(xSpaceOrComma).map(value=>value.trim()).filter(value=>(value.trim() !== ''))
+  );
+}
+
+const _annotationParsers = [
+  value=>{
+    // @annotation key methods
+    return _parseAnnotationSet(value, true);
+  },
+  ()=>{
+    // @annotation key authenticated
+    return true;
+  },
+  value=>{
+    // @annotation key accepted-fields
+    return _parseAnnotationSet(value);
+  },
+  value=>{
+    // @annotation key required-fields
+    return _parseAnnotationSet(value);
+  }
+];
+
+_annotationParsers.forEach(parser=>bolt.annotation.addParser(parser));
+
 
 /**
  * Set the controller routes for the given method.
@@ -268,8 +319,7 @@ function _addControllerRoutes(component, controllers) {
 function _setControllerMethodFilePathAnnotation(filePath, controller) {
   Object.keys(controller).forEach(controllerName=>{
     Object.keys(controller[controllerName]).forEach(methodName=>{
-      let _filePath = bolt.annotation.get(controller[controllerName][methodName], 'filePath');
-      if (!_filePath) bolt.annotation.get(controller[controllerName][methodName], 'filePath') || filePath;
+      let _filePath = bolt.annotation.get(controller[controllerName][methodName], 'filePath') || filePath;
     });
   })
 }
