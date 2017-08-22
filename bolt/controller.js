@@ -5,6 +5,7 @@
  */
 
 const createControllerScope = require('./controller/scope');
+const {AdvancedSet} = require('map-watch');
 const xSpaceOrComma = /,| /;
 
 
@@ -133,12 +134,26 @@ const _controllerAnnotationTests = {
     if (!(component && component.req)) return false;
     let bodyFields = bolt.without(Array.from(value), ...Object.keys(component.req.body || {}));
     return (bodyFields.length === 0);
+  },
+  'accepts-content': (value, component)=>{
+    if (!(component && component.req)) return false;
+    return !value.find(test=>component.req.is(test));
+  },
+  'accepts-connect': (value, component)=>{
+    if (!(component && component.req)) return false;
+    let type = 'get';
+    if (component.req.xhr) {
+      type = 'xhr';
+    } else if (component.req.isWebSocket) {
+      type = 'websocket';
+    }
+    return !value.find(test=>(test === type));
   }
 };
 
 function _parseAnnotationSet(value, lowecase=false) {
   let _value = (lowecase?value.toLocaleString():value);
-  return new Set(
+  return new AdvancedSet(
     _value.split(xSpaceOrComma).map(value=>value.trim()).filter(value=>(value.trim() !== ''))
   );
 }
@@ -158,6 +173,14 @@ const _annotationParsers = [
   },
   value=>{
     // @annotation key required-fields
+    return _parseAnnotationSet(value);
+  },
+  value=>{
+    // @annotation key accepts-content
+    return _parseAnnotationSet(value);
+  },
+  value=>{
+    // @annotation key accepts-connect
     return _parseAnnotationSet(value);
   }
 ];

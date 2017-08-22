@@ -283,7 +283,7 @@ function _createSocketResquest(message, socket, method) {
       'transfer-encoding': 'identity',
       'content-length': _getContentLength(message)
     }),
-    is: test=>typeis(req, test), // @todo Test for memory leak here.
+    is: test=>!!typeis(req, test), // @todo Test for memory leak here.
     isWebSocket: true,
     method,
     messageId: message.messageId,
