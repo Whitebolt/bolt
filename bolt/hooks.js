@@ -18,13 +18,19 @@ function _loadHooks(roots) {
       callback: hookPath=>bolt.fire('loadedHook', hookPath)
     }))
     .each(hooks =>
-      Object.keys(hooks).forEach(hookName =>
-        hooks[hookName].forEach(hook => {
-          // priority and context can be added as properties to the function.
-          let params = Object.assign(bolt.getDefault('event.defaultOptions'), hook);
-          return bolt.hook(hookName, hook, params);
-        })
-      )
+      Object.keys(hooks).forEach(_key=>{
+        const loader = hooks[_key];
+        bolt.annotation.from(loader);
+        let key = bolt.annotation.get(loader, 'key');
+        if (key) {
+          loader().forEach(hook=> {
+            bolt.annotation.from(hook);
+            let priority = bolt.annotation.get(hook, 'priority') || 10;
+            let params = Object.assign({}, bolt.getDefault('event.defaultOptions'), {priority});
+            return bolt.hook(key, hook, params);
+          })
+        }
+      })
     );
 }
 
