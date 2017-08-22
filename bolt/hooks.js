@@ -36,8 +36,6 @@ function _loadHooks(roots) {
 
 /**
  * Load hooks from hooks directories within the application roots.
- * Filename should be the same as the hook name and file should export an array
- * of functions to fire on hook.
  *
  * @public
  * @param {BoltApplication} app                       Express application.

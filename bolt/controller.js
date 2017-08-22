@@ -151,6 +151,11 @@ const _controllerAnnotationTests = {
       type = 'websocket';
     }
     return !value.find(test=>(test === type));
+  },
+  'schema': (value, component)=>{
+    if (!(component && component.req && component.req.app && component.req.body && component.req.app.schemas)) return false;
+    if (!component.req.app.schemas.hasOwnProperty(value)) return false;
+    return !bolt.Joi.validate(component.req.body, component.req.app.schemas[value]).error;
   }
 };
 

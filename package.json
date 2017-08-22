@@ -207,6 +207,11 @@
         "description": "controller"
       },
       {
+        "event": "loadedSchema",
+        "action": "load",
+        "description": "schema"
+      },
+      {
         "event": "loadedComponentView",
         "action": "load",
         "description": "component view"
