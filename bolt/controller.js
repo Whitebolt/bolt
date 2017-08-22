@@ -107,38 +107,34 @@ function _getControllerMethod(config) {
 }
 
 function _testControllerAnnotationSecurity(method, component) {
-  return !_testControllerAnnotationSecurityTests.find(test=>!test(method, component));
+  return !bolt.annotation.find(method, (value, key)=>{
+    if (_controllerAnnotationTests.hasOwnProperty(key)) {
+      return !_controllerAnnotationTests[key](bolt.annotation.get(method, key), component);
+    }
+  });
 }
 
-const _testControllerAnnotationSecurityTests = [
-  function _annotationMethods(method, component) {
-    let methods = bolt.annotation.get(method, 'methods');
-    if (methods) {
-      let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase(): '';
-      if (!methods.has(httpMethod)) return false;
-    }
+const _controllerAnnotationTests = {
+  methods: (value, component)=>{
+    let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase() : '';
+    if (!value.has(httpMethod)) return false;
     return true;
   },
-  function _annotationAuthenticated(method, component) {
-    if (!bolt.annotation.get(method, 'authenticated')) return true;
+  authenticated: (value, component)=>{
     if (component && component.req && component && component.req.isAuthenticated) return component.req.isAuthenticated();
     return false;
   },
-  function _annotationAcceptedFields(method, component) {
-    let acceptedFields = bolt.annotation.get(method, 'accepted-fields');
-    if (!acceptedFields) return true;
+  'accepted-fields': (value, component)=>{
     if (!(component && component.req)) return false;
-    let bodyFields = bolt.without(Object.keys(component.req.body || {}), ...Array.from(acceptedFields));
+    let bodyFields = bolt.without(Object.keys(component.req.body || {}), ...Array.from(value));
     return (bodyFields.length === 0);
   },
-  function _annotationRequiredFields(method, component) {
-    let requiredFields = bolt.annotation.get(method, 'required-fields');
-    if (!requiredFields) return true;
+  'required-fields': (value, component)=>{
     if (!(component && component.req)) return false;
-    let bodyFields = bolt.without(Array.from(requiredFields), ...Object.keys(component.req.body || {}));
+    let bodyFields = bolt.without(Array.from(value), ...Object.keys(component.req.body || {}));
     return (bodyFields.length === 0);
   }
-];
+};
 
 function _parseAnnotationSet(value, lowecase=false) {
   let _value = (lowecase?value.toLocaleString():value);
