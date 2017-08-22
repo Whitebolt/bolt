@@ -50,7 +50,10 @@ const injectors = Object.freeze({
   path: component=>bolt.getPathFromRequest(component.req),
   db: component=>component.req.app.db,
   view: component=>component.view,
-  config: component=>component.req.app.config
+  config: component=>component.req.app.config,
+  method: component=>(component.req.method || '').toLowerCase(),
+  session: component=>(component.req.session || {}),
+  body: component=>(component.req.body || {})
 });
 
 /**
