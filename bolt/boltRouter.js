@@ -14,8 +14,8 @@ const _componentAllowedToSet = [
  * @param {Object} req          Express request object.
  * @returns {Array.<string>}    Possible routes in cascading order.
  */
-function _getPaths(req, path) {
-  let route = path || bolt.getPathFromRequest(req);
+function _getPaths(req) {
+  let route = bolt.getPathFromRequest(req);
   let routes = [];
   while (route.length) {
     routes.push(route);
@@ -136,11 +136,11 @@ function createRouterObject(req, res, socket) {
  * @param {Object} req          The express request object.
  * @returns {Array.<Function>}  Methods that are applicable to request route.
  */
-function getMethods(app, req, path) {
+function getMethods(app, req, filter) {
   let methods = [];
   let cascading = new Map();
 
-  _getPaths(req, path).forEach(route=>{
+  _getPaths(req).forEach(route=>{
     if (app.controllerRoutes[route]) {
       app.controllerRoutes[route].forEach(method=>{
         let methodPath = bolt.annotation.get(method.method, 'methodPath');
@@ -152,9 +152,10 @@ function getMethods(app, req, path) {
           add = cascading.get(methodPath);
         }
 
+        if (filter) add = !!filter(method.method);
+
         if (add) {
           methods.push(router=>{
-            bolt.fire('firingControllerMethod', bolt.annotation.get(method.method, 'methodPath'), path || bolt.getPathFromRequest(req));
             router.__componentName = router.component || bolt.annotation.get(method.method, 'componentName');
             router.componentPath = bolt.annotation.get(method.method, 'componentPath');
             return method.method(router);

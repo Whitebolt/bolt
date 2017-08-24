@@ -66,19 +66,18 @@ const injectors = Object.freeze({
  * @param {Function|string} config.sourceMethod   The original source method from which, method is derived.
  *                                                Can be method source.
  * @param {string} config.methodPath              The path to the method in the app.
- * @returns {Map}                                 The annotations map for given method.
  */
 function _addAnnotationsToControllerMethods(config) {
   let {component, method, sourceMethod, methodPath} = config;
-  let annotations = bolt.annotation.from(sourceMethod, method);
+
+  bolt.annotation.set(method, 'accept-errors', false);
+  bolt.annotation.from(sourceMethod, method);
 
   bolt.annotation.setFrom(method,  {
     componentName: component.name,
     componentPath: component.path,
     methodPath
   });
-
-  return annotations;
 }
 
 /**
@@ -97,7 +96,7 @@ function _getControllerMethod(config) {
   let params = bolt.parseParameters(sourceMethod);
   let method = component=>{
     if (!_testControllerAnnotationSecurity(method, component)) return component;
-
+    bolt.fire('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
     return sourceMethod.apply(createControllerScope(controller), params.map(param=>{
       if (injectors.hasOwnProperty(param)) return injectors[param](component);
       if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
@@ -142,6 +141,11 @@ const _controllerAnnotationTests = {
     if (!(component && component.req)) return false;
     return !value.find(test=>component.req.is(test));
   },
+  'accept-errors': (value, component)=> {
+    if (!(component && component.res)) return true;
+    if (component.res.statusCode >= 400) return !!value;
+    return true;
+  },
   'accepts-connect': (value, component)=>{
     if (!(component && component.req)) return false;
     let type = 'get';
@@ -178,6 +182,10 @@ const _annotationParsers = [
   value=>{
     // @annotation key accepted-fields
     return _parseAnnotationSet(value);
+  },
+  value=>{
+    // @annotation key accept-errors
+    return bolt.toBool(value);
   },
   value=>{
     // @annotation key required-fields

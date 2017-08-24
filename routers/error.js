@@ -87,7 +87,7 @@ function _httpRouter(app) {
   return (_req, res, next)=>{
     if (res.statusCode >= 400) {
       let req = getErrorReqObject(_req, res);
-      let methods = bolt.boltRouter.getMethods(app, req);
+      let methods = bolt.boltRouter.getMethods(app, req, method=>!!bolt.annotation.get(method, 'accept-errors'));
       let router = bolt.boltRouter.createRouterObject(req, res);
       let config = {methods, router, req, res, next};
 

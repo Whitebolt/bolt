@@ -28,7 +28,7 @@ const templateFunctions = {
     if (method) {
       Object.assign(this, {req, parent, doc});
       req.doc = req.doc || doc;
-      bolt.fire("firingControllerMethod", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
+      bolt.fire("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
       return method(this);
     } else {
       Promise.resolve('Could not find component: ' + componentName);
