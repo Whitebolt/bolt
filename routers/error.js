@@ -24,10 +24,7 @@ function callMethod(config) {
   let method = Promise.method(config.methods.shift());
 
   return method(config.router).then(router=>{
-    if (config.router.redirect) {
-      let redirect = config.res.redirect(config.router.status || 302, config.router.redirect);
-      return ((redirect && redirect.end)?redirect.end():redirect);
-    } else if (config.router.done && !config.router.res.headersSent) {
+    if (config.router.done && !config.router.res.headersSent) {
       return bolt.boltRouter.applyAndSend(router);
     } else if (config.methods.length && !config.router.done && !config.router.res.headersSent) {
       return callMethod(config);
@@ -68,6 +65,16 @@ function _addSocketIoMethodRouters(app) {
   httpMethods.forEach(method=>bolt.ioOn(method.toLowerCase(), _socketRouterMethod.bind({}, app, method)));
 }
 
+function getErrorReqObject(req, res) {
+  const path = '/error/' + res.statusCode;
+  return new Proxy(req, {
+    get(target, property) {
+      if (property === 'path') return path;
+      return target[property];
+    }
+  });
+}
+
 /**
  * The bolt router. This will fire return a router function that fires components, controllers and methods according
  * to the bolt routing rules.
@@ -77,35 +84,25 @@ function _addSocketIoMethodRouters(app) {
  * @returns {Function}              Express router function.
  */
 function _httpRouter(app) {
-  return (req, res, next)=>{
-    let methods = bolt.boltRouter.getMethods(app, req);
-    let router = bolt.boltRouter.createRouterObject(req, res);
-    let config = {methods, router, req, res, next};
+  return (_req, res, next)=>{
+    if (res.statusCode >= 400) {
+      let req = getErrorReqObject(_req, res);
+      let methods = bolt.boltRouter.getMethods(app, req);
+      let router = bolt.boltRouter.createRouterObject(req, res);
+      let config = {methods, router, req, res, next};
 
-    if (methods.length) {
-      callMethod(config).then(router=>{
-        if (router && router.res) {
-          if (!router.res.headersSent) {
-            next();
-          }
-        }
-      });
-    } else {
-      console.log("HELLO DROP THROUGH");
-      if (router.status >= 400) {
-        console.log(router.res.statusCode);
-        throw new ERROR({
-          code: router.status,
-          message: router.statusMessage
+      router.res.statusMessage = router.res.body;
+
+      if (methods.length) {
+        callMethod(config).then(router=>{
+          if (router && router.res && !router.res.headersSent) next();
         });
-        /*next(new ERROR({
-          code: router.status,
-          message: router.statusMessage
-        }));*/
       } else {
-        console.log("NO ERROR");
+        bolt.boltRouter.applyAndSend(router);
         next();
       }
+    } else {
+      next();
     }
   };
 }
@@ -119,11 +116,11 @@ function _httpRouter(app) {
  * @param {bolt:application} app    Express application object.
  * @returns {Function}              Express router function.
  */
-function boltRouter(app) {
-  // @annotation priority 0
+function errorRouter(app) {
+  // @annotation priority 9999999
 
   _addSocketIoMethodRouters(app);
   return _httpRouter(app);
 }
 
-module.exports = boltRouter;
+module.exports = errorRouter;
