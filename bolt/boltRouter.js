@@ -123,8 +123,6 @@ function createRouterObject(req, res, socket) {
   router.set = componentSet.bind(router);
   router.mime = setMime.bind(router);
 
-  res.isWebSocket = !!socket;
-
   return router;
 }
 

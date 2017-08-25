@@ -29,16 +29,7 @@ function init(app) {
     saveUninitialized: true
   });
 
-  app.use((req, res, next)=>{
-    req.isWebSocket = false;
-    next();
-  });
-  bolt.ioUse(app, (req, res, next)=>{
-    req.isWebSocket = true;
-    next();
-  });
-
-  bolt.use(app, sessionMiddleware, (req, res, next)=>{
+  app.use(sessionMiddleware, (req, res, next)=>{
     if (req.session) {
       if (req.websocket) req.session.socketId = req.websocket.id;
       if (req.session.socketId && !app.io.sockets.connected.hasOwnProperty(req.session.socketId)) delete req.session.socketId;

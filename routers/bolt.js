@@ -1,7 +1,6 @@
 'use strict';
 
 const Promise = require('bluebird');
-const httpMethods = require('http').METHODS;
 
 /**
  * Handle any errors.
@@ -38,37 +37,6 @@ function callMethod(config) {
 }
 
 /**
- * Function to run when a socket.io message is received matching a http method.
- *
- * @private
- * @param {bolt:application} app            Express application.
- * @param {string} method                   Http method name.
- * @param {Object} socket                   The socket.io object.
- * @param {Object} message                  The socket.io message.
- * @param {Function} [callback]             Socket.io callback method.
- */
-function _socketRouterMethod(app, method, socket, message, callback) {
-  let {res, req, next} = bolt.createWebsocketRouterObjects(app, message, socket, method, callback);
-  let methods = bolt.boltRouter.getMethods(app, req);
-  let router = bolt.boltRouter.createRouterObject(req, res, socket);
-  let config = {methods, router, req, res, next, callback};
-
-  if (methods.length) callMethod(config);
-}
-
-
-/**
- * Add socket.io routing, which mimics the ordinary ajax style routing as closely as possible.
- *
- * @private
- * @param {bolt:application} app    Express application object.
- * @returns {bolt:application} app  The express application object passed to this function.
- */
-function _addSocketIoMethodRouters(app) {
-  httpMethods.forEach(method=>bolt.ioOn(method.toLowerCase(), _socketRouterMethod.bind({}, app, method)));
-}
-
-/**
  * The bolt router. This will fire return a router function that fires components, controllers and methods according
  * to the bolt routing rules.
  *
@@ -91,21 +59,7 @@ function _httpRouter(app) {
         }
       });
     } else {
-      console.log("HELLO DROP THROUGH");
-      if (router.status >= 400) {
-        console.log(router.res.statusCode);
-        throw new ERROR({
-          code: router.status,
-          message: router.statusMessage
-        });
-        /*next(new ERROR({
-          code: router.status,
-          message: router.statusMessage
-        }));*/
-      } else {
-        console.log("NO ERROR");
-        next();
-      }
+      next();
     }
   };
 }
@@ -122,7 +76,6 @@ function _httpRouter(app) {
 function boltRouter(app) {
   // @annotation priority 0
 
-  _addSocketIoMethodRouters(app);
   return _httpRouter(app);
 }
 

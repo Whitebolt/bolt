@@ -1,7 +1,6 @@
 'use strict';
 
 const Promise = require('bluebird');
-const httpMethods = require('http').METHODS;
 
 /**
  * Handle any errors.
@@ -32,37 +31,6 @@ function callMethod(config) {
       return config.router;
     }
   }, error=>handleMethodErrors(error, config));
-}
-
-/**
- * Function to run when a socket.io message is received matching a http method.
- *
- * @private
- * @param {bolt:application} app            Express application.
- * @param {string} method                   Http method name.
- * @param {Object} socket                   The socket.io object.
- * @param {Object} message                  The socket.io message.
- * @param {Function} [callback]             Socket.io callback method.
- */
-function _socketRouterMethod(app, method, socket, message, callback) {
-  let {res, req, next} = bolt.createWebsocketRouterObjects(app, message, socket, method, callback);
-  let methods = bolt.boltRouter.getMethods(app, req);
-  let router = bolt.boltRouter.createRouterObject(req, res, socket);
-  let config = {methods, router, req, res, next, callback};
-
-  if (methods.length) callMethod(config);
-}
-
-
-/**
- * Add socket.io routing, which mimics the ordinary ajax style routing as closely as possible.
- *
- * @private
- * @param {bolt:application} app    Express application object.
- * @returns {bolt:application} app  The express application object passed to this function.
- */
-function _addSocketIoMethodRouters(app) {
-  httpMethods.forEach(method=>bolt.ioOn(method.toLowerCase(), _socketRouterMethod.bind({}, app, method)));
 }
 
 function getErrorReqObject(req, res) {
@@ -119,7 +87,6 @@ function _httpRouter(app) {
 function errorRouter(app) {
   // @annotation priority 9999999
 
-  _addSocketIoMethodRouters(app);
   return _httpRouter(app);
 }
 

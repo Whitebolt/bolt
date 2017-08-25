@@ -5,7 +5,6 @@
  */
 
 const Promise = require('bluebird');
-const IO = require('socket.io');
 const figlet =  Promise.promisify(require('figlet'));
 
 
@@ -41,23 +40,12 @@ function _runApp(app) {
 
     server.listen(app.config.port, ()=>{
       bolt.fire('appListening', app.config.port);
-      return bolt.fire(()=>{
-        app.io = IO(server);
-        app.io.sockets.setMaxListeners(50);
-      }, 'ioServerLaunch', app).then(()=>{
-          let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
-          return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
-            console.log(welcome);
-            return welcome;
-          });
-        })
-        .then(() => resolve(app));
+      let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
+      return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
+        console.log(welcome);
+        return welcome;
+      }).then(() => resolve(app));
     });
-
-
-    /*let server = app.listen(app.config.port, () => {
-
-    });*/
   });
 }
 

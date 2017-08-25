@@ -195,9 +195,9 @@ function init(app) {
     _getUserRecordById(id).nodeify(callback);
   });
 
-  bolt.use(app, passport.initialize());
-  bolt.use(app, passport.session());
-  bolt.use(app, (req, res, next)=>{
+  app.use(passport.initialize());
+  app.use(passport.session());
+  app.use((req, res, next)=>{
     if (req.session) {
       const passport = req.session.passport;
 
