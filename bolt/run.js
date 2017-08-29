@@ -6,7 +6,7 @@
 
 const Promise = require('bluebird');
 const figlet =  Promise.promisify(require('figlet'));
-const {upgrade} = require('websockets-express');
+const {upgrade} = require('websocket-express');
 
 /**
  * Run the given express app, binding to correct port.

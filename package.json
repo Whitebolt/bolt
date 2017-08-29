@@ -37,6 +37,7 @@
     "helmet": "^3.8.1",
     "ical-date-parser": "^4.0.0",
     "iconv-lite": "^0.4.15",
+    "joi": "^10.6.0",
     "linux-user": "git+https://github.com/ssimpo/linux-user.git",
     "lodash": "^4.17.4",
     "map-watch": "git+ssh://git@aaron.whitebolt:simpo/map-watch.git",
@@ -58,8 +59,7 @@
     "rrule": "git+https://github.com/jkbrzt/rrule.git",
     "serve-static": "^1.11.2",
     "shortcode-insert": "^1.0.1",
-    "snyk": "^1.39.0",
-    "ws": "^3.1.0",
+    "websockets-express": "git+https://github.com/ssimpo/websockets-express.git",
     "yargs": "^8.0.2"
   },
   "main": "./server.js",
@@ -79,9 +79,7 @@
   "scripts": {
     "test": "snyk test && ./node_modules/mocha/bin/mocha --recursive test",
     "start": "node ./server.js start",
-    "build-docs": "gulp doc",
-    "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
+    "build-docs": "gulp doc"
   },
   "config": {
     "port": 3000,
@@ -246,6 +244,5 @@
         "propertyColour": "green"
       }
     ]
-  },
-  "snyk": true
+  }
 }
