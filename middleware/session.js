@@ -38,6 +38,6 @@ function init(app) {
 
     next();
   });
-};
+}
 
 module.exports = init;
