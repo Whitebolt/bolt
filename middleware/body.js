@@ -15,6 +15,10 @@ function _isMultipartRequest(req) {
   return (contentTypeHeader && (contentTypeHeader.indexOf('multipart') > -1));
 }
 
+function _isWebsocket(req) {
+  return !!req.websocket;
+}
+
 /**
  * Parse the body property of request. Parses json, url, text and raw data.
  *
@@ -30,10 +34,10 @@ function init(app) {
   const rawParser = bodyParser.raw();
 
   app.use(
-    (req, res, next)=>(_isMultipartRequest(req) ? next() : urlParser(req, res, next)),
-    (req, res, next)=>(_isMultipartRequest(req) ? next() : jsonParser(req, res, next)),
-    (req, res, next)=>(_isMultipartRequest(req) ? next() : textParser(req, res, next)),
-    (req, res, next)=>(_isMultipartRequest(req) ? next() : rawParser(req, res, next))
+    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : urlParser(req, res, next)),
+    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : jsonParser(req, res, next)),
+    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : textParser(req, res, next)),
+    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : rawParser(req, res, next))
   );
 };
 
