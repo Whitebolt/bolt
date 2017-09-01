@@ -26,7 +26,7 @@ function _isWebsocket(req) {
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-  // @annotation priority 2
+  // @annotation priority 3
 
   const jsonParser = bodyParser.json();
   const urlParser = bodyParser.urlencoded({extended:true});

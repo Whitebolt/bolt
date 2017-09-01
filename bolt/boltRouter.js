@@ -41,13 +41,12 @@ function applyAndSend(router) {
     let data;
     if (router.sendFields) {
       data = bolt.pick(req.doc, bolt.makeArray(router.sendFields));
-      if (content) Object.assign(data, {content});
+      if (content && (bolt.isObject(content)?Object.keys(content).length:true)) Object.assign(data, {content});
     } else {
       data = content;
     }
 
     if (router.redirect) data.redirect = router.redirect;
-    if (req.isWebSocket && !bolt.isString(data)) data.messageId = req.messageId;
 
     return res
       .status(router.status || 200)

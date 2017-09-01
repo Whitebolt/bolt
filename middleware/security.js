@@ -49,7 +49,7 @@ function _getDirectives(app) {
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-  // @annotation priority 3
+  // @annotation priority 4
 
   let cspMiddleware = csp({
     directives: _getDirectives(app),

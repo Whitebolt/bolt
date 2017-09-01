@@ -9,7 +9,7 @@ const {websocketMiddleware} = require('websocket-express');
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-  // @annotation priority 0
+  // @annotation priority 2
 
   app.use(websocketMiddleware);
 }
