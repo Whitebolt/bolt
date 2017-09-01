@@ -27,7 +27,7 @@ function callMethod(config) {
       let redirect = config.res.redirect(config.router.status || 302, config.router.redirect);
       return ((redirect && redirect.end)?redirect.end():redirect);
     } else if (config.router.done && !config.router.res.headersSent) {
-      return bolt.boltRouter.applyAndSend(router);
+      return bolt.boltRouter.applyAndSend(config.router);
     } else if (config.methods.length && !config.router.done && !config.router.res.headersSent) {
       return callMethod(config);
     } else {
