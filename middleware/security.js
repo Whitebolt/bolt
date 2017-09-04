@@ -25,7 +25,7 @@ function _mergeConfigDirectives(app, directives) {
 }
 
 function _getDirectives(app) {
-  const domains = ["'self'"];
+  const domains = ["'self'", 'data:'];
 
   return _mergeConfigDirectives(app, {
     defaultSrc: domains,
@@ -86,6 +86,6 @@ function init(app) {
     framegardMiddleware,
     xssFilter()
   );
-};
+}
 
 module.exports = init;

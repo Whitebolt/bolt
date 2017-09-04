@@ -42,7 +42,10 @@ const injectors = Object.freeze({
   req: component=>component.req,
   res: component=>component.res,
   component: component=>component,
-  doc: component=>(component.req.doc || {}),
+  doc: component=>{
+    component.req.doc = component.req.doc || {};
+    return component.req.doc;
+  },
   done: component=>{
     return (value=true)=>{component.done = !!value}
   },
@@ -52,8 +55,22 @@ const injectors = Object.freeze({
   view: component=>component.view,
   config: component=>component.req.app.config,
   method: component=>(component.req.method || '').toLowerCase(),
-  session: component=>(component.req.session || {}),
-  body: component=>(component.req.body || {})
+  session: component=>{
+    component.req.session = component.req.session || {};
+    return component.req.session;
+  },
+  body: component=>{
+    component.req.body = component.req.body || {};
+    return component.req.body;
+  },
+  query: component=>{
+    component.req.query = component.req.query || {};
+    return component.req.query;
+  },
+  sessionId: component=>{
+    const sessionID = component.req.sessionID;
+    return sessionID;
+  }
 });
 
 /**

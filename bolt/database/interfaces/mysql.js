@@ -26,7 +26,8 @@ function _getDbConfig(config) {
     host:config.server,
     user:config.username,
     password:config.password,
-    database:config.database
+    database:config.database,
+    timezone:'Z'
   };
 }
 

@@ -367,14 +367,27 @@ function _getComponentOverridePaths(component) {
  * @returns {Object}                        The view.
  */
 function _getView2(viewName, componentName, req) {
+  return _getViewFromPath(req, getComponentViewPath(viewName, componentName));
+}
+
+function _getViewFromPath(req, path) {
+  let componentPath = `${path.component}`;
+  if (componentPath !== '') return bolt.get(req, `app.components.${componentPath}.views.${path.view}`);
+  return bolt.get(req, `app.components.${path.view}.views.index`);
+}
+
+function getComponentViewPath(viewName, componentName) {
   let parts = viewName.split('/');
-  let _viewName = parts.pop();
-  let _componentName = bolt.replaceSequence(parts.join('/') + '/', [
+  let view = parts.pop();
+  let component = bolt.replaceSequence(parts.join('/') + '/', [
     [rxRelativeDir, componentName],
     [rxStartEndSlash],
     ['/', '.components.']
   ]);
-  return bolt.get(req, `app.components.${_componentName}.views.${_viewName}`);
+
+  return {
+    view, component
+  }
 }
 
 /**
