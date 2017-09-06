@@ -36,22 +36,21 @@ function _annotateMiddlewareMethod(middleware, middlewareName) {
  * @param {Object} importObj      The object to import into.
  * @returns {Promise}             Promise resolved when all middleware loaded.
  */
-function _loadMiddleware(app, roots, importObj) {
-  return bolt.importIntoObject({
-    roots, importObj, dirName:'middleware', eventName:'loadedMiddleware'
-  })
-    .then(middleware=>bolt.assign({}, ...middleware))
-    .then(middleware=>Object.keys(middleware)
-        .map(middlewareName => _annotateMiddlewareMethod(middleware, middlewareName))
-        .sort(bolt.prioritySorter)
-    )
-    .then(middleware=>{
-      middleware.forEach(middleware => {
-        bolt.fire('ranMiddleware', bolt.annotation.get(middleware, 'id').replace(xStartDigitUnderscore, ''));
-        middleware(app);
-      });
-      return app
-    });
+async function _loadMiddleware(app, roots, importObj) {
+  let middleware = bolt.assign({}, ...await bolt.importIntoObject({
+    roots, importObj, dirName:'middleware', eventName:'loadedMiddleware'})
+  );
+
+  Object.keys(middleware).map(
+    middlewareName=>_annotateMiddlewareMethod(middleware, middlewareName)
+  ).sort(
+    bolt.prioritySorter
+  ).forEach(middleware=>{
+    bolt.fire('ranMiddleware', bolt.annotation.get(middleware, 'id').replace(xStartDigitUnderscore, ''));
+    middleware(app);
+  });
+
+  return app;
 }
 
 
@@ -64,8 +63,9 @@ function _loadMiddleware(app, roots, importObj) {
  * @param {Object} [importObj==app.middleware]      The object to import into.
  * @returns {Promise}                               Promise resolved when all middleware loaded.
  */
-function loadMiddleware(app, roots=app.config.root, middleware=app.middleware) {
-  return bolt.fire(()=>_loadMiddleware(app, roots, middleware), 'loadMiddleware', app).then(() => app);
+async function loadMiddleware(app, roots=app.config.root, middleware=app.middleware) {
+  await bolt.fire(()=>_loadMiddleware(app, roots, middleware), 'loadMiddleware', app);
+  return app;
 }
 
 module.exports = {

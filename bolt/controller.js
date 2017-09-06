@@ -253,14 +253,14 @@ function _setControllerMethodFilePathAnnotation(filePath, controller) {
  * @param {Object} importObject           Object to import into.
  * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
-function _loadControllers(component, roots, importObj) {
+async function _loadControllers(component, roots, importObj) {
   bolt.hook('loadedController', (undefined, filePath)=>_setControllerMethodFilePathAnnotation(filePath, importObj));
 
-  return bolt
-    .importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'})
-    .then(controllers=>_addControllerRoutes(component, controllers))
-    .then(_addControllerRoutesToApplication)
-    .then(()=>importObj);
+  let controllers = await bolt.importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'});
+  _addControllerRoutes(component, controllers);
+  _addControllerRoutesToApplication()
+
+  return importObj;
 }
 
 /**
@@ -272,10 +272,9 @@ function _loadControllers(component, roots, importObj) {
  * @param {Object} [controllers=component.controllers]  Object to import into.
  * @returns {Promise.<BoltComponent>}                   Promise resolving to the supplied component.
  */
-function loadControllers(component, roots, controllers=component.controllers) {
-  return bolt.fire(
-    ()=>_loadControllers(component, roots, controllers), 'loadControllers', component
-  ).then(()=>component);
+async function loadControllers(component, roots, controllers=component.controllers) {
+  await bolt.fire(()=>_loadControllers(component, roots, controllers), 'loadControllers', component);
+  return component;
 }
 
 module.exports = {

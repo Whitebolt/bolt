@@ -212,8 +212,8 @@ function getApp(component) {
  * @returns {Promise}           Promise resolving to app object once it is
  *                              loaded and events fired.
  */
-function loadApplication(configPath) {
-  return bolt.fire(()=>_loadApplication(configPath), 'initialiseApp', configPath);
+async function loadApplication(configPath) {
+  return await bolt.fire(()=>_loadApplication(configPath), 'initialiseApp', configPath);
 }
 
 /**

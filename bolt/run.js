@@ -38,13 +38,12 @@ function _runApp(app) {
     }
     if (!server) server = require('http').createServer(app);
 
-    server.listen(app.config.port, ()=>{
+    server.listen(app.config.port, async ()=>{
       bolt.fire('appListening', app.config.port);
       let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
-      return figlet(`${serverName} v${app.config.version}`).then(welcome=>{
-        console.log(welcome);
-        return welcome;
-      }).then(() => resolve(app));
+      let welcome = await figlet(`${serverName} v${app.config.version}`)
+      console.log(welcome);
+      resolve(app);
     });
 
     upgrade(server, app);
@@ -58,8 +57,9 @@ function _runApp(app) {
  * @param {Object} app      Express application object.
  * @returns {Promise}       Promise resolved when app has launched fully.
  */
-function runApp(app) {
-  return bolt.fire(()=>_runApp(app), 'runApp', app).then(() => app);
+async function runApp(app) {
+  await bolt.fire(()=>_runApp(app), 'runApp', app);
+  return app;
 }
 
 module.exports = {
