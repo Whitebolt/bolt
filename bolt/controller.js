@@ -99,16 +99,19 @@ function _getControllerMethod(config) {
 function _setControllerRoutes(config) {
   let {methodPath, app, method, name} = config;
 
-  _getMethodPaths(methodPath).forEach((methodPath, priority) => {
-    let _methodPath = methodPath.length?methodPath:'/';
-    bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
+  let visibility = bolt.annotation.get(method, 'visibility') || 'public';
+  if (visibility === 'public') {
+    _getMethodPaths(methodPath).forEach((methodPath, priority) => {
+      let _methodPath = methodPath.length?methodPath:'/';
+      bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
 
-    app.controllerRoutes[_methodPath].forEach(route=>{
-      if (bolt.annotation.get(method, 'methodPath') === bolt.annotation.get(route.method, 'methodPath')) route.priority2++;
+      app.controllerRoutes[_methodPath].forEach(route=>{
+        if (bolt.annotation.get(method, 'methodPath') === bolt.annotation.get(route.method, 'methodPath')) route.priority2++;
+      });
+
+      app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
     });
-
-    app.controllerRoutes[_methodPath].push({method, name, priority, priority2:0});
-  });
+  }
 }
 
 /**

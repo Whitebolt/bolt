@@ -53,7 +53,7 @@ function get(component, extraParams) {
 
   function getBoundProperty(sourceMethod) {
     let method = bolt.annotation.get(sourceMethod, 'controllerMethod');
-    return (method ? method.bind({}, component, extraParams) : sourceMethod);
+    return (method ? method.bind({}, component, ...extraParams) : sourceMethod);
   }
 
   /**
@@ -76,7 +76,10 @@ function get(component, extraParams) {
     }
     if (controller.hasOwnProperty(name)) return getBoundProperty(controller[name]);
     let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
-    if (found) return getBoundProperty(found[name]);
+    if (found) {
+      let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
+      if ((visibility === 'public') || (visibility === 'private')) return getBoundProperty(found[name]);
+    }
     if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
   };
 }
