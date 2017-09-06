@@ -6,4 +6,4 @@ module.exports = function() {
   return [
     (hook, app)=>bolt.loadComponents(app)
   ];
-}
+};

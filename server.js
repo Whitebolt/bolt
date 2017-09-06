@@ -3,6 +3,8 @@
 
 Error.stackTraceLimit = Infinity;
 
+const readyCallbacks = new Set();
+
 global.boltRootDir = __dirname;
 global.colour = require('colors');
 global.express = require('express');
@@ -21,6 +23,22 @@ const packageConfig = require('./package.json').config || {};
 let configDone = false;
 let boltLoaded = false;
 
+global.bolt.ready = (hook, handler=hook)=>{
+  const _handler = ((hook !== handler) ? ()=>bolt.hook(hook, handler) : handler);
+
+  if (!boltLoaded) {
+    readyCallbacks.add(_handler);
+    return ()=>readyCallbacks.delete(_handler);
+  } else {
+    _handler();
+    return ()=>{};
+  }
+};
+
+function ready() {
+  readyCallbacks.forEach(handler=>handler());
+  readyCallbacks.clear();
+}
 
 process.on('message', message=>{
   if (message.type === 'config') appLauncher(message.data);
@@ -57,6 +75,7 @@ function appLauncher(config) {
         useSyncRequire: true
       }).then(()=>{
         boltLoaded = true;
+        ready();
         return _startApp(config);
       });
     }
@@ -79,6 +98,7 @@ function pm2Controller() {
     .importDirectory('./bolt/', boltImportOptions)
     .then(()=>{
       boltLoaded = true;
+      ready();
       return require('./cli')
     })
     .then(args=>{

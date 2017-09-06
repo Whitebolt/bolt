@@ -243,6 +243,34 @@
         "property": "<%= Date().toLocaleString(); %>",
         "propertyColour": "green"
       }
-    ]
+    ],
+    "errors": {
+      "controllerContext": {
+        "noProperty": {
+          "type": "reference",
+          "message": "Property/Method ${name} does not exist for given controller."
+        },
+        "afterInitProperty": {
+          "type": "range",
+          "message": "Cannot set properties or methods on controllers after initialisation."
+        },
+        "afterInitController": {
+          "type": "range",
+          "message": "Cannot set new controllers after initialisation."
+        },
+        "controllerAsFunction": {
+          "type": "syntax",
+          "message": "Cannot run controller as if it is a function."
+        },
+        "componentAsFunction": {
+          "type": "syntax",
+          "message": "Cannot run component as if it is a function."
+        },
+        "noController": {
+          "type": "range",
+          "message": "Controller ${name} does not exist on given component"
+        }
+      }
+    }
   }
 }

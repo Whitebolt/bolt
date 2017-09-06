@@ -314,7 +314,7 @@ function loadConfig(name, profile) {
     .then(_assignPort)
     .then(siteConfig=>{
       siteConfig.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : false);
-      return siteConfig;
+      return bolt.fire('configLoaded', siteConfig).then(()=>siteConfig);
     });
 }
 

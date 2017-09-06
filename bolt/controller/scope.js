@@ -10,6 +10,12 @@ const {Memory} = require('map-watch');
 const _memory = new Memory();
 const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;
 
+let errorFactory;
+
+bolt.ready(()=>{
+  errorFactory = new bolt.ErrorFactory('controllerContext');
+});
+
 /**
  * Get the controller cascade for a given controller.
  *
@@ -56,16 +62,14 @@ function get(controller, name) {
   if (name === '$me') {
     let callee = xStackFindProxy.exec((new Error).stack);
     let cascade = _getControllerCascade(controller, true)
-        .map(controller=>controller[callee[1]])
-        .filter(method=>method);
+      .map(controller=>controller[callee[1]])
+      .filter(method=>method);
     if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade);
   }
   if (controller.hasOwnProperty(name)) return controller[name];
   let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
   if (found) return found[name];
-  if (!bolt.isSymbol(name) && (name !== "inspect")) {
-    throw new ReferenceError(`Property/Method ${name} does not exist for given controller.`);
-  }
+  if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
 }
 
 /**
@@ -86,7 +90,7 @@ function has(controller, name) {
  * @throws RangeError
  */
 function set() {
-  throw new RangeError('Cannot set properties or methods on controllers after initialisation.');
+  throw errorFactory.error('afterInitProperty', {});
 }
 
 /**
@@ -95,7 +99,7 @@ function set() {
  * @throws RangeError
  */
 function setComponent() {
-  throw new RangeError('Cannot set new controllers after initialisation.');
+  throw errorFactory.error('afterInitController', {});
 }
 
 /**
@@ -183,7 +187,7 @@ function getPrototypeOf() {
  * @throws SyntaxError
  */
 function apply() {
-  throw new SyntaxError('Cannot run controller as if it is a function.')
+  throw errorFactory.error('ccontrollerAsFunction', {});
 }
 
 /**
@@ -192,29 +196,27 @@ function apply() {
  * @throws SyntaxError
  */
 function applyComponent() {
-  throw new SyntaxError('Cannot run component as if it is a function.')
-}
+  throw errorFactory.error('componentrAsFunction', {});
 
-/**
- * Proxy get() method for component.
- *
- * @throws ReferenceError
- *
- * @param {Object} controllers      The controllers of given component.
- * @param {string} name             The controller to get.
- * @returns {Proxy}                 The controller scope to get.
- */
-function componentGet(controllers, name) {
-  if (name === '$parent') {
-    let controllerNames = ownKeysComponent(controllers);
-    if (controllerNames.length) {
-      let parent = bolt.annotation.get(get(controllers, controllerNames[0]), 'parent');
-      if (component.parent) return createComponentScope(parent);
-    }
-  } else {
-    if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
-    if (!bolt.isSymbol(name) && (name !== "inspect")) {
-      throw new ReferenceError(`Controller ${name} does not exist on given component`);
+  /**
+   * Proxy get() method for component.
+   *
+   * @throws ReferenceError
+   *
+   * @param {Object} controllers      The controllers of given component.
+   * @param {string} name             The controller to get.
+   * @returns {Proxy}                 The controller scope to get.
+   */
+  function componentGet(controllers, name) {
+    if (name === '$parent') {
+      let controllerNames = ownKeysComponent(controllers);
+      if (controllerNames.length) {
+        let parent = bolt.annotation.get(get(controllers, controllerNames[0]), 'parent');
+        if (component.parent) return createComponentScope(parent);
+      }
+    } else {
+      if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
+      if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noController', {name});
     }
   }
 }

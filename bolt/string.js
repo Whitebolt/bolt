@@ -86,7 +86,14 @@ function replaceSequence(txt, sequence) {
   return (sequence?_replaceSequence(txt):_replaceSequence)
 }
 
+function runTemplate(strTxt, data) {
+  const params = Object.keys(data);
+  params.push('return `'+strTxt+'`;');
+  const template = new Function(...params);
+  return template(...bolt.values(data));
+}
+
 
 module.exports = {
-  replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence
+  replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate
 };
