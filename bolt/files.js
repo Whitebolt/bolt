@@ -47,10 +47,12 @@ function getCallerFileName() {
     Error.prepareStackTrace = (err, stack) => stack;
     currentfile = err.stack.shift().getFileName();
     while (err.stack.length) {
-      callerfile = err.stack.shift().getFileName();
-      if(currentfile !== callerfile) break;
+      let level = err.stack.shift();
+      callerfile = level.getFileName();
+      if(callerfile && (currentfile !== callerfile)) break;
     }
-  } catch (err) {}
+  } catch (err) {
+  }
 
   Error.prepareStackTrace = prepareStackTrace;
   return callerfile;

@@ -337,7 +337,8 @@ function  _addControllerRoutesToApplication() {
     Object.keys(app.controllerRoutes).forEach(route=>{
       app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
     });
-    _freezeControllers(app);
+    // Removed deep freeze as it was blocking cool stuff with proxy - need fix.
+    //_freezeControllers(app);
     _setAnnotations(app);
   }, {id:'addControllerRoutesToApplication'});
 
