@@ -8,7 +8,7 @@
  */
 const injectors = Object.freeze({
   req: component=>component.req,
-  res: component=>component.res,
+  res: component=>component.res || component.res,
   component: component=>component,
   doc: component=>{
     component.req.doc = component.req.doc || {};
@@ -41,6 +41,10 @@ const injectors = Object.freeze({
   },
   params: (component, extraParams)=>{
     return extraParams;
+  },
+  parent: component=>{
+    component.parent = component.parent || {};
+    return component.parent;
   }
 });
 

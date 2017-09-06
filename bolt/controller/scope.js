@@ -78,7 +78,7 @@ function get(component, extraParams) {
     let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
     if (found) {
       let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
-      if ((visibility === 'public') || (visibility === 'private')) return getBoundProperty(found[name]);
+      if ((visibility === 'public') || (visibility === 'private') || (visibility === 'protected')) return getBoundProperty(found[name]);
     }
     if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
   };

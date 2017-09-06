@@ -149,7 +149,10 @@ function getMethods(app, req, filter) {
           add = cascading.get(methodPath);
         }
 
-        if (filter) add = !!filter(method.method);
+        if (filter) add = !!filter(method.method, bolt.annotation.get(method.metod, 'controllerMethod'));
+
+        let visibility = bolt.annotation.get(method.method, 'visibility') || 'public';
+        if (visibility !== 'public') add = false;
 
         if (add) {
           methods.push(router=>{

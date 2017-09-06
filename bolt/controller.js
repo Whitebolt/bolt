@@ -100,7 +100,7 @@ function _setControllerRoutes(config) {
   let {methodPath, app, method, name} = config;
 
   let visibility = bolt.annotation.get(method, 'visibility') || 'public';
-  if (visibility === 'public') {
+  if ((visibility === 'public') || (visibility === 'viewOnly') || (visibility === 'protected')) {
     _getMethodPaths(methodPath).forEach((methodPath, priority) => {
       let _methodPath = methodPath.length?methodPath:'/';
       bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
