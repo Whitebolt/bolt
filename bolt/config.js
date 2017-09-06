@@ -212,8 +212,7 @@ function _getConfig(config) {
  * @private
  * @returns {BoltConfig}    The config object.
  */
-function getConfigLoadPaths() {
-  const serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile);
+function getConfigLoadPaths(serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile)) {
   const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
   if (env.hasOwnProperty('config')) bolt.makeArray(env.config).forEach(config=>configLoadPaths.push(config + '/' + serverConfigFile));
   if (packageConfig.serverConfigPath) configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
@@ -295,21 +294,17 @@ function mergePackageConfigs(roots, merger=_configMerge, configProp='config') {
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 function loadConfig(name, profile) {
-  return requireX.getModule(true, configLoadPaths)
-    .then(config=>bolt.loadMongo(config.db))
-    .then(db=>{
-      return db.collection('apps')
-        .findOne({name})
-        .then(_parseConfig)
-        .then(config=>{
-          if (!profile) profile = (config.development ? 'development' : 'production');
-          return db.collection('profiles').findOne({name:profile}).then(profileConfig=>{
-            if (profileConfig) {
-              delete profileConfig.name;
-              return bolt.mergeWith(config, profileConfig, _configMerge);
-            }
-          });
-        });
+  return requireX.getModule(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
+    .then(_parseConfig)
+    .then(config=>{
+      if (!profile) profile = (config.development ? 'development' : 'production');
+
+      return requireX.getModule(true, getConfigLoadPaths('settings/profiles/'+profile+'.json')).then(profileConfig=>{
+        if (profileConfig) {
+          delete profileConfig.name;
+          return bolt.mergeWith(config, profileConfig, _configMerge);
+        }
+      });
     })
     .then(_assignPort)
     .then(siteConfig=>{
