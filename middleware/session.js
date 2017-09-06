@@ -1,7 +1,6 @@
 'use strict';
 
 const session = require('express-session');
-const MongoStore = require('connect-mongo')(session);
 
 /**
  * Create the session object using mongo store. Duplicate session to websocket routes.
@@ -14,6 +13,8 @@ function init(app) {
 
   app.set('trust proxy', 1);
 
+  const store = bolt['load'+bolt.capitalize(app.config.sessionStore || 'mongo')].sessionStore(session, app);
+
   let sessionMiddleware = session({
     name: 'sessionId',
     secret: app.config.secret,
@@ -22,9 +23,7 @@ function init(app) {
       expires: new Date(Date.now() + 60 * 60 * 1000),
       httpOnly: true
     },
-    store: new MongoStore({
-      db: app.dbs.main
-    }),
+    store,
     resave: true,
     saveUninitialized: true
   });

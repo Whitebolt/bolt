@@ -30,6 +30,7 @@
     "express": "^4.13.4",
     "express-enforces-ssl": "^1.1.0",
     "express-http-proxy": "^1.0.0",
+    "express-mysql-session": "git+https://github.com/Whitebolt/express-mysql-session.git",
     "express-session": "^1.15.0",
     "figlet": "^1.2.0",
     "find-free-port": "^1.0.2",
@@ -110,7 +111,9 @@
       "name",
       "serverName",
       "domains",
-      "csp"
+      "csp",
+      "sessionStore",
+      "sessionStoreDb"
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [

@@ -75,4 +75,9 @@ function mongoId(id) {
 
 loadMongo.mongoId = mongoId;
 
+loadMongo.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
+  const MongoStore = require('connect-mongo')(session);
+  return new MongoStore({db: app.dbs[db]});
+};
+
 module.exports = loadMongo;

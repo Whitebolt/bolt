@@ -67,11 +67,28 @@ function _query(db, queryMethod, sql) {
 function loadMysql(config) {
   let db = mysql(config.database);
   db.configure(_getDbConfig(config));
-  db.query = _query.bind(db, db, db.query);
+  db._originalDb = db;
+  let query = _query.bind(db, db, db.query);
 
   bolt.fire('SQLConnected', config.database);
 
+  return Promise.resolve(new Proxy(db, {
+    get: (target, property, receiver)=>{
+      if (property === 'query') return query;
+      return Reflect.get(target, property, receiver);
+    }
+  }));
+
+
   return Promise.resolve(db);
 }
+
+loadMysql.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
+  const MySqlStore = require('express-mysql-session')(session);
+
+  return new MySqlStore({
+    createDatabaseTable: true
+  }, app.dbs[db]._originalDb);
+};
 
 module.exports = loadMysql;
