@@ -258,7 +258,7 @@ async function _loadControllers(component, roots, importObj) {
 
   let controllers = await bolt.importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'});
   _addControllerRoutes(component, controllers);
-  _addControllerRoutesToApplication()
+  _addControllerRoutesToApplication();
 
   return importObj;
 }
