@@ -48,28 +48,37 @@ function _getNamedControllerCascade(component, name) {
   return bolt.annotation.get(component, "controllers", name);
 }
 
-/**
- * Proxy get() method for controller..
- *
- * @throws ReferenceError
- *
- * @param {Object} controller     Controller to get on.
- * @param {string} name           The property to get.
- * @returns {*}                   The property value.
- */
-function get(controller, name) {
-  if (name === '$parent') return createComponentScope(controller);
-  if (name === '$me') {
-    let callee = xStackFindProxy.exec((new Error).stack);
-    let cascade = _getControllerCascade(controller, true)
-      .map(controller=>controller[callee[1]])
-      .filter(method=>method);
-    if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade);
+
+function get(component, extraParams) {
+
+  function getBoundProperty(sourceMethod) {
+    let method = bolt.annotation.get(sourceMethod, 'controllerMethod');
+    return (method ? method.bind({}, component, extraParams) : sourceMethod);
   }
-  if (controller.hasOwnProperty(name)) return controller[name];
-  let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
-  if (found) return found[name];
-  if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
+
+  /**
+   * Proxy get() method for controller..
+   *
+   * @throws ReferenceError
+   *
+   * @param {Object} controller     Controller to get on.
+   * @param {string} name           The property to get.
+   * @returns {*}                   The property value.
+   */
+  return (controller, name)=>{
+    if (name === '$parent') return createComponentScope(controller);
+    if (name === '$me') {
+      let callee = xStackFindProxy.exec((new Error).stack);
+      let cascade = _getControllerCascade(controller, true)
+        .map(controller=>controller[callee[1]])
+        .filter(method=>method);
+      if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade);
+    }
+    if (controller.hasOwnProperty(name)) return getBoundProperty(controller[name]);
+    let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
+    if (found) return getBoundProperty(found[name]);
+    if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
+  };
 }
 
 /**
@@ -289,7 +298,7 @@ function createComponentScope(controller) {
  * @param {Object} controller     Controller to create scope for.
  * @returns {Proxy}
  */
-function createControllerScope(controller) {
+function createControllerScope(controller, router, extraParams) {
   let component = bolt.annotation.get(controller, 'parent');
   let name = bolt.annotation.get(controller, 'name');
 
@@ -298,7 +307,7 @@ function createControllerScope(controller) {
     apply,
     defineProperty,
     deleteProperty,
-    get,
+    get: get(router, extraParams),
     getOwnPropertyDescriptor,
     getPrototypeOf,
     has,

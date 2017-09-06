@@ -70,6 +70,9 @@ const injectors = Object.freeze({
   sessionId: component=>{
     const sessionID = component.req.sessionID;
     return sessionID;
+  },
+  params: (component, extraParams)=>{
+    return extraParams;
   }
 });
 
@@ -111,11 +114,11 @@ function _getControllerMethod(config) {
   if (bolt.annotation.has(sourceMethod, 'controllerMethod')) return bolt.annotation.get(sourceMethod, 'controllerMethod');
 
   let params = bolt.parseParameters(sourceMethod);
-  let method = component=>{
+  let method = (component, ...extraParams)=>{
     if (!_testControllerAnnotationSecurity(method, component)) return component;
     bolt.fire('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
-    return sourceMethod.apply(createControllerScope(controller), params.map(param=>{
-      if (injectors.hasOwnProperty(param)) return injectors[param](component);
+    return sourceMethod.apply(createControllerScope(controller, component, extraParams), params.map(param=>{
+      if (injectors.hasOwnProperty(param)) return injectors[param](component, extraParams);
       if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
     }));
   };
