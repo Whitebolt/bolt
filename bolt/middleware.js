@@ -40,7 +40,7 @@ function _loadMiddleware(app, roots, importObj) {
   return bolt.importIntoObject({
     roots, importObj, dirName:'middleware', eventName:'loadedMiddleware'
   })
-    .then(middleware=>middleware[0])
+    .then(middleware=>bolt.assign({}, ...middleware))
     .then(middleware=>Object.keys(middleware)
         .map(middlewareName => _annotateMiddlewareMethod(middleware, middlewareName))
         .sort(bolt.prioritySorter)
