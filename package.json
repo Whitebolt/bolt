@@ -60,7 +60,7 @@
     "rrule": "git+https://github.com/jkbrzt/rrule.git",
     "serve-static": "^1.11.2",
     "shortcode-insert": "^1.0.1",
-    "websockets-express": "git+https://github.com/ssimpo/websockets-express.git",
+    "websocket-express": "git+https://github.com/ssimpo/websockets-express.git",
     "yargs": "^8.0.2"
   },
   "main": "./server.js",
