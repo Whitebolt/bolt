@@ -5,8 +5,10 @@
  */
 
 const createControllerScope = require('./controller/scope');
-const {AdvancedSet} = require('map-watch');
-const xSpaceOrComma = /,| /;
+const injector = require('./controller/injectors');
+const testControllerAnnotationSecurity = require('./controller/securityTests');
+
+require('./controller/annotationParsers');
 
 
 /**
@@ -31,50 +33,6 @@ function _getMethodPaths(methodPath) {
   }
   return methodPaths;
 }
-
-/**
- * Object of methods to map dynamic inclusion parameters in controllers to what should be actually supplied to the
- * controller method.
- *
- * @type {Object}
- */
-const injectors = Object.freeze({
-  req: component=>component.req,
-  res: component=>component.res,
-  component: component=>component,
-  doc: component=>{
-    component.req.doc = component.req.doc || {};
-    return component.req.doc;
-  },
-  done: component=>{
-    return (value=true)=>{component.done = !!value}
-  },
-  app: component=>component.req.app,
-  path: component=>bolt.getPathFromRequest(component.req),
-  db: component=>component.req.app.db,
-  view: component=>component.view,
-  config: component=>component.req.app.config,
-  method: component=>(component.req.method || '').toLowerCase(),
-  session: component=>{
-    component.req.session = component.req.session || {};
-    return component.req.session;
-  },
-  body: component=>{
-    component.req.body = component.req.body || {};
-    return component.req.body;
-  },
-  query: component=>{
-    component.req.query = component.req.query || {};
-    return component.req.query;
-  },
-  sessionId: component=>{
-    const sessionID = component.req.sessionID;
-    return sessionID;
-  },
-  params: (component, extraParams)=>{
-    return extraParams;
-  }
-});
 
 /**
  * Set annotations on given method by using default values and extracting from the method source.
@@ -115,12 +73,10 @@ function _getControllerMethod(config) {
 
   let params = bolt.parseParameters(sourceMethod);
   let method = (component, ...extraParams)=>{
-    if (!_testControllerAnnotationSecurity(method, component)) return component;
+    if (!testControllerAnnotationSecurity(method, component)) return component;
     bolt.fire('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
-    return sourceMethod.apply(createControllerScope(controller, component, extraParams), params.map(param=>{
-      if (injectors.hasOwnProperty(param)) return injectors[param](component, extraParams);
-      if (component.req.app.dbs.hasOwnProperty(param)) return component.req.app.dbs[param];
-    }));
+    let scope = createControllerScope(controller, component, extraParams);
+    return sourceMethod.apply(scope, injector(params, component, extraParams));
   };
 
   bolt.annotation.set(sourceMethod, 'controllerMethod', method);
@@ -128,100 +84,6 @@ function _getControllerMethod(config) {
 
   return method;
 }
-
-function _testControllerAnnotationSecurity(method, component) {
-  return !bolt.annotation.find(method, (value, key)=>{
-    if (_controllerAnnotationTests.hasOwnProperty(key)) {
-      return !_controllerAnnotationTests[key](bolt.annotation.get(method, key), component);
-    }
-  });
-}
-
-const _controllerAnnotationTests = {
-  methods: (value, component)=>{
-    let httpMethod = (component && component.req && component.req.method) ? component.req.method.trim().toLowerCase() : '';
-    if (!value.has(httpMethod)) return false;
-    return true;
-  },
-  authenticated: (value, component)=>{
-    if (component && component.req && component && component.req.isAuthenticated) return component.req.isAuthenticated();
-    return false;
-  },
-  'accepted-fields': (value, component)=>{
-    if (!(component && component.req)) return false;
-    let bodyFields = bolt.without(Object.keys(component.req.body || {}), ...Array.from(value));
-    return (bodyFields.length === 0);
-  },
-  'required-fields': (value, component)=>{
-    if (!(component && component.req)) return false;
-    let bodyFields = bolt.without(Array.from(value), ...Object.keys(component.req.body || {}));
-    return (bodyFields.length === 0);
-  },
-  'accepts-content': (value, component)=>{
-    if (!(component && component.req)) return false;
-    return !value.find(test=>component.req.is(test));
-  },
-  'accept-errors': (value, component)=> {
-    if (!(component && component.res)) return true;
-    if (component.res.statusCode >= 400) return !!value;
-    return true;
-  },
-  'accepts-connect': (value, component)=>{
-    if (!(component && component.req)) return false;
-    let type = 'get';
-    if (component.req.xhr) {
-      type = 'xhr';
-    } else if (component.req.isWebSocket) {
-      type = 'websocket';
-    }
-    return !value.find(test=>(test === type));
-  },
-  'schema': (value, component)=>{
-    if (!(component && component.req && component.req.app && component.req.body && component.req.app.schemas)) return false;
-    if (!component.req.app.schemas.hasOwnProperty(value)) return false;
-    return !bolt.Joi.validate(component.req.body, component.req.app.schemas[value]).error;
-  }
-};
-
-function _parseAnnotationSet(value, lowecase=false) {
-  let _value = (lowecase?value.toLocaleString():value);
-  return new AdvancedSet(
-    _value.split(xSpaceOrComma).map(value=>value.trim()).filter(value=>(value.trim() !== ''))
-  );
-}
-
-const _annotationParsers = [
-  value=>{
-    // @annotation key methods
-    return _parseAnnotationSet(value, true);
-  },
-  ()=>{
-    // @annotation key authenticated
-    return true;
-  },
-  value=>{
-    // @annotation key accepted-fields
-    return _parseAnnotationSet(value);
-  },
-  value=>{
-    // @annotation key accept-errors
-    return bolt.toBool(value);
-  },
-  value=>{
-    // @annotation key required-fields
-    return _parseAnnotationSet(value);
-  },
-  value=>{
-    // @annotation key accepts-content
-    return _parseAnnotationSet(value);
-  },
-  value=>{
-    // @annotation key accepts-connect
-    return _parseAnnotationSet(value);
-  }
-];
-
-_annotationParsers.forEach(parser=>bolt.annotation.addParser(parser));
 
 
 /**
