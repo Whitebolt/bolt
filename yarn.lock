@@ -3808,7 +3808,7 @@ vxx@^1.2.0:
     shimmer "^1.0.0"
     uuid "^3.0.1"
 
-"websockets-express@git+https://github.com/ssimpo/websockets-express.git":
+"websocket-express@git+https://github.com/ssimpo/websockets-express.git":
   version "0.1.0"
   resolved "git+https://github.com/ssimpo/websockets-express.git#1a202968c2b365f48b148d86bbde2b26e0f6f6f3"
   dependencies:
