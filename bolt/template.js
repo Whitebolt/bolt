@@ -45,7 +45,7 @@ const templateFunctions = {
    * @returns {Promise.<string>}              The view applied to given document.
    */
   view: function (viewName, doc, req, parent) {
-    let view = _getView2(viewName, this.__componentName, req);
+    let view = _getViewFromPath(viewName, this.__componentName, req);
     if (view) {
       bolt.fire("firingView", view.path, bolt.getPathFromRequest(req));
       return view.compiled(doc, req, parent);
@@ -229,19 +229,35 @@ function _getTemplate(app, control) {
 }
 
 /**
- * Get a view
+ * Get a view from a router object.
  *
  * @private
  * @param {BoltApplication} app     The application to get from.
- * @param {Object} control          The control object.
+ * @param {Object} router           The router object.
  * @param {Object} tag              The tag.
  * @returns {Object}                The view.
  */
-function _getView(app, control, tag ={}) {
-  const componentName = bolt.annotation.get(control, 'componentPath') || control.component || tag.component;
+function _getView(app, router, tag ={}) {
+  const componentName = bolt.annotation.get(router, 'componentPath') || router.component || tag.component;
   const component = _getComponent(componentName, app);
-  const viewName = control.view || tag.view;
+  const viewName = router.view || tag.view;
   if (component && component.views[viewName]) return component.views[viewName];
+}
+
+/**
+ * Get a named view from a supplied path.
+ *
+ * @private
+ * @param {string} viewName                 Name of view to load.
+ * @param {string} componentName            Name of component toload from.
+ * @param {external:express:request} req    Request instance to use and apply.
+ * @returns {Object}                        The view.
+ */
+function _getViewFromPath(viewName, componentName, req) {
+  return (req.app.templates.hasOwnProperty(viewName) ?
+    req.app.templates[viewName] :
+    _getAppViewFromPath(req.app, getComponentViewPath(viewName, componentName))
+  );
 }
 
 /**
@@ -272,19 +288,19 @@ function _getComponent(componentName, app) {
  * Apply a template to the given request, returning the text.
  *
  * @private
- * @param {Object} control                  The control object to use.
- * @param {external:express:request} req    The request instance to use.
- * @returns {Promise.<string>}              Promise resolving to text when templates appled.
+ * @param {Object} router                                The router object to use.
+ * @param {external:express:request} [req=router.req]    The request instance to use.
+ * @returns {Promise.<string>}                           Promise resolving to text when templates appled.
  *
  */
-function _applyTemplate(control, req) {
+function _applyTemplate(router, req=router.req) {
   let view = false;
-  const app = req.app;
-  const doc = control.doc || req.doc;
-  const parent = control.parent || {};
-  let template = _getTemplate(app, control);
+  const app = req.app || router.req;
+  const doc = router.doc || req.doc;
+  const parent = router.parent || {};
+  let template = _getTemplate(app, router);
   if (!template) {
-    template = _getView(app, control);
+    template = _getView(app, router);
     view = true;
   }
 
@@ -357,23 +373,10 @@ function _getComponentOverridePaths(component) {
   return overridePaths;
 }
 
-/**
- * Get a named view from a named component.
- *
- * @private
- * @param {string} viewName                 Name of view to load.
- * @param {string} componentName            Name of component toload from.
- * @param {external:express:request} req    Request instance to use and apply.
- * @returns {Object}                        The view.
- */
-function _getView2(viewName, componentName, req) {
-  return _getViewFromPath(req, getComponentViewPath(viewName, componentName));
-}
-
-function _getViewFromPath(req, path) {
+function _getAppViewFromPath(app, path) {
   let componentPath = `${path.component}`;
-  if (componentPath !== '') return bolt.get(req, `app.components.${componentPath}.views.${path.view}`);
-  return bolt.get(req, `app.components.${path.view}.views.index`);
+  if (componentPath !== '') return bolt.get(app, `components.${path.component}.views.${path.view}`);
+  return bolt.get(app, `components.${path.view}.views.index`);
 }
 
 function getComponentViewPath(viewName, componentName) {
