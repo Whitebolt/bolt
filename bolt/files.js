@@ -134,9 +134,14 @@ function filesInDirectory(dirPath, ext = 'js') {
     .map(fileName => path.resolve(dirPath, fileName))
 }
 
+function isPathRelativeTo(testPath, isRelativeTo) {
+  const xRelativeToDir = new RegExp('^' + path.normalize(isRelativeTo).replace('/', '\/'));
+  return xRelativeToDir.test(path.normalize(testPath));
+}
+
 
 module.exports = {
   filesInDirectory, directoriesInDirectory,
   getCallerFileName, getRoot, require: requireX,
-  fileExists
+  fileExists, isPathRelativeTo
 };

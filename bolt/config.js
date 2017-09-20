@@ -6,13 +6,14 @@
  */
 const Promise = require('bluebird');
 const requireX = require('require-extra');
-const freeport = Promise.promisify(require("find-free-port"));
+const freeport = Promise.promisify(require('find-free-port'));
 const path = require('path');
+const util = require('util');
+const realpath = util.promisify(require('fs').realpath);
 
 const packageData = getPackage(boltRootDir);
 const packageConfig = packageData.config || {};
 const env = getKeyedEnvVars();
-const configLoadPaths = getConfigLoadPaths();
 
 
 /**
@@ -78,11 +79,19 @@ function _parseEnvValueConvertItem(value, converter) {
  * @param {BoltConfig} config   Initial config.
  * @returns {BoltConfig}        The parsed config.
  */
-function _parseConfig(config) {
+async function _parseConfig(config) {
   config.script = boltRootDir + '/server.js';
-  let dbConfig = bolt.parseTemplatedJson(config);
-  let root = _concatPropertyArray([dbConfig, env, packageConfig], 'root');
-  return bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerge);
+  const dbConfig = bolt.parseTemplatedJson(config);
+  const root = await getRoots(dbConfig, env, packageConfig);
+  const _config = bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerger);
+  _config.root = root;
+  return _config;
+}
+
+async function getRoots(...configs) {
+  return Promise.all(_concatPropertyArray(configs, 'root').map(
+    root=>realpath(path.normalize(root)).then(root=>root,err=>undefined)
+  )).filter(root=>root);
 }
 
 /**
@@ -154,7 +163,7 @@ const _configMergeOverrides = {
  * @returns {undefined|*} The new value after merging or undefined to use
  *                        default method.
  */
-function _configMerge(objValue, srcValue, key) {
+function _configMerger(objValue, srcValue, key) {
   return (_configMergeOverrides.hasOwnProperty(key) ?
       _configMergeOverrides[key](objValue, srcValue) :
       undefined
@@ -246,7 +255,7 @@ function mergePackageProperties(roots, properties=[], merger=()=>{}) {
     bolt.pickDeep(getPackage(root), bolt.makeArray(properties))
   );
   packageConfigs.unshift({});
-  if (bolt.isFunction(merger)) packageConfigs.push(_configMerge);
+  if (bolt.isFunction(merger)) packageConfigs.push(_configMerger);
   return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
@@ -279,7 +288,7 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.
  * @param {string} [configProp='config]       The property to get from.
  * @returns {Object}                          The merged package.
  */
-function mergePackageConfigs(roots, merger=_configMerge, configProp='config') {
+function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
   let _configProp = bolt.isString(merger)?merger:configProp;
   let _merger = bolt.isFunction(merger)?merger:()=>{};
   return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
@@ -302,7 +311,7 @@ function loadConfig(name, profile) {
       return requireX.getModule(true, getConfigLoadPaths('settings/profiles/'+profile+'.json')).then(profileConfig=>{
         if (profileConfig) {
           delete profileConfig.name;
-          return bolt.mergeWith(config, profileConfig, _configMerge);
+          return bolt.mergeWith(config, profileConfig, _configMerger);
         }
       });
     })
