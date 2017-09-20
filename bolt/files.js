@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const requireX = require('require-extra');
 const lstat = Promise.promisify(fs.lstat);
+const mkdir = Promise.promisify(fs.mkdir);
 
 
 /**
@@ -139,9 +140,18 @@ function isPathRelativeTo(testPath, isRelativeTo) {
   return xRelativeToDir.test(path.normalize(testPath));
 }
 
+async function makeDirectory(dir) {
+  const sep = path.sep;
+  const initDir = path.isAbsolute(dir) ? sep : '';
+  await dir.split(sep).reduce(async (parentDir, childDir)=>{
+    const curDir = path.resolve(await parentDir, childDir);
+    if (!(await fileExists(curDir))) await mkdir(curDir);
+    return curDir;
+  }, initDir);
+}
 
 module.exports = {
   filesInDirectory, directoriesInDirectory,
   getCallerFileName, getRoot, require: requireX,
-  fileExists, isPathRelativeTo
+  fileExists, isPathRelativeTo, makeDirectory
 };

@@ -8,8 +8,7 @@ const Promise = require('bluebird');
 const requireX = require('require-extra');
 const freeport = Promise.promisify(require('find-free-port'));
 const path = require('path');
-const util = require('util');
-const realpath = util.promisify(require('fs').realpath);
+const realpath = Promise.promisify(require('fs').realpath);
 
 const packageData = getPackage(boltRootDir);
 const packageConfig = packageData.config || {};
@@ -90,7 +89,7 @@ async function _parseConfig(config) {
 
 async function getRoots(...configs) {
   return Promise.all(_concatPropertyArray(configs, 'root').map(
-    root=>realpath(path.normalize(root)).then(root=>root,err=>undefined)
+    root=>realpath(path.normalize(root)).then(root=>root+'/',err=>undefined)
   )).filter(root=>root);
 }
 
