@@ -21,6 +21,7 @@
   "dependencies": {
     "bcrypt": "^1.0.2",
     "bluebird": "^3.4.7",
+    "binary-messsage-format": "git+ssh://git@aaron.whitebolt:simpo/binary-message-format.git",
     "body-parser": "^1.16.0",
     "chownr": "^1.0.1",
     "colors": "^1.1.2",

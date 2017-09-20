@@ -1,6 +1,7 @@
 'use strict';
 
 const bodyParser = require('body-parser');
+const BMF = require('binary-message-format/lib');
 
 
 /**
@@ -19,6 +20,31 @@ function _isWebsocket(req) {
   return !!req.websocket;
 }
 
+function bmfParser(req, res, next) {
+  if (req.is('binary/bmf')) {
+    const view = new Uint8Array(req.body, req.body.byteOffset, req.body.byteLength);
+    const message = new BMF(view);
+
+    let body = {};
+
+    message.headers.forEach((value, header)=>{
+      body[header] = value;
+    });
+    body.frames = [...message.frames].map(frameRaw=>{
+      let frame = {};
+      frameRaw.headers.forEach((value, header)=>{
+        frame[header] = value;
+      });
+      frame.body = frameRaw.parsedBody;
+      return frame;
+    });
+
+    req.body = body;
+  }
+
+  next();
+}
+
 /**
  * Parse the body property of request. Parses json, url, text and raw data.
  *
@@ -31,13 +57,14 @@ function init(app) {
   const jsonParser = bodyParser.json();
   const urlParser = bodyParser.urlencoded({extended:true});
   const textParser = bodyParser.text();
-  const rawParser = bodyParser.raw();
+  const rawParser = bodyParser.raw({type: req=>(req.is('application/octet-stream') || req.is('binary/bmf'))});
 
   app.use(
-    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : urlParser(req, res, next)),
-    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : jsonParser(req, res, next)),
-    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : textParser(req, res, next)),
-    (req, res, next)=>((_isMultipartRequest(req) || _isWebsocket(req))? next() : rawParser(req, res, next))
+    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : urlParser(...router)),
+    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : jsonParser(...router)),
+    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : textParser(...router)),
+    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : rawParser(...router)),
+    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : bmfParser(...router))
   );
 };
 
