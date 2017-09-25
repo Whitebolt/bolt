@@ -124,6 +124,18 @@ function _createApp(config) {
   return new BoltApplication(config);
 }
 
+async function getComponentDirectories(root) {
+  const componentsDirectories = (await bolt.directoriesInDirectory(root, ['components']));
+  if (componentsDirectories.length) {
+    const componentDirectories = await bolt.directoriesInDirectory(componentsDirectories);
+    if (componentDirectories.length) {
+      return [...componentDirectories, ... await getComponentDirectories(componentDirectories)];
+    }
+    return componentDirectories;
+  }
+  return [];
+}
+
 /**
  * Load additional bolt modules (not just the main root ones).  Will only load
  * additional modules, ignoring the main root.
@@ -132,16 +144,19 @@ function _createApp(config) {
  * @param {BoltApplication} app               The application object.
  * @returns {Promise.<BoltApplication>}       Promise resolving to app when all is loaded.
  */
-function _boltLoader(app) {
-  return bolt.directoriesInDirectory(app.config.root, ['bolt'])
-    .filter(dirPath=>(dirPath !== boltRootDir + '/bolt'))
-    .map(dirPath=>bolt.require.importDirectory(dirPath, {
-      merge: true,
-      imports: bolt,
-      useSyncRequire: true,
-      callback:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
-    }))
-    .then(()=>app);
+async function _boltLoader(app) {
+  const root = [...app.config.root, ...await getComponentDirectories(app.config.root)];
+  const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
+    .filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
+
+  await Promise.all(boltDirectories.map(dirPath=>bolt.require.importDirectory(dirPath, {
+    merge: true,
+    imports: bolt,
+    useSyncRequire: true,
+    callback:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
+  })));
+
+  return app;
 }
 
 /**
