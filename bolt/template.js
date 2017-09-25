@@ -22,12 +22,18 @@ const templateFunctions = {
    * @param {external:express:request} req    The current request object.
    * @param {Object} parent                   A parent object needed in called component (can be anything).
    */
-  component: function (componentName, doc, req, parent) {
+  component: function (componentName, doc={}, req={}, parent={}) {
     let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
     let method = _getMethod(_componentName, req.app);
     if (method) {
-      Object.assign(this, {req, parent, doc});
       req.doc = req.doc || doc;
+      const proxiedReq = new Proxy(req, {
+        get: function(target, property, receiver) {
+          if (property === 'doc') return doc;
+          return Reflect.get(target, property, receiver);
+        }
+      });
+      Object.assign(this, {req:proxiedReq, parent, doc});
       bolt.fire("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
       return Promise.resolve(method(this));
     } else {
