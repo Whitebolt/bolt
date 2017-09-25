@@ -35,7 +35,9 @@ function _getPaths(req) {
  * @returns {*}
  */
 function applyAndSend(router) {
-  let {req, res} = router;
+  const {req, res} = router;
+  const status = router.status || res.statusCode || 200;
+  const statusMessage = router.statusMessage || res.statusMessage;
 
   function send(content={}) {
     let data;
@@ -49,8 +51,8 @@ function applyAndSend(router) {
     if (router.redirect) data.redirect = router.redirect;
 
     return res
-      .status(router.status || 200)
-      .send(data || router.statusMessage)
+      .status(status)
+      .send(data || statusMessage)
       .end();
   }
 
@@ -58,6 +60,8 @@ function applyAndSend(router) {
     return req.app.applyTemplate(router, req).then(send);
   } else if (router.sendFields) {
     return send();
+  } else if (status === 204) {
+    return send(null);
   }
 }
 
