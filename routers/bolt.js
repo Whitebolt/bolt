@@ -19,21 +19,26 @@ function handleMethodErrors(error, config) {
  * @param {Object} config       Router config object.
  * @returns {Promise}           Promise resolving when data has been sent back to user.
  */
-function callMethod(config) {
-  let method = Promise.method(config.methods.shift());
+async function callMethod(config) {
+  const method = Promise.method(config.methods.shift());
+  const {router} = config;
+  const {res} = router;
 
-  return method(config.router).then(router=>{
-    if (config.router.redirect) {
-      let redirect = config.res.redirect(config.router.status || 302, config.router.redirect);
-      return ((redirect && redirect.end)?redirect.end():redirect);
-    } else if (config.router.done && !config.router.res.headersSent) {
-      return bolt.boltRouter.applyAndSend(config.router);
-    } else if (config.methods.length && !config.router.done && !config.router.res.headersSent) {
-      return callMethod(config);
-    } else {
-      return config.router;
-    }
-  }, error=>handleMethodErrors(error, config));
+  try {
+    await method(router);
+  } catch (err) {
+    return handleMethodErrors(err, config)
+  }
+
+  if (router.redirect) {
+    let redirect = res.redirect(router.status || 302, router.redirect);
+    return ((redirect && redirect.end)?redirect.end():redirect);
+  }
+
+  if (router.done && !res.headersSent) return bolt.boltRouter.applyAndSend(router);
+  if (!config.methods.length || !!router.done || !!res.headersSent) return router;
+
+  return callMethod(config);
 }
 
 /**
@@ -48,10 +53,9 @@ function _httpRouter(app) {
   return (req, res, next)=>{
     let methods = bolt.boltRouter.getMethods(app, req);
     let router = bolt.boltRouter.createRouterObject(req, res);
-    let config = {methods, router, req, res, next};
 
     if (methods.length) {
-      callMethod(config).then(router=>{
+      callMethod({methods, router, next}).then(router=>{
         if (router && router.res) {
           if (!router.res.headersSent) {
             next();

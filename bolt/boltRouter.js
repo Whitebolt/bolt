@@ -15,16 +15,11 @@ const _componentAllowedToSet = [
  * @returns {Array.<string>}    Possible routes in cascading order.
  */
 function _getPaths(req) {
-  let route = bolt.getPathFromRequest(req);
-  let routes = [];
-  while (route.length) {
-    routes.push(route);
-    let routeParts = route.split('/');
-    routeParts.pop();
-    route = routeParts.join('/')
-  }
-  routes.push('/');
-  return routes;
+  let lopper = bolt.lopGen(bolt.getPathFromRequest(req));
+  return function* () {
+    for (const route of lopper()) yield route;
+    yield '/';
+  };
 }
 
 /**
@@ -138,12 +133,15 @@ function createRouterObject(req, res, socket) {
  * @returns {Array.<Function>}  Methods that are applicable to request route.
  */
 function getMethods(app, req, filter) {
-  let methods = [];
-  let cascading = new Map();
+  const methods = [];
+  const cascading = new Map();
+  const pathGen = _getPaths(req);
 
-  _getPaths(req).forEach(route=>{
-    if (app.controllerRoutes[route]) {
-      app.controllerRoutes[route].forEach(method=>{
+  for (let route of pathGen()) {
+    if (app.controllerRoutes.hasOwnProperty(route)) {
+      for (let n=0; n<app.controllerRoutes[route].length; n++) {
+        const method = app.controllerRoutes[route][n];
+
         let methodPath = bolt.annotation.get(method.method, 'methodPath');
         let add = true;
 
@@ -165,9 +163,9 @@ function getMethods(app, req, filter) {
             return method.method(router);
           });
         }
-      });
+      }
     }
-  });
+  }
   return methods;
 }
 

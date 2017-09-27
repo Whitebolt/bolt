@@ -93,7 +93,22 @@ function runTemplate(strTxt, data) {
   return template(...bolt.values(data));
 }
 
+function lop(text, seperator='/') {
+  const parts = text.split(seperator);
+  parts.pop();
+  return parts.join(seperator)
+}
+
+function lopGen(text, seperator='/') {
+  let _text = text;
+  return function*() {
+    while (_text.length) {
+      yield _text;
+      _text = lop(_text, seperator='/');
+    }
+  };
+}
 
 module.exports = {
-  replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate
+  replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen
 };
