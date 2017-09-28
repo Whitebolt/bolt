@@ -59,13 +59,17 @@ function init(app) {
   const textParser = bodyParser.text();
   const rawParser = bodyParser.raw({type: req=>(req.is('application/octet-stream') || req.is('binary/bmf'))});
 
+  function skip(req, res, next, parser) {
+    return ((_isMultipartRequest(req) || _isWebsocket(req)) ? next() : parser(req, res, next));
+  }
+
   app.use(
-    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : urlParser(...router)),
-    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : jsonParser(...router)),
-    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : textParser(...router)),
-    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : rawParser(...router)),
-    (...router)=>((_isMultipartRequest(router[0]) || _isWebsocket(router[0]))? next() : bmfParser(...router))
+    (req, res, next)=>skip(req, res, next, urlParser),
+    (req, res, next)=>skip(req, res, next, jsonParser),
+    (req, res, next)=>skip(req, res, next, textParser),
+    (req, res, next)=>skip(req, res, next, rawParser),
+    (req, res, next)=>skip(req, res, next, bmfParser)
   );
-};
+}
 
 module.exports = init;
