@@ -112,4 +112,8 @@ function pm2Controller() {
 
 if (!module.parent) pm2Controller();
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
+
 module.exports = appLauncher;
