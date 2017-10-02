@@ -79,7 +79,7 @@ function init(app) {
   app.use(
     cspMiddleware,
     hidePoweredByMiddleware,
-    express_enforces_ssl(),
+    //express_enforces_ssl(),
     hstsMiddleware,
     ienoopen(),
     nosniff(),

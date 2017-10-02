@@ -302,7 +302,7 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 async function loadConfig(name, profile) {
-  const config = _parseConfig(
+  const config = await _parseConfig(
     await requireX.getModule(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
   );
 
