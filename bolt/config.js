@@ -301,24 +301,25 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
  * @param {string} name           The config to load.
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
-function loadConfig(name, profile) {
-  return requireX.getModule(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
-    .then(_parseConfig)
-    .then(config=>{
-      if (!profile) profile = (config.development ? 'development' : 'production');
+async function loadConfig(name, profile) {
+  const config = _parseConfig(
+    await requireX.getModule(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
+  );
 
-      return requireX.getModule(true, getConfigLoadPaths('settings/profiles/'+profile+'.json')).then(profileConfig=>{
-        if (profileConfig) {
-          delete profileConfig.name;
-          return bolt.mergeWith(config, profileConfig, _configMerger);
-        }
-      });
-    })
-    .then(_assignPort)
-    .then(siteConfig=>{
-      siteConfig.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : false);
-      return bolt.fire('configLoaded', siteConfig).then(()=>siteConfig);
-    });
+  if (!profile) profile = (config.development ? 'development' : 'production');
+
+  const profileConfig = await requireX.getModule(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
+  if (profileConfig) {
+    delete profileConfig.name;
+    return bolt.mergeWith(config, profileConfig, _configMerger);
+  }
+
+  await _assignPort(config);
+
+  config.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : false);
+  await bolt.fire('configLoaded', config);
+
+  return config;
 }
 
 module.exports = {

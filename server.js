@@ -64,20 +64,22 @@ function _startApp(config) {
  * @param {Object} config   All the config information for the app to launch.
  * @returns {Promise}       Promise resolving when app launched.
  */
-function appLauncher(config) {
+async function appLauncher(config) {
+  console.log(-1);
   if (!configDone) {
+    console.log(0);
     configDone = true;
     if (!boltLoaded) {
-      return require('require-extra').importDirectory('./bolt/', {
+      console.log(1);
+      await require('require-extra').importDirectory('./bolt/', {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
-        useSyncRequire: true
-      }).then(()=>{
-        boltLoaded = true;
-        ready();
-        return _startApp(config);
+        useSyncRequire: true,
+        callback: (...params)=>console.log(params)
       });
+      boltLoaded = true;
+      ready();
     }
     return _startApp(config);
   }
@@ -90,24 +92,20 @@ function appLauncher(config) {
  * @public
  * @returns {Promise}   Promise resolving when app launched.
  */
-function pm2Controller() {
+async function pm2Controller() {
   let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
-  return require('require-extra')
-    .importDirectory('./bolt/', boltImportOptions)
-    .then(()=>{
-      boltLoaded = true;
-      ready();
-      return require('./cli')
-    })
-    .then(args=>{
-      return Promise.all(args._.map(cmd=>{
-        if (args.cmd.hasOwnProperty(cmd)) {
-          return args.cmd[cmd](args);
-        }
-      }));
-    });
+  await require('require-extra').importDirectory('./bolt/', boltImportOptions);
+  boltLoaded = true;
+  ready();
+  const args = await require('./cli');
+
+  return Promise.all(args._.map(cmd=>{
+    if (args.cmd.hasOwnProperty(cmd)) {
+      return args.cmd[cmd](args);
+    }
+  }));
 }
 
 if (!module.parent) pm2Controller();
