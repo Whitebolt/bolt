@@ -16,6 +16,7 @@ function init(app) {
    */
   app.config.root.forEach(rootDir => {
     app.use(serve(rootDir + 'public/', {}));
+    app.use(serve(rootDir + 'upload/', {}));
   });
 };
 
