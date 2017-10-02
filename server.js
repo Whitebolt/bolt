@@ -65,18 +65,14 @@ function _startApp(config) {
  * @returns {Promise}       Promise resolving when app launched.
  */
 async function appLauncher(config) {
-  console.log(-1);
   if (!configDone) {
-    console.log(0);
     configDone = true;
     if (!boltLoaded) {
-      console.log(1);
       await require('require-extra').importDirectory('./bolt/', {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
-        useSyncRequire: true,
-        callback: (...params)=>console.log(params)
+        useSyncRequire: true
       });
       boltLoaded = true;
       ready();

@@ -311,13 +311,13 @@ async function loadConfig(name, profile) {
   const profileConfig = await requireX.getModule(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
   if (profileConfig) {
     delete profileConfig.name;
-    return bolt.mergeWith(config, profileConfig, _configMerger);
+    bolt.mergeWith(config, profileConfig, _configMerger);
   }
 
   await _assignPort(config);
 
-  config.development = (siteConfig.hasOwnProperty('development') ? siteConfig.development : false);
-  await bolt.fire('configLoaded', config);
+  config.development = (config.hasOwnProperty('development') ? config.development : false);
+  if (bolt.fire) await bolt.fire('configLoaded', config);
 
   return config;
 }
