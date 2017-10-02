@@ -244,7 +244,7 @@ function _getTemplate(app, control) {
  * @returns {Object}                The view.
  */
 function _getView(app, router, tag ={}) {
-  const componentName = bolt.annotation.get(router, 'componentPath') || router.component || tag.component;
+  const componentName = bolt.annotation.get(router, 'componentPath') || router.componentPath || tag.componentPath;
   const component = _getComponent(componentName, app);
   const viewName = router.view || tag.view;
   if (component && component.views[viewName]) return component.views[viewName];
