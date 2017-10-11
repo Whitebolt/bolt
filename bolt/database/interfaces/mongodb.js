@@ -49,7 +49,6 @@ function _createMongoAuthenticationPart(config) {
  */
 function loadMongo(config) {
   return mongo.MongoClient.connect(_createMongoUrl(config), {
-    uri_decode_auth: true,
     promiseLibrary: Promise
   }).then(results=>{
     if (global.bolt && bolt.fire) bolt.fire('mongoConnected', config.database);

@@ -9,6 +9,7 @@ const fs = require('fs');
 const open = Promise.promisify(fs.open);
 const write = Promise.promisify(fs.write);
 const ejs = require('ejs');
+const path = require('path');
 
 /**
  *  @external ejsOptions
@@ -90,9 +91,9 @@ function _initConsoleLogging(level, callback) {
  */
 function _initAccessLogging(logPath) {
   if (logPath) {
-    open(logPath, 'a').then(fd => {
+    bolt.makeDirectory(path.dirname(logPath)).then(()=>open(logPath, 'a').then(fd=>{
       bolt.subscribe('/logging/access', (options, message)=>write(fd, message));
-    });
+    }));
   }
 }
 
