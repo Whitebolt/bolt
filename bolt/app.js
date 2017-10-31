@@ -150,11 +150,11 @@ async function _boltLoader(app) {
   const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
     .filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
 
-  await Promise.all(boltDirectories.map(dirPath=>bolt.require.importDirectory(dirPath, {
+  await Promise.all(boltDirectories.map(dirPath=>bolt.require.import(dirPath, {
     merge: true,
     imports: bolt,
     useSyncRequire: true,
-    callback:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
+    onload:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
   })));
 
   return app;
@@ -192,10 +192,11 @@ function _loadApplication(configPath) {
 function importIntoObject(options) {
   return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
     .mapSeries(dirPath => {
-      return bolt.require.importDirectory(dirPath, {
-        imports: options.importObj,
+      return bolt.require.import(dirPath, {
+        imports: options.importObj || {},
         useSyncRequire: true,
-        callback: filepath => bolt.fire(options.eventName, filepath)
+        onload: filepath=>bolt.fire(options.eventName, filepath),
+        basedir: boltRootDir
       });
     })
   );

@@ -63,6 +63,11 @@ function init(app) {
     return ((_isMultipartRequest(req) || _isWebsocket(req)) ? next() : parser(req, res, next));
   }
 
+  function bmfParser(req, res, next) {
+    console.log('BMF PARSER!');
+    next();
+  }
+
   app.use(
     (req, res, next)=>skip(req, res, next, urlParser),
     (req, res, next)=>skip(req, res, next, jsonParser),

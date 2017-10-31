@@ -68,12 +68,14 @@ async function appLauncher(config) {
   if (!configDone) {
     configDone = true;
     if (!boltLoaded) {
-      await require('require-extra').importDirectory('./bolt/', {
+      await require('require-extra').import('./bolt/', {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
-        useSyncRequire: true
+        useSyncRequire: true,
+        basedir: __dirname
       });
+
       boltLoaded = true;
       ready();
     }
@@ -89,18 +91,17 @@ async function appLauncher(config) {
  * @returns {Promise}   Promise resolving when app launched.
  */
 async function pm2Controller() {
-  let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true};
+  let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true, basedir:__dirname};
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
-  await require('require-extra').importDirectory('./bolt/', boltImportOptions);
+  await require('require-extra').import('./bolt/', boltImportOptions);
   boltLoaded = true;
   ready();
+
   const args = await require('./cli');
 
   return Promise.all(args._.map(cmd=>{
-    if (args.cmd.hasOwnProperty(cmd)) {
-      return args.cmd[cmd](args);
-    }
+    if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
   }));
 }
 

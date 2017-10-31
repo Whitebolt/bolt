@@ -303,12 +303,12 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
  */
 async function loadConfig(name, profile) {
   const config = await _parseConfig(
-    await requireX.getModule(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
+    await requireX.try(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
   );
 
   if (!profile) profile = (config.development ? 'development' : 'production');
 
-  const profileConfig = await requireX.getModule(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
+  const profileConfig = await requireX.try(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
   if (profileConfig) {
     delete profileConfig.name;
     bolt.mergeWith(config, profileConfig, _configMerger);

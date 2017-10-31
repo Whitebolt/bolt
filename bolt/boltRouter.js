@@ -68,7 +68,7 @@ function applyAndSend(router) {
  * @private
  */
 function setMime(mimeType) {
-  this.res.set('Content-Type', mime.lookup(mimeType));
+  this.res.set('Content-Type', mime.getType(mimeType));
 }
 
 /**
@@ -86,7 +86,7 @@ function componentSet(values, value, headerValue) {
     if (values === 'header') {
       this.res.set(value, headerValue);
     } else if (values === 'mime') {
-      this.res.set('Content-Type', mime.lookup(value));
+      this.res.set('Content-Type', mime.getType(value));
     } else {
       this[values] = value;
     }
@@ -98,7 +98,7 @@ function componentSet(values, value, headerValue) {
             this.res.set(header, values[key][header])
           );
         } else if (key === 'mime') {
-          this.res.set('Content-Type', mime.lookup(values[key]));
+          this.res.set('Content-Type', mime.getType(values[key]));
         } else {
           this[key] = values[key];
         }

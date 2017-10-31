@@ -7,7 +7,11 @@ const queryBuilder = require('mongo-sql');
 const xDollarDigit = /\$\d+/g;
 const xDoubleQuotes = /\"/g;
 
-const mutateToMySqlFormat = bolt.replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
+let mutateToMySqlFormat;
+
+bolt.ready(()=>{
+  mutateToMySqlFormat = bolt.replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
+});
 
 /**
  * @external MysqlConnectionConfig
