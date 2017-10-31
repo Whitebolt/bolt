@@ -196,7 +196,8 @@ function importIntoObject(options) {
         imports: options.importObj || {},
         useSyncRequire: true,
         onload: filepath=>bolt.fire(options.eventName, filepath),
-        basedir: boltRootDir
+        basedir: boltRootDir,
+        parent: __filename
       });
     })
   );

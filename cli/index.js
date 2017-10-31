@@ -19,6 +19,7 @@ module.exports = require('require-extra')
     merge:true,
     imports:argv.cmd,
     useSyncRequire:true,
-    basedir: __dirname
+    basedir: __dirname,
+    parent: __filename
   })
   .then(()=>argv);

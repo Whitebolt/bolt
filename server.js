@@ -73,7 +73,8 @@ async function appLauncher(config) {
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
         useSyncRequire: true,
-        basedir: __dirname
+        basedir: __dirname,
+        parent: __filename
       });
 
       boltLoaded = true;
@@ -91,7 +92,13 @@ async function appLauncher(config) {
  * @returns {Promise}   Promise resolving when app launched.
  */
 async function pm2Controller() {
-  let boltImportOptions = {merge:true, imports:bolt, useSyncRequire:true, basedir:__dirname};
+  let boltImportOptions = {
+    merge:true,
+    imports:bolt,
+    useSyncRequire:true,
+    basedir:__dirname,
+    parent: __filename
+  };
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
   await require('require-extra').import('./bolt/', boltImportOptions);
