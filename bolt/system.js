@@ -4,8 +4,7 @@
  * @module bolt/bolt
  */
 
-let linuxUser;
-try {linuxUser = require('linux-user');} catch (err) {}
+const linuxUser = require.try('linux-user');
 const Promise = require('bluebird');
 const chown = Promise.promisify(require('chownr'));
 const exec = Promise.promisify(require('child_process').exec);

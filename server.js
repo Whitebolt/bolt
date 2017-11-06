@@ -4,12 +4,32 @@
 Error.stackTraceLimit = Infinity;
 
 const readyCallbacks = new Set();
+const requireX = require('require-extra');
+const { r, g, b, w, c, m, y, k } = [
+  ['r', 1], ['g', 2], ['b', 4], ['w', 7],
+  ['c', 6], ['m', 5], ['y', 3], ['k', 0]
+].reduce((cols, col) => ({
+  ...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`
+}), {});
 
 global.boltRootDir = __dirname;
 global.colour = require('colors');
 global.express = require('express');
 global.bolt = require('lodash');
 global.boltAppID = require('./bolt/string').randomString();
+
+requireX.on('evaluated', event=>{
+  const ms = (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000);
+  console.log(`${event.cacheSize} ${c(ms+'ms')} ${y(event.target)}`);
+});
+
+requireX.on('error', event=>{
+  console.log(`Error: ${r(event.target)}
+  ${r(event.error)}`);
+});
+
+//requireX.set('useSyncRequire', true);
+requireX.set('useSandbox', false);
 
 Object.assign(
   global.bolt,
@@ -72,7 +92,6 @@ async function appLauncher(config) {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
-        useSyncRequire: true,
         basedir: __dirname,
         parent: __filename
       });
@@ -80,6 +99,7 @@ async function appLauncher(config) {
       boltLoaded = true;
       ready();
     }
+
     return _startApp(config);
   }
 }
@@ -95,16 +115,13 @@ async function pm2Controller() {
   let boltImportOptions = {
     merge:true,
     imports:bolt,
-    useSyncRequire:true,
     basedir:__dirname,
     parent: __filename
   };
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
-
   await require('require-extra').import('./bolt/', boltImportOptions);
   boltLoaded = true;
   ready();
-
   const args = await require('./cli');
 
   return Promise.all(args._.map(cmd=>{

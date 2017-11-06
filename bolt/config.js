@@ -5,7 +5,6 @@
  * @todo Add windows and mac path?
  */
 const Promise = require('bluebird');
-const requireX = require('require-extra');
 const freeport = Promise.promisify(require('find-free-port'));
 const path = require('path');
 const realpath = Promise.promisify(require('fs').realpath);
@@ -113,7 +112,7 @@ function _concatPropertyArray(objects, property) {
  * @returns {BoltConfig}      The config with port assigned.
  */
 function _assignPort(config) {
-  if (config.assignFreePort) {
+  if (config.assignFreePort && config.portRange && config.portRange.start && config.portRange.end) {
     return freeport(config.portRange.start, config.portRange.end).then(portNo=>{
       config.devPort = config.port;
       config.port = portNo;
@@ -236,8 +235,10 @@ function getConfigLoadPaths(serverConfigFile = (env.serverConfigFile || packageC
  */
 function getPackage(dirPath=boltRootDir) {
   try {
-    return require(dirPath + '/package.json');
-  } catch(e) {return {};}
+    return require((dirPath + '/package.json').replace('//', '/'));
+  } catch(e) {
+    return {};
+  }
 }
 
 /**
@@ -303,12 +304,12 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
  */
 async function loadConfig(name, profile) {
   const config = await _parseConfig(
-    await requireX.try(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
+    await require.try(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
   );
 
   if (!profile) profile = (config.development ? 'development' : 'production');
 
-  const profileConfig = await requireX.try(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
+  const profileConfig = await require.try(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
   if (profileConfig) {
     delete profileConfig.name;
     bolt.mergeWith(config, profileConfig, _configMerger);

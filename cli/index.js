@@ -18,7 +18,6 @@ module.exports = require('require-extra')
   .import('./cmd/', {
     merge:true,
     imports:argv.cmd,
-    useSyncRequire:true,
     basedir: __dirname,
     parent: __filename
   })

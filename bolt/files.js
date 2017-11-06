@@ -7,7 +7,6 @@
 const Promise = require('bluebird');
 const fs = require('fs');
 const path = require('path');
-const requireX = require('require-extra');
 const lstat = Promise.promisify(fs.lstat);
 const mkdir = Promise.promisify(fs.mkdir);
 
@@ -106,7 +105,8 @@ function _directoriesInDirectories(dirPaths) {
  * @returns {Promise}         Found directories.
  */
 function _directoriesInDirectory(dirPath) {
-  dirPath = path.resolve(path.dirname(getCallerFileName()), dirPath);
+  const root = getCallerFileName();
+  dirPath = root?path.resolve(path.dirname(root), dirPath):dirPath;
 
   return Promise.promisify(fs.readdir)(dirPath)
     .then(file => file, err => [])
@@ -126,7 +126,8 @@ function _directoriesInDirectory(dirPath) {
  * @returns {Promise}           Promise resoving to found files.
  */
 function filesInDirectory(dirPath, ext = 'js') {
-  dirPath = path.resolve(path.dirname(getCallerFileName()), dirPath);
+  const resolveTo = getCallerFileName();
+  dirPath = resolveTo?path.resolve(path.dirname(resolveTo), dirPath):dirPath;
   let xExt = new RegExp('\.' + ext);
 
   return Promise.promisify(fs.readdir)(dirPath)
@@ -152,6 +153,6 @@ async function makeDirectory(dir) {
 
 module.exports = {
   filesInDirectory, directoriesInDirectory,
-  getCallerFileName, getRoot, require: requireX,
+  getCallerFileName, getRoot,
   fileExists, isPathRelativeTo, makeDirectory
 };

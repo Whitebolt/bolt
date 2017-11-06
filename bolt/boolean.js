@@ -6,10 +6,15 @@
 
 const _bolt = require('./bolt');
 
-let _defaultTrueValues = _bolt.setDefault('bool.true', ['true', 'yes', 'on']);
-_bolt.watchDefault('bool.true', value=>{_defaultTrueValues = value;});
-let _defaultFalseValues = _bolt.setDefault('bool.false', ['false', 'no', 'off']);
-_bolt.watchDefault('bool.false', value=>{_defaultFalseValues = value;});
+let _defaultTrueValues;
+let _defaultFalseValues;
+
+bolt.ready(()=>{
+  let _defaultTrueValues = _bolt.setDefault('bool.true', ['true', 'yes', 'on']);
+  _bolt.watchDefault('bool.true', value=>{_defaultTrueValues = value;});
+  let _defaultFalseValues = _bolt.setDefault('bool.false', ['false', 'no', 'off']);
+  _bolt.watchDefault('bool.false', value=>{_defaultFalseValues = value;});
+});
 
 
 /**
