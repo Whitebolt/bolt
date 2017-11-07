@@ -131,7 +131,7 @@ function _initIntercept(app, proxyConfig) {
  * @returns {Function}              The request path resolver function.
  */
 function _initSlugger(app, appProxyConfig, config) {
-  let _slugger = bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
+  let _slugger = require.try(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
     config.proxyReqPathResolver = slugger(appProxyConfig);
     return config.proxyReqPathResolver;
   });
@@ -151,7 +151,7 @@ function _initSlugger(app, appProxyConfig, config) {
  * @returns {Promise.<Object>}      Promise resolving to mutated config object.
  */
 function _initInterceptModule(app, appProxyConfig, config) {
-  return bolt.require.getModule(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
+  return bolt.require.try(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
     appProxyConfig.intercepts.push(intercept);
     return config;
   });

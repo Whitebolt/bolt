@@ -54,7 +54,7 @@ function _getRequireX() {
 
   requireX.on('evaluated', event=>{
     const ms = (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000);
-    console.log(`${event.cacheSize} ${c(ms+'ms')} ${y(event.target)}`);
+    //console.log(`${event.cacheSize} ${c(ms+'ms')} ${y(event.target)}`);
   }).on('error', event=>{
     console.log(`Error: ${r(event.target)}\n${r(event.error)}`);
   });
