@@ -14,8 +14,7 @@ if (!argv.development && !argv.d) argv.development = false;
 
 argv.cmd = {};
 
-module.exports = require('require-extra')
-  .import('./cmd/', {
+module.exports = require.import('./cmd/', {
     merge:true,
     imports:argv.cmd,
     basedir: __dirname,

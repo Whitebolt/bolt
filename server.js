@@ -3,66 +3,105 @@
 
 Error.stackTraceLimit = Infinity;
 
-const readyCallbacks = new Set();
-const requireX = require('require-extra');
-const { r, g, b, w, c, m, y, k } = [
-  ['r', 1], ['g', 2], ['b', 4], ['w', 7],
-  ['c', 6], ['m', 5], ['y', 3], ['k', 0]
-].reduce((cols, col) => ({
-  ...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`
-}), {});
-
-global.boltRootDir = __dirname;
-global.colour = require('colors');
-global.express = require('express');
-global.bolt = require('lodash');
-global.boltAppID = require('./bolt/string').randomString();
-
-requireX.on('evaluated', event=>{
-  const ms = (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000);
-  console.log(`${event.cacheSize} ${c(ms+'ms')} ${y(event.target)}`);
-});
-
-requireX.on('error', event=>{
-  console.log(`Error: ${r(event.target)}
-  ${r(event.error)}`);
-});
-
-//requireX.set('useSyncRequire', true);
-requireX.set('useSandbox', false);
-
-Object.assign(
-  global.bolt,
-  require('map-watch'), {
-    annotation: new (require('object-annotations'))()
-  }
-);
-
-const packageConfig = require('./package.json').config || {};
+const requireX = _getRequireX();
+const bolt = _createPlatformScope();
+const packageConfig = requireX.sync('./package.json').config || {};
+const ready = _getReady(bolt);
 
 let configDone = false;
 let boltLoaded = false;
 
-global.bolt.ready = (hook, handler=hook)=>{
-  const _handler = ((hook !== handler) ? ()=>bolt.hook(hook, handler) : handler);
+/**
+ * Setup ready callback.
+ *
+ * @private
+ * @returns {Function}      The ready function to fire all on ready events.
+ */
+function _getReady() {
+  const readyCallbacks = new Set();
 
-  if (!boltLoaded) {
-    readyCallbacks.add(_handler);
-    return ()=>readyCallbacks.delete(_handler);
-  } else {
-    _handler();
-    return ()=>{};
+  bolt.ready = (hook, handler=hook)=>{
+    const _handler = ((hook !== handler) ? ()=>bolt.hook(hook, handler) : handler);
+
+    if (!boltLoaded) {
+      readyCallbacks.add(_handler);
+      return ()=>readyCallbacks.delete(_handler);
+    } else {
+      _handler();
+      return ()=>{};
+    }
+  };
+
+  return ()=>{
+    readyCallbacks.forEach(handler=>handler());
+    readyCallbacks.clear();
   }
-};
-
-function ready() {
-  readyCallbacks.forEach(handler=>handler());
-  readyCallbacks.clear();
 }
 
-process.on('message', message=>{
-  if (message.type === 'config') appLauncher(message.data);
-});
+/**
+ * Get and setup requireX
+ *
+ * @private
+ * @returns {requireX}    The requireX module.
+ */
+function _getRequireX() {
+  const { r, g, b, w, c, m, y, k } = [
+    ['r', 1], ['g', 2], ['b', 4], ['w', 7],
+    ['c', 6], ['m', 5], ['y', 3], ['k', 0]
+  ].reduce((cols, col) => ({...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`}), {});
+
+  const requireX = require('require-extra');
+
+  requireX.on('evaluated', event=>{
+    const ms = (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000);
+    console.log(`${event.cacheSize} ${c(ms+'ms')} ${y(event.target)}`);
+  }).on('error', event=>{
+    console.log(`Error: ${r(event.target)}\n${r(event.error)}`);
+  });
+
+  return requireX;
+}
+
+/**
+ * Create the bolt object.
+ *
+ * @private
+ * @returns {Object}
+ */
+function _createBoltObject() {
+  return Object.assign(
+    {},
+    requireX.sync('lodash'),
+    requireX.sync('map-watch'), {
+      annotation: new (requireX.sync('object-annotations'))()
+    }
+  );
+}
+
+/**
+ * Create and setup the scopes used in the platform via require-extra.  Return bolt object.
+ *
+ * @private
+ * @returns {Object}    The bolt object.
+ */
+function _createPlatformScope() {
+  const emptyScope = {};
+  const scope = {
+    bolt: _createBoltObject(),
+    boltRootDir: __dirname,
+    colour: requireX.sync('colors'),
+    express: requireX.sync('express')
+  };
+
+  requireX.set({
+    useSandbox:false,
+    scope:config=>((config.filename.indexOf('/node_modules/') !== -1) ? emptyScope :scope)
+  });
+
+  scope.boltAppID = requireX.sync('./bolt/string').randomString();
+
+  return scope.bolt;
+}
 
 /**
  * Start the app loading process.
@@ -88,7 +127,7 @@ async function appLauncher(config) {
   if (!configDone) {
     configDone = true;
     if (!boltLoaded) {
-      await require('require-extra').import('./bolt/', {
+      await requireX.import('./bolt/', {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
@@ -119,20 +158,23 @@ async function pm2Controller() {
     parent: __filename
   };
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
-  await require('require-extra').import('./bolt/', boltImportOptions);
+  await requireX.import('./bolt/', boltImportOptions);
   boltLoaded = true;
   ready();
-  const args = await require('./cli');
+  const args = await requireX('./cli');
 
   return Promise.all(args._.map(cmd=>{
     if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
   }));
 }
 
-if (!module.parent) pm2Controller();
+process.on('message', message=>{
+  if (message.type === 'config') appLauncher(message.data);
+});
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at: Promise', promise, 'reason:', reason);
 });
 
+if (!module.parent) pm2Controller();
 module.exports = appLauncher;

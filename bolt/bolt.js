@@ -23,10 +23,13 @@ lookup.set('watchers', watchers);
  * @returns {Map}
  */
 function _getMap(type) {
-  if (!global.hasOwnProperty('boltAppID') || (global.boltAppID === undefined)) throw new ReferenceError('No app space defined for defaults, global property \'boltAppId\' should be set');
-  let requestedMap = lookup.get(type);
-  if (!requestedMap.has(global.boltAppID)) requestedMap.set(global.boltAppID, new Map());
-  return requestedMap.get(global.boltAppID);
+  try {
+    let requestedMap = lookup.get(type);
+    if (!requestedMap.has(boltAppID)) requestedMap.set(boltAppID, new Map());
+    return requestedMap.get(boltAppID);
+  } catch (err) {
+    throw new ReferenceError('No app space defined for defaults, global property \'boltAppId\' should be set');
+  }
 }
 
 /**
