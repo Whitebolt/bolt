@@ -38,6 +38,10 @@ const _annotationParsers = [
   value=>{
     // @annotation key accepts-connect
     return _parseAnnotationSet(value);
+  },
+  value=>{
+    // @annotation key cascade
+    return ((value === '')?true:bolt.toBool(value));
   }
 ];
 
