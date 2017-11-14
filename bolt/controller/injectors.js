@@ -1,19 +1,11 @@
 'use strict';
 
 function injectorReflect(items, component) {
-  return bolt.makeArray(items).map(item=>injectors[item](component))
+  return bolt.toObjectMap(items, item=>[item, injectors[item](component)]);
 }
 
 function db(component) {
-  const _queryConfig = ()=>{
-    return {
-      db:injectors.db(component),
-      app:injectors.app(component),
-      req: injectors.req(component),
-      session: injectors.session(component)
-    };
-  };
-
+  const _queryConfig = ()=>injectorReflect(['db', 'app', 'req', 'session'], component);
   const _getLogicFunction = (funcName, queryConfig={})=>bolt[funcName](Object.assign({}, _queryConfig(), queryConfig));
 
   const collectionLogic = {
@@ -37,7 +29,7 @@ function getMethodPath(method) {
 }
 
 function values(component, extraParams, method) {
-  const [path, query, body] = [injectors.path(component), injectors.query(component), injectors.body(component)];
+  const {path, query, body} = injectorReflect(['path', 'query', 'body'], component);
   const pathObj = {};
   const pathMap = (bolt.annotation.get(method, 'path-map') || '').split('/').filter(part=>part);
 
@@ -60,7 +52,7 @@ function values(component, extraParams, method) {
  */
 const injectors = Object.freeze({
   req: component=>component.req,
-  res: component=>component.res || component.res,
+  res: component=>component.res || component.req.res,
   component: component=>component,
   doc: component=>{
     component.req.doc = component.req.doc || {};

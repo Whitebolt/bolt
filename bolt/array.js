@@ -114,6 +114,18 @@ function indexOfEquiv(ary, value) {
   return bolt.findIndex(ary, _value=>bolt.isEqual(value, _value));
 }
 
+function toObjectMap(ary, iteree, context) {
+  const _iteree = context?iteree.bind(context):iteree;
+  const exportObj = {};
+
+  bolt.makeArray(ary).forEach((item, n, ary)=>{
+    const [key, value] = _iteree(item, n, ary);
+    exportObj[key] = value;
+  });
+
+  return exportObj;
+}
+
 module.exports = {
-  makeArray, prioritySorter, indexOfEquiv
+  makeArray, prioritySorter, indexOfEquiv, toObjectMap
 };
