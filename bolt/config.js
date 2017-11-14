@@ -83,7 +83,16 @@ async function _parseConfig(config) {
   const root = await getRoots(dbConfig, env, packageConfig);
   const _config = bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerger);
   _config.root = root;
-  return _config;
+  return substitute(_config);
+}
+
+function substitute(obj) {
+  const result = (new Function(...[
+    ...Object.keys(obj),
+    'return JSON.parse(`' + JSON.stringify(obj) + '`);'
+  ]))(...Object.keys(obj).map(key=>obj[key]));
+
+  return ((JSON.stringify(result) !== JSON.stringify(obj)) ? substitute(result) : result);
 }
 
 async function getRoots(...configs) {
