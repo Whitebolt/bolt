@@ -9,7 +9,7 @@ const freeport = Promise.promisify(require('find-free-port'));
 const path = require('path');
 const realpath = Promise.promisify(require('fs').realpath);
 
-const packageData = getPackage(boltRootDir);
+const packageData = _getPackage(boltRootDir);
 const packageConfig = packageData.config || {};
 const env = getKeyedEnvVars();
 
@@ -79,20 +79,12 @@ function _parseEnvValueConvertItem(value, converter) {
  */
 async function _parseConfig(config) {
   config.script = boltRootDir + '/server.js';
-  const dbConfig = bolt.parseTemplatedJson(config);
+  const dbConfig = bolt.substituteInObject(config);
   const root = await getRoots(dbConfig, env, packageConfig);
+
   const _config = bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerger);
   _config.root = root;
-  return substitute(_config);
-}
-
-function substitute(obj) {
-  const result = (new Function(...[
-    ...Object.keys(obj),
-    'return JSON.parse(`' + JSON.stringify(obj) + '`);'
-  ]))(...Object.keys(obj).map(key=>obj[key]));
-
-  return ((JSON.stringify(result) !== JSON.stringify(obj)) ? substitute(result) : result);
+  return bolt.substituteInObject(_config);
 }
 
 async function getRoots(...configs) {
@@ -250,6 +242,12 @@ function getPackage(dirPath=boltRootDir) {
   }
 }
 
+function _getPackage(dirPath=boltRootDir) {
+  const data = getPackage(dirPath);
+  if (Object.keys(data).length && data.hasOwnProperty('name')) data[bolt.camelCase(data.name)+'Path'] = dirPath;
+  return data;
+}
+
 /**
  * Grab package.json files and get the specfied properties merging them all together.
  *
@@ -261,7 +259,7 @@ function getPackage(dirPath=boltRootDir) {
  */
 function mergePackageProperties(roots, properties=[], merger=()=>{}) {
   const packageConfigs = bolt.makeArray(roots).map(root=>
-    bolt.pickDeep(getPackage(root), bolt.makeArray(properties))
+    bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
   );
   packageConfigs.unshift({});
   if (bolt.isFunction(merger)) packageConfigs.push(_configMerger);

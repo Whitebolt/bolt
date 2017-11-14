@@ -65,6 +65,39 @@ function parseTemplatedJson(jsonString) {
   return _jsonString;
 }
 
+function _forEachKeys(obj, iteree) {
+  if (Array.isArray(obj)) {
+    obj.forEach((value, key)=>iteree(key))
+  } else {
+    Object.keys(obj).forEach(key=>iteree(key));
+  }
+}
+
+function _substitute(txt, obj={}) {
+  try {
+    return (new Function(...[
+      ...Object.keys(obj),
+      'return `' + txt + '`;'
+    ]))(...Object.keys(obj).map(key=>obj[key]));
+  } catch (error) {
+    return txt;
+  }
+}
+
+function substituteInObject(obj, originalObj) {
+  const _obj = (bolt.isString(obj)?JSON.parse(obj):obj);
+  const _originalObj = originalObj || _obj;
+  const matcher = JSON.stringify(_obj);
+
+  _forEachKeys(_obj, key=>{
+    if (bolt.isNull(_obj[key] || bolt.isUndefined(_obj[key]))) return _obj[key];
+    if (bolt.isObject(_obj[key]) || Array.isArray(_obj[key])) _obj[key] = substituteInObject(_obj[key], _originalObj);
+    if (bolt.isString(_obj[key]) && (_obj[key].indexOf('${') !== -1)) _obj[key] = _substitute(_obj[key], originalObj);
+  });
+
+  return ((JSON.stringify(_obj) !== matcher) ? substituteInObject(_obj, _originalObj) : _obj);
+}
+
 /**
  * Deep pick function, similar to lodash.pick but with the facility to pick deeply.
  *
@@ -81,5 +114,5 @@ function pickDeep(obj, properties) {
 }
 
 module.exports = {
-  addDefaultObjects, parseTemplatedJson, pickDeep, deepFreeze
+  addDefaultObjects, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject
 };
