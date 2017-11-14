@@ -209,27 +209,27 @@ function apply() {
  */
 function applyComponent() {
   throw errorFactory.error('componentrAsFunction', {});
+}
 
-  /**
-   * Proxy get() method for component.
-   *
-   * @throws ReferenceError
-   *
-   * @param {Object} controllers      The controllers of given component.
-   * @param {string} name             The controller to get.
-   * @returns {Proxy}                 The controller scope to get.
-   */
-  function componentGet(controllers, name) {
-    if (name === '$parent') {
-      let controllerNames = ownKeysComponent(controllers);
-      if (controllerNames.length) {
-        let parent = bolt.annotation.get(get(controllers, controllerNames[0]), 'parent');
-        if (component.parent) return createComponentScope(parent);
-      }
-    } else {
-      if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
-      if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noController', {name});
+/**
+ * Proxy get() method for component.
+ *
+ * @throws ReferenceError
+ *
+ * @param {Object} controllers      The controllers of given component.
+ * @param {string} name             The controller to get.
+ * @returns {Proxy}                 The controller scope to get.
+ */
+function componentGet(controllers, name) {
+  if (name === '$parent') {
+    let controllerNames = ownKeysComponent(controllers);
+    if (controllerNames.length) {
+      let parent = bolt.annotation.get(get(controllers, controllerNames[0]), 'parent');
+      if (component.parent) return createComponentScope(parent);
     }
+  } else {
+    if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
+    if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noController', {name});
   }
 }
 

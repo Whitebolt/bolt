@@ -72,16 +72,13 @@ function _idIsInGroup(groupIds, authorisedIds) {
  * @returns {boolean}                      Is session user authorised?
  */
 function _isAuthorised(doc, session, accessLevel='read') {
-  if (!doc) return false;
-  if (!doc._acl) return false;
-  if (!doc._acl.security) return false;
+  if (!doc || !doc._acl || !doc._acl.security) return false;
 
   let authorisedIds = _getAccessLevelLookup(doc._acl, accessLevel.toLowerCase().trim());
   if (authorisedIds.length) {
     let groupIds = _getAccessGroups(session);
     return _idIsInGroup(groupIds, authorisedIds);
   }
-
   return false;
 }
 
@@ -258,6 +255,7 @@ function _getResults(queryConfig) {
  */
 function _getDoc(queryConfig, noFilters=false) {
   return _getResults(queryConfig)
+    .then(docs=>docs)
     .then(docs=>bolt.makeArray(docs))
     .then(docs=>((queryConfig.filterByAccessLevel && !noFilters) ? docs.filter(doc=>_isAuthorised(doc, queryConfig.session, queryConfig.accessLevel)) : docs))
     .then(docs=>((queryConfig.filterByVisibility && !noFilters) ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))
