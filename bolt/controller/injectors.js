@@ -1,7 +1,7 @@
 'use strict';
 
-function injectorReflect(items, component) {
-  return bolt.toObjectMap(items, item=>[item, injectors[item](component)]);
+function injectorReflect(items, component, extraParams, method) {
+  return bolt.toObjectMap(items, item=>[item, injectors[item](component, extraParams, method)]);
 }
 
 function db(component) {
@@ -30,18 +30,40 @@ function getMethodPath(method) {
 
 function values(component, extraParams, method) {
   const {path, query, body} = injectorReflect(['path', 'query', 'body'], component);
+  const _path = component.viaView?component.viaViewPath:path;
   const pathObj = {};
   const pathMap = (bolt.annotation.get(method, 'path-map') || '').split('/').filter(part=>part);
 
   if (pathMap.length) {
     const methodPath = getMethodPath(method);
-    const pathParts = path.replace(methodPath, '').split('/').filter(part=>part);
+    const pathParts = _path.split('?').shift().replace(methodPath, '').split('/').filter(part=>part);
     pathParts.forEach((part, n)=>{
       if (pathMap[n]) pathObj[pathMap[n]] = part;
     })
   }
 
-  return Object.assign({}, query || {}, bolt.isObject(body)?body:{}, pathObj);
+  return Object.assign({}, query || {}, bolt.getUrlQueryObject(_path) || {}, bolt.isObject(body)?body:{}, pathObj);
+}
+
+function isJson(component, extraParams, method) {
+  const req = injectors.req(component);
+  const values = injectors.values(component, extraParams, method);
+  if (!values.hasOwnProperty('json')) {
+    return !!((req.method.toLowerCase() === "post") && req.is('application/json') && req.body)
+  } else {
+    if (values.json === undefined) return true;
+    return bolt.toBool(values.json);
+  }
+}
+
+function display(component, extraParams, method) {
+  const {isJson, viaView, res, doc, req, view} = injectorReflect(['isJson', 'viaView', 'res', 'doc', 'req', 'view'], component, extraParams, method);
+
+  return async (docField, viewName)=>{
+    if (isJson) return viaView?JSON.stringify(docField?doc[docField]:doc):res.json(docField?doc[docField]:doc);
+    const html = await view(viewName, doc, req);
+    return viaView?html:res.send(html);
+  };
 }
 
 /**
@@ -90,7 +112,10 @@ const injectors = Object.freeze({
     component.parent = component.parent || {};
     return component.parent;
   },
-  values: (...params)=>values(...params)
+  values: (...params)=>values(...params),
+  viaView: component=>!!component.viaView,
+  isJson: (...params)=>isJson(...params),
+  display: (...params)=>display(...params)
 });
 
 module.exports = (params, component, extraParams, method)=>{

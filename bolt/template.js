@@ -24,7 +24,8 @@ const templateFunctions = {
    */
   component: function (componentName, doc={}, req={}, parent={}) {
     let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
-    let method = _getMethod(_componentName, req.app);
+    let method = _getMethod(_componentName.split('?').shift(), req.app);
+
     if (method) {
       req.doc = req.doc || doc;
       const proxiedReq = new Proxy(req, {
@@ -33,6 +34,8 @@ const templateFunctions = {
           return Reflect.get(target, property, receiver);
         }
       });
+      this.viaView = true;
+      this.viaViewPath = _componentName;
       Object.assign(this, {req:proxiedReq, parent, doc});
       bolt.fire("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
       return Promise.resolve(method(this));
