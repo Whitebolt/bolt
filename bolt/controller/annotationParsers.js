@@ -4,7 +4,7 @@ const {AdvancedSet} = require('map-watch');
 const xSpaceOrComma = /,| /;
 
 function _parseAnnotationSet(value, lowecase=false) {
-  let _value = (lowecase?value.toLocaleString():value);
+  let _value = (lowecase?value.toLowerCase():value);
   return new AdvancedSet(
     _value.split(xSpaceOrComma).map(value=>value.trim()).filter(value=>(value.trim() !== ''))
   );
