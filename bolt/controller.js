@@ -76,7 +76,7 @@ function _getControllerMethod(config) {
     if (!testControllerAnnotationSecurity(method, component)) return component;
     bolt.fire('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
     let scope = createControllerScope(controller, component, extraParams);
-    return sourceMethod.apply(scope, injector(params, component, extraParams));
+    return sourceMethod.apply(scope, injector(params, component, extraParams, sourceMethod));
   };
 
   bolt.annotation.set(sourceMethod, 'controllerMethod', method);
