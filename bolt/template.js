@@ -5,8 +5,6 @@
  */
 
 const path = require('path');
-const Promise = require('bluebird');
-const readFile = Promise.promisify(require('fs').readFile);
 const ejs = require('ejs');
 
 const rxRelativeDir = /^\.\//;
@@ -22,7 +20,7 @@ const templateFunctions = {
    * @param {external:express:request} req    The current request object.
    * @param {Object} parent                   A parent object needed in called component (can be anything).
    */
-  component: function (componentName, doc={}, req={}, parent={}) {
+  component: async function (componentName, doc={}, req={}, parent={}) {
     let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
     let method = _getMethod(_componentName.split('?').shift(), req.app);
 
@@ -38,9 +36,9 @@ const templateFunctions = {
       this.viaViewPath = _componentName;
       Object.assign(this, {req:proxiedReq, parent, doc});
       bolt.fire("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
-      return Promise.resolve(method(this));
+      return method(this);
     } else {
-      Promise.resolve('Could not find component: ' + componentName);
+      return 'Could not find component: ' + componentName;
     }
   },
 
@@ -53,13 +51,13 @@ const templateFunctions = {
    * @param {Object} parent                   A parent object needed in called view (can be anything).
    * @returns {Promise.<string>}              The view applied to given document.
    */
-  view: function (viewName, doc, req, parent) {
+  view: async function (viewName, doc, req, parent) {
     let view = _getViewFromPath(viewName, this.__componentName, req);
     if (view) {
       bolt.fire("firingView", view.path, bolt.getPathFromRequest(req));
       return view.compiled(doc, req, parent);
     } else {
-      Promise.resolve('Could not find view: ' + viewName);
+      return 'Could not find view: ' + viewName;
     }
   }
 };
@@ -154,20 +152,6 @@ function _getComponentOptions(component, componentDir, parentOptions={}) {
   options.locals.__componentName = component.path;
 
   return options;
-}
-
-/**
- * Get an array of the template directories.
- *
- * @private
- * @param {Array|string} roots      Directories to look in.
- * @param {string} templateName     The template name we are looking for.
- * @returns {Promise.<string[]>}    Array of template directories.
- */
-function _getTemplateDirectories(roots, templateName) {
-  return Promise.all(bolt.directoriesInDirectory(roots, ['templates']).map(templateDir =>
-    bolt.directoriesInDirectory(templateDir, bolt.makeArray(templateName))
-  )).then(templateDirs => bolt.flatten(templateDirs))
 }
 
 /**
@@ -279,7 +263,7 @@ function _getComponent(componentName, app) {
  * @returns {Promise.<string>}                           Promise resolving to text when templates appled.
  *
  */
-function _applyTemplate(router, req=router.req) {
+async function _applyTemplate(router, req=router.req) {
   let view = false;
   const app = req.app || router.req;
   const doc = router.doc || req.doc;
@@ -290,15 +274,9 @@ function _applyTemplate(router, req=router.req) {
     view = true;
   }
 
-  if (template) {
-    bolt.fire(
-      view?"fireingView":"firingTemplate",
-      template.path, bolt.getPathFromRequest(req)
-    );
-    return Promise.resolve(template.compiled(doc, req, parent));
-  }
-
-  return Promise.resolve('');
+  if (!template) return '';
+  bolt.fire(view?"fireingView":"firingTemplate", template.path, bolt.getPathFromRequest(req));
+  return template.compiled(doc, req, parent);
 }
 
 /**
