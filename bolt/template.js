@@ -75,17 +75,12 @@ const templateFunctions = {
  * @returns {Promise}                                     Prtomise resolving when all templates loaded.
  */
 function _loadAllTemplates(options, templateName=options.templateName) {
-  if (Array.isArray(templateName)) {
-    return Promise.all(templateName.map(templateName => _loadAllTemplates(options, templateName)));
-  }
-
-  return Promise.all(_getTemplateDirectories(options.roots, templateName).map(templateDir => {
-    return bolt.filesInDirectory(templateDir, 'ejs').map(viewPath => {
-      let viewText = _loadViewText(viewPath, options);
-      bolt.fire('loadedTemplate', viewPath);
-      return viewText;
-    });
-  }));
+  return loadEjsDirectory(
+    _getDirectoryPaths(options.roots, 'templates'),
+    templateName,
+    options,
+    'loadedTemplate'
+  );
 }
 
 /**
@@ -176,33 +171,22 @@ function _getTemplateDirectories(roots, templateName) {
 }
 
 /**
- * Get an array of the view directories.
- *
- * @private
- * @param {Array|string} roots          Directories to look in.
- * @param {string} [dirName='views']    The name of the views directories.
- * @returns {Promise.<string[]>}        Array of view directories.
- */
-function _getViewFilenames(roots, dirName=['views']) {
-  return Promise.all(bolt.directoriesInDirectory(roots, bolt.makeArray(dirName)).map(viewDir => {
-    return bolt.filesInDirectory(viewDir, 'ejs');
-  })).then(viewPaths=>bolt.flattenDeep(viewPaths));
-}
-
-/**
  * Load views from component directories.
  *
  * @private
- * @param {string} componentDir         Directory to search in.
- * @param {Object} componentOptions     Component options.
- * @returns {Promise.<string>}          Promise resolving to view text.
+ * @param {string} roots          Directory to search in.
+ * @param {Object} options        Component options.
+ * @returns {Promise.<Function>}  Promise resolving to compiled view
  */
-function _loadComponentViews(componentDir, componentOptions) {
-  return Promise.all(_getViewFilenames(componentDir).map(viewPath => {
-    let viewText = _loadViewText(viewPath, componentOptions);
-    bolt.fire('loadedComponentView', viewPath);
-    return viewText;
-  }));
+function _loadComponentViews(roots, options) {
+  return loadEjsDirectory(roots, 'views', options, 'loadedComponentView');
+}
+
+function viewOnload(filename, compiled, views) {
+  let viewName = path.basename(filename, '.ejs');
+  views[viewName] = views[viewName] || {};
+  views[viewName].path = filename;
+  views[viewName].compiled = compiled;
 }
 
 /**
@@ -213,16 +197,9 @@ function _loadComponentViews(componentDir, componentOptions) {
  * @param {Object} options        The view options.
  * @returns {Promise.<string>}    Promise resolving to vview text.
  */
-function _loadViewText(filename, options) {
-  let views = options.views;
-  return readFile(filename, 'utf-8').then(viewTxt => {
-    let viewName = path.basename(filename, '.ejs');
-    views[viewName] = views[viewName] || {};
-    views[viewName].text = viewTxt;
-    views[viewName].path = filename;
-    views[viewName].compiled = compileTemplate({text: views[viewName].text, filename, options});
-    return viewTxt;
-  });
+async function _loadViewText(filename, options) {
+  const compiled = await require.async({options}, filename);
+  viewOnload(filename, compiled, options.views);
 }
 
 /**
@@ -421,7 +398,7 @@ function _loadTemplates(app, options) {
 /**
  * Compile a passed in template.
  *
- * @param {Object} config                       Config for this operation.
+ * @param {Object} config        Config for this operation.
  * @returns {TemplateFunction}   The template function.
  */
 function compileTemplate(config) {
@@ -478,16 +455,41 @@ function loadTemplates(app, options={}) {
  *
  * @public
  * @param {Array|string} roots      Root folders to search.
- * @param {string} dirName          Name of directory under roots to looki in.
+ * @param {string} dirName          Name of directory under roots to look in.
  * @param {Object} options          Options to apply to the views
  * @returns {Promise.<Object>}      Promise resolving to all the loaded views.
  */
-function loadEjsDirectory(roots, dirName, options={}) {
+async function loadEjsDirectory(roots, dirName, options={}, eventName) {
   let _options = _parseLoadOptions({}, Object.assign({roots}, options));
-  return _getViewFilenames(roots, dirName)
-    .map(filename=>_loadViewText(filename, _options))
-    .then(()=>_options.views);
+  const dirs = _getDirectoryPaths(roots, dirName);
+
+  await require.import(dirs, {
+    options:options,
+    extensions:['.ejs'],
+    basedir:__dirname,
+    parent: __filename,
+    onload: (filename, compiled)=>{
+      viewOnload(filename, compiled, options.views);
+      if (eventName) bolt.fire(eventName, filename)
+    }
+  });
+
+  return _options.views;
 }
+
+function _getDirectoryPaths(roots, dirName) {
+  return bolt.flattenDeep(bolt.makeArray(roots).map(
+    root=>bolt.makeArray(dirName).map(dir=>`${root}/${dir}/`.replace(/\/+/g, '/'))
+  ));
+}
+
+require.set('.ejs', function(config, options) {
+  const module = new require.Module(config);
+  if (Buffer.isBuffer(config.content)) config.content = config.content.toString();
+  module.exports = compileTemplate({text:config.content, filename:config.filename, options});
+  module.loaded = true;
+  return module;
+});
 
 module.exports = {
   loadTemplates,
