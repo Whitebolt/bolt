@@ -238,11 +238,11 @@ function _addControllerRoutes(component, controllers) {
  * @param {object} controller   The controller to set method file paths on.
  */
 function _setControllerMethodFilePathAnnotation(filePath, controller) {
-  Object.keys(controller).forEach(controllerName=>{
-    Object.keys(controller[controllerName]).forEach(methodName=>{
-      let _filePath = bolt.annotation.get(controller[controllerName][methodName], 'filePath') || filePath;
-    });
-  })
+  Object.keys(controller).forEach(controllerName=>
+    Object.keys(controller[controllerName]).forEach(methodName=>
+      bolt.annotation.set(controller[controllerName][methodName], 'filePath', filePath)
+    )
+  )
 }
 
 /**
@@ -257,7 +257,7 @@ function _setControllerMethodFilePathAnnotation(filePath, controller) {
  * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
 async function _loadControllers(component, roots, importObj) {
-  bolt.on('loadedController', (undefined, filePath)=>_setControllerMethodFilePathAnnotation(filePath, importObj));
+  bolt.on('loadedController', filePath=>_setControllerMethodFilePathAnnotation(filePath, importObj));
 
   let controllers = await bolt.importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'});
   _addControllerRoutes(component, controllers);

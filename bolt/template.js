@@ -308,9 +308,9 @@ function _getPaths(route) {
  */
 function _getMethod(route, app) {
   let methods = [];
-  _getPaths(route).forEach(route => {
+  _getPaths(route).forEach(route=>{
     if (app.controllerRoutes[route]) {
-      app.controllerRoutes[route].forEach(method => methods.push(method.method));
+      app.controllerRoutes[route].sort(bolt.prioritySorter).forEach(method=>methods.push(method.method));
     }
   });
   return methods.shift();
@@ -461,6 +461,13 @@ function _getDirectoryPaths(roots, dirName) {
   ));
 }
 
+function getControllerMethodProperty(method, property) {
+  if (method[property]) return method[property];
+  const sourceMethod = bolt.annotation.get(method, 'sourceMethod');
+  if (sourceMethod[property]) return sourceMethod[property];
+  return bolt.annotation.get(method, property) || bolt.annotation.get(sourceMethod, property);
+}
+
 require.set('.ejs', function(config, options) {
   const module = new require.Module(config);
   if (Buffer.isBuffer(config.content)) config.content = config.content.toString();
@@ -475,5 +482,6 @@ module.exports = {
   loadComponentViewsTemplateOverrides,
   compileTemplate,
   loadEjsDirectory,
-  addTemplateFunctions
+  addTemplateFunctions,
+  getControllerMethodProperty
 };

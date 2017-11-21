@@ -64,7 +64,6 @@ function init(app) {
   }
 
   function bmfParser(req, res, next) {
-    console.log('BMF PARSER!');
     next();
   }
 
