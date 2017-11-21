@@ -39,7 +39,7 @@ function _runApp(app) {
     if (!server) server = require('http').createServer(app);
 
     server.listen(app.config.port, async ()=>{
-      bolt.fire('appListening', app.config.port);
+      bolt.emit('appListening', app.config.port);
       let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
       let welcome = await figlet(`${serverName} v${app.config.version}`)
       console.log(welcome);
@@ -58,7 +58,7 @@ function _runApp(app) {
  * @returns {Promise}       Promise resolved when app has launched fully.
  */
 async function runApp(app) {
-  await bolt.fire(()=>_runApp(app), 'runApp', app);
+  await bolt.emitThrough(()=>_runApp(app), 'runApp', app);
   return app;
 }
 

@@ -113,14 +113,14 @@ function _loadComponents(app, roots) {
   return _getComponentDirectories(roots).mapSeries(fullPath=>{
       let component = _createComponent(app, fullPath);
       return Promise.all([
-        bolt.fire(()=>bolt.loadHooks(component, fullPath), 'loadComponentHooks', app),
-        bolt.fire(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
-        bolt.fire(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
-        bolt.fire(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
-        bolt.fire(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
+        bolt.emitThrough(()=>bolt.loadHooks(component, fullPath), 'loadComponentHooks', app),
+        bolt.emitThrough(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
+        bolt.emitThrough(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
+        bolt.emitThrough(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
+        bolt.emitThrough(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
       ]).then(()=>{return {component, fullPath};})
   }).mapSeries(
-    config=>bolt.fire(()=>bolt.loadComponents(config.component, config.fullPath), 'loadComponentComponents', app)
+    config=>bolt.emitThrough(()=>bolt.loadComponents(config.component, config.fullPath), 'loadComponentComponents', app)
   );
 }
 
@@ -133,7 +133,7 @@ function _loadComponents(app, roots) {
  */
 function loadComponents(app, roots=app.config.root) {
   let fireEvent = 'loadComponents' + (!app.parent?',loadAllComponents':'');
-  return bolt.fire(()=>_loadComponents(app, roots), fireEvent, app).then(()=>app);
+  return bolt.emitThrough(()=>_loadComponents(app, roots), fireEvent, app).then(()=>app);
 }
 
 

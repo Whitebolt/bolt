@@ -74,7 +74,7 @@ function loadMysql(config) {
   db._originalDb = db;
   let query = _query.bind(db, db, db.query);
 
-  bolt.fire('SQLConnected', config.database);
+  bolt.emit('SQLConnected', config.database);
 
   return Promise.resolve(new Proxy(db, {
     get: (target, property, receiver)=>{

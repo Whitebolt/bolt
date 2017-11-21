@@ -14,19 +14,19 @@
 function _loadHooks(roots) {
   return bolt.directoriesInDirectory(roots, ['hooks'])
     .map(dirPath => require.import(dirPath, {
-      onload: hookPath=>bolt.fire('loadedHook', hookPath)
+      onload: hookPath=>bolt.emit('loadedHook', hookPath)
     }))
     .each(hooks =>
       Object.keys(hooks).forEach(_key=>{
         const loader = hooks[_key];
         bolt.annotation.from(loader);
         let key = bolt.annotation.get(loader, 'key');
-        if (key) {
-          loader().forEach(hook=> {
+        let when = bolt.annotation.get(loader, 'when') || 'on';
+        if (key && ((when === 'after') || (when === 'before') || (when === 'on'))) {
+          loader().forEach(hook=>{
+            console.log(key, when);
             bolt.annotation.from(hook);
-            let priority = bolt.annotation.get(hook, 'priority') || 10;
-            let params = Object.assign({}, bolt.getDefault('event.defaultOptions'), {priority});
-            return bolt.hook(key, hook, params);
+            return bolt[when](key, hook);
           })
         }
       })
@@ -44,7 +44,7 @@ function _loadHooks(roots) {
  */
 function loadHooks(app, roots=app.config.root) {
   let fireEvent = 'loadHooks' + (!app.parent?',loadRootHooks':'');
-  return bolt.fire(()=>_loadHooks(roots), fireEvent, app).then(() => app);
+  return bolt.emitThrough(()=>_loadHooks(roots, app), fireEvent, app).then(() => app);
 }
 
 module.exports = {

@@ -153,7 +153,7 @@ async function _boltLoader(app) {
   await Promise.all(boltDirectories.map(dirPath=>require.import(dirPath, {
     merge: true,
     imports: bolt,
-    onload:(filePath)=>bolt.fire('extraBoltModuleLoaded', filePath)
+    onload:(filePath)=>bolt.emit('extraBoltModuleLoaded', filePath)
   })));
 
   return app;
@@ -171,7 +171,7 @@ function _loadApplication(configPath) {
     .then(_createApp)
     .then(_initLogging)
     .then(app=>{
-      bolt.fire('configLoaded', configPath);
+      bolt.emit('configLoaded', configPath);
       return app;
     })
     .then(_boltLoader);
@@ -193,7 +193,7 @@ function importIntoObject(options) {
     .mapSeries(dirPath => {
       return require.import(dirPath, {
         imports: options.importObj || {},
-        onload: filepath=>bolt.fire(options.eventName, filepath),
+        onload: filepath=>bolt.emit(options.eventName, filepath),
         basedir: boltRootDir,
         parent: __filename
       });
@@ -229,7 +229,11 @@ function getApp(component) {
  *                              loaded and events fired.
  */
 async function loadApplication(configPath) {
-  return await bolt.fire(()=>_loadApplication(configPath), 'initialiseApp', configPath);
+  await bolt.emitBefore('initialiseApp');
+  const app = await _loadApplication(configPath);
+  await bolt.emitAfter('initialiseApp', configPath, app);
+
+  //return await bolt.emitThrough(()=>_loadApplication(configPath), 'initialiseApp', configPath);
 }
 
 /**

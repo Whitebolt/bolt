@@ -32,7 +32,7 @@ function _loadSchemas(roots, app) {
  *                                                    schemas and firing of related events.
  */
 function loadSchemas(app, roots=app.config.root) {
-  return bolt.fire(()=>_loadSchemas(roots, app), 'loadSchemas', app).then(() => app);
+  return bolt.emitThrough(()=>_loadSchemas(roots, app), 'loadSchemas', app).then(() => app);
 }
 
 module.exports = {

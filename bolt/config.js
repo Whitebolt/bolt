@@ -325,7 +325,7 @@ async function loadConfig(name, profile) {
   await _assignPort(config);
 
   config.development = (config.hasOwnProperty('development') ? config.development : false);
-  if (bolt.fire) await bolt.fire('configLoaded', config);
+  if (bolt.fire) await bolt.emit('configLoaded', config);
 
   return config;
 }

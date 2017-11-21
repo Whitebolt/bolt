@@ -1,9 +1,10 @@
 'use strict';
 
 module.exports = function() {
-  // @annotation key afterLoadDatabases
+  // @annotation key loadDatabases
+  // @annotation when after
 
   return [
-    (hook, app)=>bolt.loadMiddleware(app)
+    app=>bolt.loadMiddleware(app)
   ];
 };

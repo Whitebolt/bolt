@@ -1,9 +1,10 @@
 'use strict';
 
 module.exports = function() {
-  // @annotation key afterLoadRoutes
+  // @annotation key loadRoutes
+  // @annotation when after
 
   return [
-    (hook, app)=>bolt.fire(()=>bolt.loadShortcodes(app), 'loadShortcodes', app).then(() => app)
+    app=>bolt.emitThrough(()=>bolt.loadShortcodes(app), 'loadShortcodes', app).then(() => app)
   ];
 };

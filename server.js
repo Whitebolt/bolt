@@ -21,7 +21,7 @@ function _getReady() {
   const readyCallbacks = new Set();
 
   bolt.ready = (hook, handler=hook)=>{
-    const _handler = ((hook !== handler) ? ()=>bolt.hook(hook, handler) : handler);
+    const _handler = ((hook !== handler) ? ()=>bolt.emit(hook, handler) : handler);
 
     if (!boltLoaded) {
       readyCallbacks.add(_handler);
@@ -111,7 +111,7 @@ function _createPlatformScope() {
  * @returns {Promise}       Promise resolving when app has fully loaded.
  */
 function _startApp(config) {
-  bolt.hook('afterInitialiseApp', (hook, configPath, app)=>bolt.loadHooks(app));
+  bolt.after('initialiseApp', (configPath, app)=>bolt.loadHooks(app));
   return bolt.loadApplication(config);
 }
 

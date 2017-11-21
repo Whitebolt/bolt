@@ -35,7 +35,7 @@ const templateFunctions = {
       this.viaView = true;
       this.viaViewPath = _componentName;
       Object.assign(this, {req:proxiedReq, parent, doc});
-      bolt.fire("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
+      bolt.emit("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
       return method(this);
     } else {
       return 'Could not find component: ' + componentName;
@@ -54,7 +54,7 @@ const templateFunctions = {
   view: async function (viewName, doc, req, parent) {
     let view = _getViewFromPath(viewName, this.__componentName, req);
     if (view) {
-      bolt.fire("firingView", view.path, bolt.getPathFromRequest(req));
+      bolt.emit("firingView", view.path, bolt.getPathFromRequest(req));
       return view.compiled(doc, req, parent);
     } else {
       return 'Could not find view: ' + viewName;
@@ -275,7 +275,7 @@ async function _applyTemplate(router, req=router.req) {
   }
 
   if (!template) return '';
-  bolt.fire(view?"fireingView":"firingTemplate", template.path, bolt.getPathFromRequest(req));
+  bolt.emit(view?"fireingView":"firingTemplate", template.path, bolt.getPathFromRequest(req));
   return template.compiled(doc, req, parent);
 }
 
@@ -425,7 +425,7 @@ function loadComponentViews(component, dirPath) {
  * @returns {Promise.<BoltApplication>}     The bolt application that was supplied.
  */
 function loadTemplates(app, options={}) {
-  return bolt.fire(()=>_loadTemplates(app, options), 'loadTemplates', app).then(()=>app);
+  return bolt.emitThrough(()=>_loadTemplates(app, options), 'loadTemplates', app).then(()=>app);
 }
 
 /**
@@ -448,7 +448,7 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
     parent: __filename,
     onload: (filename, compiled)=>{
       viewOnload(filename, compiled, options.views);
-      if (eventName) bolt.fire(eventName, filename)
+      if (eventName) bolt.emit(eventName, filename)
     }
   });
 

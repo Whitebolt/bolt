@@ -1,9 +1,10 @@
 'use strict';
 
 module.exports = function() {
-  // @annotation key afterLoadShortcodes
+  // @annotation key loadShortcodes
+  // @annotation when after
 
   return [
-    (hook, app)=>bolt.loadComponents(app)
+    app=>bolt.loadComponents(app)
   ];
 };

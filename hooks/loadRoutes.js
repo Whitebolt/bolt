@@ -1,9 +1,10 @@
 'use strict';
 
 module.exports = function() {
-  // @annotation key afterLoadSchemas
+  // @annotation key loadSchemas
+  // @annotation when after
 
   return [
-    (hook, app)=>bolt.loadRoutes(app)
+    app=>bolt.loadRoutes(app)
   ];
 };

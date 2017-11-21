@@ -46,7 +46,7 @@ async function _loadMiddleware(app, roots, importObj) {
   ).sort(
     bolt.prioritySorter
   ).forEach(middleware=>{
-    bolt.fire('ranMiddleware', bolt.annotation.get(middleware, 'id').replace(xStartDigitUnderscore, ''));
+    bolt.emit('ranMiddleware', bolt.annotation.get(middleware, 'id').replace(xStartDigitUnderscore, ''));
     middleware(app);
   });
 
@@ -64,7 +64,7 @@ async function _loadMiddleware(app, roots, importObj) {
  * @returns {Promise}                               Promise resolved when all middleware loaded.
  */
 async function loadMiddleware(app, roots=app.config.root, middleware=app.middleware) {
-  await bolt.fire(()=>_loadMiddleware(app, roots, middleware), 'loadMiddleware', app);
+  await bolt.emitThrough(()=>_loadMiddleware(app, roots, middleware), 'loadMiddleware', app);
   return app;
 }
 

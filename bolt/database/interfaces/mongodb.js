@@ -51,7 +51,7 @@ function loadMongo(config) {
   return mongo.MongoClient.connect(_createMongoUrl(config), {
     promiseLibrary: Promise
   }).then(results=>{
-    if (global.bolt && bolt.fire) bolt.fire('mongoConnected', config.database);
+    if (global.bolt && bolt.fire) bolt.emit('mongoConnected', config.database);
     return results;
   })
 }

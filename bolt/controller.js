@@ -74,7 +74,7 @@ function _getControllerMethod(config) {
   let params = bolt.parseParameters(sourceMethod);
   let method = (component, ...extraParams)=>{
     if (!testControllerAnnotationSecurity(method, component)) return component;
-    bolt.fire('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
+    bolt.emit('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
     let scope = createControllerScope(controller, component, extraParams);
     return sourceMethod.apply(scope, injector(params, component, extraParams, sourceMethod));
   };
@@ -257,7 +257,7 @@ function _setControllerMethodFilePathAnnotation(filePath, controller) {
  * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
 async function _loadControllers(component, roots, importObj) {
-  bolt.hook('loadedController', (undefined, filePath)=>_setControllerMethodFilePathAnnotation(filePath, importObj));
+  bolt.on('loadedController', (undefined, filePath)=>_setControllerMethodFilePathAnnotation(filePath, importObj));
 
   let controllers = await bolt.importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'});
   _addControllerRoutes(component, controllers);
@@ -276,7 +276,7 @@ async function _loadControllers(component, roots, importObj) {
  * @returns {Promise.<BoltComponent>}                   Promise resolving to the supplied component.
  */
 async function loadControllers(component, roots, controllers=component.controllers) {
-  await bolt.fire(()=>_loadControllers(component, roots, controllers), 'loadControllers', component);
+  await bolt.emitThrough(()=>_loadControllers(component, roots, controllers), 'loadControllers', component);
   return component;
 }
 

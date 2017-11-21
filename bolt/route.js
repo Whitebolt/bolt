@@ -64,7 +64,7 @@ function _loadRoutes(app, roots) {
  * @returns {Promise.<Object>}   The express application object.
  */
 function loadRoutes(app) {
-  return bolt.fire(()=>_loadRoutes(
+  return bolt.emitThrough(()=>_loadRoutes(
     app, app.config.root || [], app.routes
   ), 'loadRoutes', app).then(() => app);
 }
