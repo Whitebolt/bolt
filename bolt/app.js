@@ -11,6 +11,19 @@ const write = Promise.promisify(fs.write);
 const ejs = require('ejs');
 const path = require('path');
 
+const { r, g, b, w, c, m, y, k } = [
+  ['r', 1], ['g', 2], ['b', 4], ['w', 7],
+  ['c', 6], ['m', 5], ['y', 3], ['k', 0]
+].reduce((cols, col) => ({...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`}), {});
+
+const colourLookup = {
+  red:r, green:g, blue:b, white:w, cyan:c, magenta:m, yellow:y
+};
+
+function colour(name, text) {
+  return text?colourLookup[name](text):colourLookup[name];
+}
+
 /**
  *  @external ejsOptions
  *  @see {https://github.com/Whitebolt/ejs/blob/master/lib/ejs.js}
@@ -39,17 +52,35 @@ function _registerLogEvent(config) {
   let description = ejs.compile(config.description, ejsOptions);
   let property = config.property?ejs.compile(config.property, ejsOptions):undefined;
 
-  return bolt.on(config.event, (options, ...params) => {
+  return bolt.on(config.event, (...params) => {
     let level = config.level || 3; // Placed here so level can be changed in-flight.
-    let channel = _getEventChannel('logging', level, 8);
+    const channel = '/logging';
+
     let promises = [
       description(params),
       config.property ? property(params) : Promise.resolve(params[0])
     ];
 
     Promise.all(promises).spread((description, property) => {
-      let message = '[' + colour[config.actionColour || 'green'](' ' + (config.action || config.event) + ' ') + '] ' + description + ' ' + colour[config.propertyColour || 'yellow'](property);
-      bolt.broadcast(channel, message);
+      let message = {
+        level,
+        type: config.action || config.event,
+        description,
+        property,
+        style: {
+          property: {
+            colour: config.propertyColour || 'yellow'
+          },
+          type: {
+            colour: config.typeColour || 'green'
+          },
+          description: {
+            colour: config.descriptionColour || 'white'
+          }
+        }
+      };
+
+      bolt.publish(channel, message);
     });
   });
 }
@@ -61,8 +92,15 @@ function _registerLogEvent(config) {
  * @param {BoltApplication} app    The express application.
  */
 function _initLogging(app) {
-  app.config.eventConsoleLogging.forEach(config => _registerLogEvent(config));
-  _initConsoleLogging(app.config.logLevel, (options, message) => console.log(message));
+  app.config.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
+  _initConsoleLogging(app.config.logLevel, message=>{
+    const pc = colour(message.data.style.property.colour || 'yellow');
+    const tc = colour(message.data.style.type.colour || 'green');
+    const mc = colour(message.data.style.description.colour || 'white');
+
+    const _message = `[${tc(message.data.type)}] ${mc(message.data.description)} ${pc(message.data.property)}`;
+    console.log(_message)
+  });
   _initAccessLogging(app.config.accessLog);
 
   return app;
@@ -73,11 +111,10 @@ function _initLogging(app) {
  *
  * @private
  * @param {integer} level       Log level to subscribe to.
- * @param {function} callback   Callback to fire on event.
+ * @param {function} listener   Callback to fire on event.
  */
-function _initConsoleLogging(level, callback) {
-  let channel = _getEventChannel('logging', level, 8);
-  bolt.subscribe(channel, callback);
+function _initConsoleLogging(level, listener) {
+  bolt.subscribe('/logging', {level: {$gte: level}}, message=>listener(message));
 }
 
 /**
@@ -95,23 +132,6 @@ function _initAccessLogging(logPath) {
       bolt.subscribe('/logging/access', (options, message)=>write(fd, message));
     }));
   }
-}
-
-/**
- * Get a logging channel based on a level.  So with a root of 'logging' and
- * level of 6 (max 8), the channel would be /logging/8/7/6.  With the same
- * root and max but a level of 3, the channel would be /logging/8/7/6/5/4/3
- *
- * @private
- * @param {string} root     The root channel name.
- * @param {integer} level   The level to use.
- * @param {integer} max     The max level possible.
- * @returns {string}        The channel name.
- */
-function _getEventChannel(root, level, max) {
-  let channel = '/' + root;
-  for (let n=max; n>=level; n--) channel += '/' + n.toString();
-  return channel;
 }
 
 /**
@@ -232,8 +252,6 @@ async function loadApplication(configPath) {
   await bolt.emitBefore('initialiseApp');
   const app = await _loadApplication(configPath);
   await bolt.emitAfter('initialiseApp', configPath, app);
-
-  //return await bolt.emitThrough(()=>_loadApplication(configPath), 'initialiseApp', configPath);
 }
 
 /**

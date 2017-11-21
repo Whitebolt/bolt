@@ -20,7 +20,6 @@ class BoltEventEmitter extends EventEmitter {
   }
 
   async emit(eventName, ...params) {
-    console.log(`*${eventName}*`);
     await Promise.all(bolt.flattenDeep(splitter(eventName).map(eventName=>
       this.listeners(eventName).map(listener=>
         setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
@@ -29,7 +28,6 @@ class BoltEventEmitter extends EventEmitter {
   }
 
   async emitBefore(eventName, ...params) {
-    console.log(`Before: *${eventName}*`);
     await Promise.all(bolt.flattenDeep(splitter(eventName).map(eventName=>
       Private.get(this, 'before').listeners(eventName).map(listener=>
         setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
@@ -38,7 +36,6 @@ class BoltEventEmitter extends EventEmitter {
   }
 
   async emitAfter(eventName, ...params) {
-    console.log(`AFTER: *${eventName}*`);
     await Promise.all(bolt.flattenDeep(splitter(eventName).map(eventName=>
       Private.get(this, 'after').listeners(eventName).map(listener=>
         setImmediatePromise().then(()=>Promise.resolve(listener(...params)))

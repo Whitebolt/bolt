@@ -89,7 +89,6 @@ function _createPlatformScope() {
   const scope = {
     bolt: _createBoltObject(),
     boltRootDir: __dirname,
-    colour: requireX.sync('colors'),
     express: requireX.sync('express')
   };
 

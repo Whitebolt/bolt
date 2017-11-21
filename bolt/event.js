@@ -5,18 +5,19 @@
  */
 
 const EventEmitter = require('./events');
+const PubSub = require('topic-subscribe');
 const events = new EventEmitter();
+const pubsub = new PubSub();
 
-const exported = {
-  subscribe:()=>{},
-  broadcast:()=>{}
-};
+const eventsExportMethods = ['on', 'once', 'emit', 'emitSync', 'emitBefore', 'emitAfter', 'before', 'after', 'beforeOnce', 'afterOnce', 'emitThrough'];
+const pubsubExportMethods = ['subscribe', 'unsubscribe', 'publish', 'broadcast'];
 
-[
-  'on', 'once', 'emit', 'emitSync', 'emitBefore', 'emitAfter', 'before', 'after',
-  'beforeOnce', 'afterOnce', 'emitThrough'
-].forEach(method=>{
-  exported[method] = events[method].bind(events);
-});
+function reflect(methods, from, to={}) {
+  methods.forEach(method=>to[method] = from[method].bind(from));
+  return to;
+}
+
+const exported = reflect(eventsExportMethods, events);
+reflect(pubsubExportMethods, pubsub, exported);
 
 module.exports = exported;

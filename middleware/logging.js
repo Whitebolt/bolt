@@ -14,7 +14,7 @@ function init(app) {
 
   const stream = new Writable({
     write(chunk, encoding, callback) {
-      bolt.broadcast('/logging/access', chunk.toString());
+      bolt.publish('/logging/access', {message: chunk.toString()});
       callback();
     }
   });
