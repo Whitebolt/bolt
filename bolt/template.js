@@ -468,12 +468,17 @@ function getControllerMethodProperty(method, property) {
   return bolt.annotation.get(method, property) || bolt.annotation.get(sourceMethod, property);
 }
 
-require.set('.ejs', function(config, options) {
-  const module = new require.Module(config);
-  if (Buffer.isBuffer(config.content)) config.content = config.content.toString();
-  module.exports = compileTemplate({text:config.content, filename:config.filename, options});
-  module.loaded = true;
-  return module;
+require.on('evaluate', event=>{
+  if (path.extname(event.target) === '.ejs') {
+    event.data.module = event.data.module || new require.Module(event.moduleConfig);
+    if (Buffer.isBuffer(event.moduleConfig.content)) event.moduleConfig.content = event.moduleConfig.content.toString();
+    event.data.module.exports = compileTemplate({
+      text:event.moduleConfig.content,
+      filename:event.moduleConfig.filename,
+      options:event.parserOptions
+    });
+    event.data.module.loaded = true;
+  }
 });
 
 module.exports = {

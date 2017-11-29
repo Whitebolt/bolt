@@ -11,6 +11,8 @@ const ready = _getReady(bolt);
 let configDone = false;
 let boltLoaded = false;
 
+global.startTime = process.hrtime();
+
 /**
  * Setup ready callback.
  *
@@ -85,16 +87,14 @@ function _createBoltObject() {
  * @returns {Object}    The bolt object.
  */
 function _createPlatformScope() {
-  const emptyScope = {};
   const scope = {
     bolt: _createBoltObject(),
     boltRootDir: __dirname,
     express: requireX.sync('express')
   };
 
-  requireX.set({
-    useSandbox:false,
-    scope:config=>((config.filename.indexOf('/node_modules/') !== -1) ? emptyScope :scope)
+  requireX.on('evaluate', event=>{
+    if (event.moduleConfig.filename.indexOf('/node_modules/') === -1) event.moduleConfig.scope = scope;
   });
 
   scope.boltAppID = requireX.sync('./bolt/string').randomString();

@@ -43,10 +43,14 @@ function _runApp(app) {
       let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
       let welcome = await figlet(`${serverName} v${app.config.version}`)
       console.log(welcome);
+
+      console.log('Load took: ', process.hrtime(global.startTime)[0], 'secs');
       resolve(app);
     });
 
     upgrade(server, app);
+
+
   });
 }
 
