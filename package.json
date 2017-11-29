@@ -194,6 +194,12 @@
         "description": "hook"
       },
       {
+        "event": "loadedModule",
+        "action": "module loaded",
+        "description": "<%= params[1] %>ms",
+        "level": 1
+      },
+      {
         "event": "loadedRouter",
         "action": "load",
         "description": "router"

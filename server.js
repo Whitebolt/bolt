@@ -3,13 +3,14 @@
 
 Error.stackTraceLimit = Infinity;
 
+let [configDone, boltLoaded] = [false, false];
+
+const eventsStack = [];
 const requireX = _getRequireX();
 const bolt = _createPlatformScope();
 const packageConfig = requireX.sync('./package.json').config || {};
 const ready = _getReady(bolt);
 
-let configDone = false;
-let boltLoaded = false;
 
 global.startTime = process.hrtime();
 
@@ -47,16 +48,19 @@ function _getReady() {
  * @returns {requireX}    The requireX module.
  */
 function _getRequireX() {
-  const { r, g, b, w, c, m, y, k } = [
-    ['r', 1], ['g', 2], ['b', 4], ['w', 7],
-    ['c', 6], ['m', 5], ['y', 3], ['k', 0]
-  ].reduce((cols, col) => ({...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`}), {});
-
   const requireX = require('require-extra');
 
+  function moduleLoaded(event) {
+    bolt.emit('loadedModule', event.target, (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000));
+  }
+
   requireX.on('evaluated', event=>{
-    const ms = (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000);
-    //console.log(`${event.cacheSize} ${c(ms+'ms')} ${y(event.target)}`);
+    if (boltLoaded) {
+      while (eventsStack.length) moduleLoaded(eventsStack.pop());
+      moduleLoaded(event);
+    } else {
+      eventsStack.push(event);
+    }
   }).on('error', event=>{
     console.log(`Error: ${r(event.target)}\n${r(event.error)}`);
   });
