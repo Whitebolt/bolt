@@ -41,10 +41,9 @@ function _runApp(app) {
     server.listen(app.config.port, async ()=>{
       bolt.emit('appListening', app.config.port);
       let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
-      let welcome = await figlet(`${serverName} v${app.config.version}`)
+      let welcome = await figlet(`${serverName} v${app.config.version}`);
       console.log(welcome);
-
-      console.log('Load took: ', process.hrtime(global.startTime)[0], 'secs');
+      bolt.emit('appRunning', app.config.name, process.hrtime(global.startTime));
       resolve(app);
     });
 
