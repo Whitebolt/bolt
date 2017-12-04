@@ -456,51 +456,6 @@ function getControllerMethodProperty(method, property) {
   return bolt.annotation.get(method, property) || bolt.annotation.get(sourceMethod, property);
 }
 
-function _compileEjsModule(event) {
-  event.data.module = event.data.module || new require.Module(event.moduleConfig);
-  if (Buffer.isBuffer(event.moduleConfig.content)) event.moduleConfig.content = event.moduleConfig.content.toString();
-  event.data.module.exports = compileTemplate({
-    text:event.moduleConfig.content,
-    filename:event.moduleConfig.filename,
-    options:event.parserOptions
-  });
-}
-
-/*function _compileJsxModule(event) {
-  console.log("JSX", event.moduleConfig.filename);
-
-  try {
-    if (Buffer.isBuffer(event.moduleConfig.content)) event.moduleConfig.content = event.moduleConfig.content.toString();
-    event.moduleConfig.content = babel.transform(event.moduleConfig.content, {
-      plugins: ['transform-react-jsx'],
-      presets: [
-        ['env', {targets: {node: 'current'}}]
-      ]
-    }).code;
-    event.moduleConfig.scope = event.moduleConfig.scope || {};
-    event.moduleConfig.scope.React = require("react");
-    event.moduleConfig.scope.ReactDOMServer = require("react-dom/server");
-
-    bolt.emitSync('jsxCompile', event);
-
-    event.data.module = require.get(".js")(event.moduleConfig);
-  } catch (error) {
-    console.log(error);
-  }
-}*/
-
-require.on('evaluate', event=>{
-  const ext = path.extname(event.target);
-  if ((ext === '.ejs') || (ext === '.jsx')) {
-    if (ext === '.ejs') {
-      _compileEjsModule(event);
-      event.data.module.loaded = true;
-    } else if (ext === '.jsx') {
-      //_compileJsxModule(event)
-    }
-  }
-});
-
 module.exports = {
   loadTemplates,
   loadComponentViews,

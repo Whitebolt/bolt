@@ -6,8 +6,6 @@ module.exports = function() {
   // @annotation key moduleEvaluateJsx
 
   return event=>{
-    console.log("JSX-Compile", event.target);
-
     if (Buffer.isBuffer(event.config.content)) event.content = event.config.content.toString();
     event.config.content = babel.transform(event.config.content, {
       plugins: ['transform-react-jsx'],
