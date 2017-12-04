@@ -2,6 +2,17 @@
 
 const babel = require('babel-core');
 
+bolt.CompileJsxEvent = class CompilesJsxEvent extends bolt.Event {};
+
+function getEmitFunction(event) {
+  return !!event.sync?bolt.emitSync:bolt.emit;
+}
+
+function compile(event) {
+  event.data.module = require.get(".js")(event.config);
+  event.data.module.loaded = true;
+}
+
 module.exports = function() {
   // @annotation key moduleEvaluateJsx
 
@@ -14,7 +25,7 @@ module.exports = function() {
       ]
     }).code;
 
-    event.data.module = require.get(".js")(event.config);
-    event.data.module.loaded = true;
+    const compileJsxEvent = getEmitFunction(event)('compileJsx', new bolt.CompileJsxEvent(event.config));
+    return !!event.sync?compile(event):compileJsxEvent.then(()=>compile(event));
   }
 };
