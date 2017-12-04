@@ -23,7 +23,7 @@ function _loadHooks(roots) {
         let key = bolt.annotation.get(loader, 'key');
         let when = bolt.annotation.get(loader, 'when') || 'on';
         if (key && ((when === 'after') || (when === 'before') || (when === 'on'))) {
-          loader().forEach(hook=>{
+          bolt.makeArray(loader()).forEach(hook=>{
             bolt.annotation.from(hook);
             return bolt[when](key, hook);
           })

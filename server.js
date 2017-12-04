@@ -10,6 +10,7 @@ const requireX = _getRequireX();
 const bolt = _createPlatformScope();
 const packageConfig = requireX.sync('./package.json').config || {};
 const ready = _getReady(bolt);
+const path = require('path');
 
 
 global.startTime = process.hrtime();
@@ -41,6 +42,11 @@ function _getReady() {
   }
 }
 
+bolt.ready(()=>{
+  bolt.ModuleSetScopeEvent = class ModuleSetScopeEvent extends bolt.Event {};
+  bolt.ModuleEvaluateEvent = class ModuleEvaluateEvent extends bolt.Event {};
+});
+
 /**
  * Get and setup requireX
  *
@@ -54,6 +60,46 @@ function _getRequireX() {
     bolt.emit('loadedModule', event.target, (((event.duration[0] * 1000000000) + event.duration[1]) / 1000000));
   }
 
+  function getEmitFunction(event) {
+    return !!event.sync?bolt.emitSync:bolt.emit;
+  }
+
+  function evaluate(eventName, event) {
+    return getEmitFunction(event)(eventName, new bolt.ModuleEvaluateEvent({
+      type:eventName,
+      target:event.target,
+      source:event.source,
+      config: event.moduleConfig,
+      parserOptions: event.parserOptions,
+      data: event.data,
+      scope: event.moduleConfig.scope,
+      sync: event.sync
+    }));
+  }
+
+  function setScope(eventName, event) {
+    return getEmitFunction(event)(eventName, new bolt.ModuleSetScopeEvent({
+      type:eventName,
+      target:event.target,
+      source:event.source,
+      scope: event.moduleConfig.scope,
+      sync: event.sync
+    }));
+  }
+
+  requireX.on('evaluate', event=>{
+    if (boltLoaded) {
+      const ext = path.extname(event.target);
+      if (ext.charAt(0) === '.') {
+        event.moduleConfig.scope = event.moduleConfig.scope || {};
+        return bolt.runSeries(!event.sync, [
+          ()=>setScope(bolt.camelCase(`moduleSetScope_${ext.substring(1)}`), event),
+          ()=>evaluate(bolt.camelCase(`moduleEvaluate_${ext.substring(1)}`), event)
+        ]);
+      }
+    }
+  });
+
   requireX.on('evaluated', event=>{
     if (boltLoaded) {
       while (eventsStack.length) moduleLoaded(eventsStack.pop());
@@ -61,8 +107,8 @@ function _getRequireX() {
     } else {
       eventsStack.push(event);
     }
-  }).on('error', event=>{
-    console.log(`Error: ${r(event.target)}\n${r(event.error)}`);
+  }).on('error', error=>{
+    console.log(error);
   });
 
   return requireX;

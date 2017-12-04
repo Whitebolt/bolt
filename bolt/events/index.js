@@ -11,6 +11,15 @@ function splitter(item) {
     .filter(item=>(item !== ''));
 }
 
+function mapPromiseSeries(series, ...params) {
+  function next(item) {
+    return Promise.resolve(item(...params)).then(()=>
+      ((series.length)?next(series.shift()):Promise.resolve())
+    );
+  }
+  if (series.length) return next(series.shift());
+}
+
 class BoltEventEmitter extends EventEmitter {
   constructor(...params) {
     super(...params);
@@ -20,27 +29,41 @@ class BoltEventEmitter extends EventEmitter {
   }
 
   async emit(eventName, ...params) {
-    await Promise.all(bolt.flattenDeep(splitter(eventName).map(eventName=>
-      this.listeners(eventName).map(listener=>
-        setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
-      )
-    )));
+    const listeners = bolt.flattenDeep(
+      splitter(eventName).map(eventName=>this.listeners(eventName))
+    ).map(listener=>{
+      return ()=>setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
+    });
+    return mapPromiseSeries(listeners, ...params);
   }
 
   async emitBefore(eventName, ...params) {
-    await Promise.all(bolt.flattenDeep(splitter(eventName).map(eventName=>
-      Private.get(this, 'before').listeners(eventName).map(listener=>
-        setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
-      )
-    )));
+    const listeners = bolt.flattenDeep(
+      splitter(eventName).map(eventName=>Private.get(this, 'before').listeners(eventName))
+    ).map(listener=>{
+      return ()=>setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
+    });
+    return mapPromiseSeries(listeners, ...params);
   }
 
   async emitAfter(eventName, ...params) {
-    await Promise.all(bolt.flattenDeep(splitter(eventName).map(eventName=>
-      Private.get(this, 'after').listeners(eventName).map(listener=>
-        setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
-      )
-    )));
+    const listeners = bolt.flattenDeep(
+      splitter(eventName).map(eventName=>Private.get(this, 'after').listeners(eventName))
+    ).map(listener=>{
+      return ()=>setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
+    });
+    return mapPromiseSeries(listeners, ...params);
+  }
+
+  emitSyncBefore(eventName, ...params) {
+    const eventNames = bolt.flattenDeep(splitter(eventName));
+    let called = false;
+
+    eventNames.forEach(eventName=>{
+      called = called || Private.get(this, 'before').emit(eventName, ...params);
+    });
+
+    return called;
   }
 
   emitSync(eventName, ...params) {
@@ -48,11 +71,16 @@ class BoltEventEmitter extends EventEmitter {
     let called = false;
 
     eventNames.forEach(eventName=>{
-      called = called || Private.get(this, 'before').emit(eventName, ...params);
-    });
-    eventNames.forEach(eventName=>{
       called = called ||  super.emit(eventName, ...params);
     });
+
+    return called;
+  }
+
+  emitSyncAfter(eventName, ...params) {
+    const eventNames = bolt.flattenDeep(splitter(eventName));
+    let called = false;
+
     eventNames.forEach(eventName=>{
       called = called || Private.get(this, 'after').emit(eventName, ...params);
     });

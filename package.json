@@ -19,6 +19,9 @@
     "CMS"
   ],
   "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.6.1",
     "bcrypt": "^1.0.3",
     "binary-message-format": "git+ssh://git@aaron.whitebolt:simpo/binary-message-format.git",
     "bluebird": "^3.5.1",
@@ -56,7 +59,10 @@
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
     "pm2": "^2.7.2",
-    "require-extra": "^1.2.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-helmet": "^5.2.0",
+    "require-extra": "^1.4.0",
     "rrule": "git+https://github.com/jkbrzt/rrule.git",
     "serve-static": "^1.13.1",
     "shortcode-insert": "^1.0.2",

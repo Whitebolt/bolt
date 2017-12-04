@@ -6,10 +6,18 @@
 
 const EventEmitter = require('./events');
 const PubSub = require('topic-subscribe');
+
+class Event {
+  constructor(config) {
+    Object.assign(this, config);
+    this.type = config.type || 'Event';
+    this.sync = config.sync || true;
+  }
+}
+
 const events = new EventEmitter();
 const pubsub = new PubSub();
-
-const eventsExportMethods = ['on', 'once', 'emit', 'emitSync', 'emitBefore', 'emitAfter', 'before', 'after', 'beforeOnce', 'afterOnce', 'emitThrough'];
+const eventsExportMethods = ['on', 'once', 'emit', 'emitSyncBefore', 'emitSync', 'emitSyncAfter', 'emitBefore', 'emitAfter', 'before', 'after', 'beforeOnce', 'afterOnce', 'emitThrough'];
 const pubsubExportMethods = ['subscribe', 'unsubscribe', 'publish', 'broadcast'];
 
 function reflect(methods, from, to={}) {
@@ -19,5 +27,6 @@ function reflect(methods, from, to={}) {
 
 const exported = reflect(eventsExportMethods, events);
 reflect(pubsubExportMethods, pubsub, exported);
+exported.Event = Event;
 
 module.exports = exported;

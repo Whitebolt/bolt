@@ -6,6 +6,7 @@
 
 const path = require('path');
 const ejs = require('ejs');
+const babel = require('babel-core');
 
 const rxRelativeDir = /^\.\//;
 const rxStartEndSlash = /^\/|\/$/g;
@@ -167,23 +168,10 @@ function _loadComponentViews(roots, options) {
 }
 
 function viewOnload(filename, compiled, views) {
-  let viewName = path.basename(filename, '.ejs');
+  let viewName = path.basename(path.basename(filename, '.ejs'), '.jsx');
   views[viewName] = views[viewName] || {};
   views[viewName].path = filename;
   views[viewName].compiled = compiled;
-}
-
-/**
- * Get view text.
- *
- * @private
- * @param {string} filename       The view to load.
- * @param {Object} options        The view options.
- * @returns {Promise.<string>}    Promise resolving to vview text.
- */
-async function _loadViewText(filename, options) {
-  const compiled = await require.async({options}, filename);
-  viewOnload(filename, compiled, options.views);
 }
 
 /**
@@ -443,7 +431,7 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
 
   await require.import(dirs, {
     options:options,
-    extensions:['.ejs'],
+    extensions:['.ejs', '.jsx'],
     basedir:__dirname,
     parent: __filename,
     onload: (filename, compiled)=>{
@@ -468,16 +456,48 @@ function getControllerMethodProperty(method, property) {
   return bolt.annotation.get(method, property) || bolt.annotation.get(sourceMethod, property);
 }
 
-require.on('evaluate', event=>{
-  if (path.extname(event.target) === '.ejs') {
-    event.data.module = event.data.module || new require.Module(event.moduleConfig);
+function _compileEjsModule(event) {
+  event.data.module = event.data.module || new require.Module(event.moduleConfig);
+  if (Buffer.isBuffer(event.moduleConfig.content)) event.moduleConfig.content = event.moduleConfig.content.toString();
+  event.data.module.exports = compileTemplate({
+    text:event.moduleConfig.content,
+    filename:event.moduleConfig.filename,
+    options:event.parserOptions
+  });
+}
+
+/*function _compileJsxModule(event) {
+  console.log("JSX", event.moduleConfig.filename);
+
+  try {
     if (Buffer.isBuffer(event.moduleConfig.content)) event.moduleConfig.content = event.moduleConfig.content.toString();
-    event.data.module.exports = compileTemplate({
-      text:event.moduleConfig.content,
-      filename:event.moduleConfig.filename,
-      options:event.parserOptions
-    });
-    event.data.module.loaded = true;
+    event.moduleConfig.content = babel.transform(event.moduleConfig.content, {
+      plugins: ['transform-react-jsx'],
+      presets: [
+        ['env', {targets: {node: 'current'}}]
+      ]
+    }).code;
+    event.moduleConfig.scope = event.moduleConfig.scope || {};
+    event.moduleConfig.scope.React = require("react");
+    event.moduleConfig.scope.ReactDOMServer = require("react-dom/server");
+
+    bolt.emitSync('jsxCompile', event);
+
+    event.data.module = require.get(".js")(event.moduleConfig);
+  } catch (error) {
+    console.log(error);
+  }
+}*/
+
+require.on('evaluate', event=>{
+  const ext = path.extname(event.target);
+  if ((ext === '.ejs') || (ext === '.jsx')) {
+    if (ext === '.ejs') {
+      _compileEjsModule(event);
+      event.data.module.loaded = true;
+    } else if (ext === '.jsx') {
+      //_compileJsxModule(event)
+    }
   }
 });
 

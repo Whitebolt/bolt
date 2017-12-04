@@ -17,6 +17,25 @@ function parseParameters(func) {
   return getParameters(func).split(',').map(param=>param.trim());
 }
 
+function runSeries(async, series, ...params) {
+  if (async === true) return _runAsyncSeries(series, ...params);
+  if (!bolt.isBoolean(async)) {
+    params.unshift(series);
+    series = async;
+  }
+
+  series.forEach(item=>item(...params));
+}
+
+function _runAsyncSeries(series, ...params) {
+  function next(item) {
+    return Promise.resolve(item(...params)).then(()=>
+      ((series.length)?next(series.shift()):Promise.resolve())
+    );
+  }
+  if (series.length) return next(series.shift());
+}
+
 module.exports = {
-  parseParameters
+  parseParameters, runSeries
 };
