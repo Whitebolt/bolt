@@ -4,16 +4,9 @@
  * @module bolt/bolt
  */
 
-const _bolt = require('./bolt');
-
-let _defaultTrueValues;
-let _defaultFalseValues;
-
 bolt.ready(()=>{
-  let _defaultTrueValues = _bolt.setDefault('bool.true', ['true', 'yes', 'on']);
-  _bolt.watchDefault('bool.true', value=>{_defaultTrueValues = value;});
-  let _defaultFalseValues = _bolt.setDefault('bool.false', ['false', 'no', 'off']);
-  _bolt.watchDefault('bool.false', value=>{_defaultFalseValues = value;});
+  bolt.setDefault('bool.true', ['true', 'yes', 'on']);
+  bolt.setDefault('bool.false', ['false', 'no', 'off']);
 });
 
 
@@ -26,7 +19,7 @@ bolt.ready(()=>{
  * @param {Array} defaultFalseValues=bolt.getDefault('bool.false')]   Default false values.
  * @returns {boolean|*}   Boolean value or original value.
  */
-function toBool(value, defaultTrueValues=_defaultTrueValues, defaultFalseValues=_defaultFalseValues) {
+function toBool(value, defaultTrueValues=bolt.getDefault('bool.true'), defaultFalseValues=bolt.getDefault('bool.false')) {
   if (bolt.indexOfEquiv(defaultFalseValues, value) !== -1) {
     return false;
   } else if (bolt.indexOfEquiv(defaultTrueValues, value) !== -1) {
