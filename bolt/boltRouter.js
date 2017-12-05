@@ -16,9 +16,13 @@ const _componentAllowedToSet = [
  */
 function _getPaths(req) {
   let lopper = bolt.lopGen(bolt.getPathFromRequest(req));
+  let lookup = new Set();
   return function* () {
-    for (const route of lopper()) yield route;
-    yield '/';
+    for (const route of lopper()) {
+      lookup.add(route);
+      yield route;
+    }
+    if (!lookup.has('/')) yield '/';
   };
 }
 

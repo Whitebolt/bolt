@@ -198,7 +198,7 @@ function _setAnnotations(app) {
  *                      promise chains.
  */
 function  _addControllerRoutesToApplication() {
-  bolt.once('beforeRunApp', (options, app)=>{
+  bolt.beforeOnce('runApp', app=>{
     Object.keys(app.controllerRoutes).forEach(route=>{
       app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
     });
