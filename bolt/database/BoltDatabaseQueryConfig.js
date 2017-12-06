@@ -6,9 +6,9 @@ const defaults = Object.freeze({
   accessLevel: 'read',
   collection: 'pages',
   filters: Object.freeze({
-    'filterByVisibility':true,
-    'filterByAccessLevel':true,
-    'filterUnauthorisedFields':true
+    filterByVisibility:true,
+    filterByAccessLevel:true,
+    filterUnauthorisedFields:true
   })
 });
 const accessLevels = new FreezeSet('read', 'write', 'admin');
@@ -38,7 +38,6 @@ accessLevels.freeze();
 class BoltDatabaseQueryConfig {
   constructor(queryConfig, copyObject={}) {
     Object.assign(this, copyObject, queryConfig);
-
     this.collection = (this.collection || defaults.collection).toString();
     _setAccessLevel(this);
     this.app = ((this.req && !this.app) ? this.req.app : this.app);

@@ -1,5 +1,7 @@
 'use strict';
 
+const controllerInstructions = require('./controllerInstructions');
+
 function injectorReflect(items, component, extraParams, method) {
   return bolt.toObjectMap(items, item=>[item, injectors[item](component, extraParams, method)]);
 }
@@ -123,7 +125,8 @@ const injectors = Object.freeze({
   values: (...params)=>values(...params),
   viaView: component=>!!component.viaView,
   isJson: (...params)=>isJson(...params),
-  display: (...params)=>display(...params)
+  display: (...params)=>display(...params),
+  instructions: component=>controllerInstructions(injectors.req(component))
 });
 
 module.exports = (params, component, extraParams, method)=>{

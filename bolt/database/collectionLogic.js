@@ -255,7 +255,6 @@ function _getResults(queryConfig) {
  */
 function _getDoc(queryConfig, noFilters=false) {
   return _getResults(queryConfig)
-    .then(docs=>docs)
     .then(docs=>bolt.makeArray(docs))
     .then(docs=>((queryConfig.filterByAccessLevel && !noFilters) ? docs.filter(doc=>_isAuthorised(doc, queryConfig.session, queryConfig.accessLevel)) : docs))
     .then(docs=>((queryConfig.filterByVisibility && !noFilters) ? docs.filter(doc=>_isAuthorisedVisibility(doc)) : docs))

@@ -30,6 +30,7 @@ const templateFunctions = {
       const proxiedReq = new Proxy(req, {
         get: function(target, property, receiver) {
           if (property === 'doc') return doc;
+          if (property === '__unproxied') return req.__unproxied || req;
           return Reflect.get(target, property, receiver);
         }
       });
@@ -171,7 +172,7 @@ function viewOnload(filename, compiled, views) {
   let viewName = path.basename(path.basename(filename, '.ejs'), '.jsx');
   views[viewName] = views[viewName] || {};
   views[viewName].path = filename;
-  views[viewName].compiled = compiled;
+  views[viewName].compiled = compiled.default || compiled;
 }
 
 /**
