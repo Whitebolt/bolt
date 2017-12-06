@@ -10,6 +10,10 @@ const tests = {
     if (component && component.req && component && component.req.isAuthenticated) return component.req.isAuthenticated();
     return false;
   },
+  unauthenticated: (value, component)=>{
+    if (component && component.req && component && component.req.isAuthenticated) return !component.req.isAuthenticated();
+    return true;
+  },
   'accepted-fields': (value, component)=>{
     if (!(component && component.req)) return false;
     let bodyFields = bolt.without(Object.keys(component.req.body || {}), ...Array.from(value));

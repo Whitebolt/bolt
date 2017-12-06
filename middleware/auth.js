@@ -4,7 +4,6 @@ const passport = require('passport');
 const Strategy = require('passport-local').Strategy;
 const Promise = require('bluebird');
 const bcrypt = require('bcrypt');
-const compare = Promise.promisify(bcrypt.compare);
 
 /**
  * @todo  Reduce inefficiencies with some form of caching, indexes and DbRefs.
@@ -30,12 +29,14 @@ function init(app) {
    * @param {string} password         Password to use.
    * @returns {Promise.<boolean>}     Promise resolving to boolean, which equals, did _login succeed?
    */
-  function loginUser(username, password) {
-    return _getUserByAccount(username)
-      .then(user=>{
-        return compare(password, user.password)
-          .then(authenticated =>(!authenticated ? false : user));
-      });
+  async function loginUser(username, password) {
+    const user = await _getUserByAccount(username);
+    try {
+      const authenticated = await bcrypt.compare(password, user.password);
+      return (!authenticated ? false : user);
+    } catch(error) {
+      console.log("ERROR", error);
+    }
   }
 
   /**
