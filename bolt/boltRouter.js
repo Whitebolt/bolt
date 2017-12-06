@@ -51,7 +51,7 @@ function applyAndSend(router) {
 
     return res
       .status(status)
-      .send(data || statusMessage)
+      .send((data === null) ? null : data || statusMessage)
       .end();
   }
 
@@ -61,6 +61,8 @@ function applyAndSend(router) {
     return send();
   } else if (status === 204) {
     return send(null);
+  } else if (statusMessage !== "") {
+    return send();
   }
 }
 

@@ -31,12 +31,8 @@ function init(app) {
    */
   async function loginUser(username, password) {
     const user = await _getUserByAccount(username);
-    try {
-      const authenticated = await bcrypt.compare(password, user.password);
-      return (!authenticated ? false : user);
-    } catch(error) {
-      console.log("ERROR", error);
-    }
+    const authenticated = await bcrypt.compare(password, user.password);
+    return (!authenticated ? false : user);
   }
 
   /**
