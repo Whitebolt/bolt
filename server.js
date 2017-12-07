@@ -3,7 +3,6 @@
 
 Error.stackTraceLimit = Infinity;
 
-require('bcrypt');
 let [configDone, boltLoaded] = [false, false];
 
 const bolt = {requireX: require('require-extra')};

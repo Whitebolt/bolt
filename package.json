@@ -62,7 +62,7 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-helmet": "^5.2.0",
-    "require-extra": "^1.4.0",
+    "require-extra": "^1.4.1",
     "rrule": "git+https://github.com/jkbrzt/rrule.git",
     "serve-static": "^1.13.1",
     "shortcode-insert": "^1.0.2",
