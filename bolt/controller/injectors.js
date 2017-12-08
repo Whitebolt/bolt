@@ -67,7 +67,7 @@ function display(component, extraParams, method) {
 
   return async (docField, viewName)=>{
     if (isJson) {
-      const value = docField?doc[docField]:doc;
+      const value = docField?bolt.get(doc, docField):doc;
       if (viaView) return (stringify?JSON.stringify(value):value);
       return res.json(value);
     }

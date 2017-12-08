@@ -1,7 +1,7 @@
 'use strict';
 
 const bodyParser = require('body-parser');
-const BMF = require('binary-message-format/lib');
+//const BMF = require('binary-message-format/lib');
 
 
 /**
@@ -71,8 +71,8 @@ function init(app) {
     (req, res, next)=>skip(req, res, next, urlParser),
     (req, res, next)=>skip(req, res, next, jsonParser),
     (req, res, next)=>skip(req, res, next, textParser),
-    (req, res, next)=>skip(req, res, next, rawParser),
-    (req, res, next)=>skip(req, res, next, bmfParser)
+    (req, res, next)=>skip(req, res, next, rawParser)/*,
+    (req, res, next)=>skip(req, res, next, bmfParser)*/
   );
 }
 

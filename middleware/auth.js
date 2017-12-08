@@ -192,9 +192,10 @@ function init(app) {
     _getUserRecordById(id).nodeify(callback);
   });
 
-  app.use(passport.initialize());
-  app.use(passport.session());
-  app.use((req, res, next)=>{
+  const passportInit = passport.initialize();
+  const passportSession = passport.session();
+
+  function passportPopulate(req, res, next) {
     if (req.session) {
       const passport = req.session.passport;
 
@@ -205,6 +206,28 @@ function init(app) {
         .finally(()=>next());
     } else {
       next();
+    }
+  }
+
+  app.use((req, res, next)=>{
+    if (req.websocket) {
+      passportInit(req._req, res, ()=>passportInit(req, res, next));
+    } else {
+      passportInit(req, res, next)
+    }
+  });
+  app.use((req, res, next)=>{
+    if (req.websocket) {
+      passportSession(req._req, res, ()=>passportSession(req, res, next));
+    } else {
+      passportSession(req, res, next)
+    }
+  });
+  app.use((req, res, next)=>{
+    if (req.websocket) {
+      passportPopulate(req._req, res, ()=>passportPopulate(req, res, next));
+    } else {
+      passportPopulate(req, res, next)
     }
   });
 }

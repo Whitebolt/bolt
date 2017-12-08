@@ -23,7 +23,7 @@
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-env": "^1.6.1",
     "bcrypt": "^1.0.3",
-    "binary-message-format": "git+ssh://git@aaron.whitebolt:simpo/binary-message-format.git",
+    "binary-message-format2": "git+ssh://git@aaron.whitebolt:simpo/binary-message-format2.git",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "chownr": "^1.0.1",
