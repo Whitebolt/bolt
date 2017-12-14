@@ -6,6 +6,10 @@ const rollupNodeResolve = require('rollup-plugin-node-resolve');
 const rollupCommonJs = require('rollup-plugin-commonjs');
 const rollupBabel = require('rollup-plugin-babel');
 
+const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
+
+bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
+
 function rollupMemoryPlugin(config = {}) {
   function isPath(path) {
     return typeof path === 'string';
@@ -81,7 +85,7 @@ module.exports = function() {
         ]
       });
       const { code } = await bundle.generate({format:'iife', sourcemap:false, name:'bolt'});
-      return code;
+      return code.replace(xBreakingInCSPGetGlobal, 'window');  // So CSP does not break, it is always browser anyway.
     } catch (error) {
       console.error(error);
     }
@@ -89,11 +93,13 @@ module.exports = function() {
 
   return async (app)=>{
     let boltContent = '';
-    const names = [...bolt.__modules].map(exports=>{
+    const names = [...bolt.__modules].map(target=>{
+      const exports = require(target);
       if (bolt.annotation.get(exports, 'browser-export')) {
-        const modulePath = bolt.annotation.get(exports, 'modulePath');
+        const type = 'exportBoltToBrowserGlobal';
+        bolt.emit(type, new bolt.ExportToBrowserBoltEvent({type, target, sync: false}));
         const name = 'module'+bolt.randomString(10);
-        boltContent += `import ${name} from "${modulePath}";\n`;
+        boltContent += `import ${name} from "${target}";\n`;
         return name;
       }
     }).filter(name=>name);
