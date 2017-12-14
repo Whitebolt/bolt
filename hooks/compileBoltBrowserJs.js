@@ -122,9 +122,9 @@ module.exports = function() {
     let boltContent = '';
     const exportedLookup = new Set();
 
-    const exported = ['lodash', ...bolt.__modules].map(target=>{
+    const exported = [boltRootDir + '/lib/lodash', ...bolt.__modules].map(target=>{
       const exports = require(target);
-      if (target === 'lodash') {
+      if (target === boltRootDir + '/lib/lodash') {
         return {
           target,
           exportedNames:Object.keys(exports).filter(name=>bolt.isFunction(exports[name])),

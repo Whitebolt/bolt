@@ -9,8 +9,8 @@ const path = require('path');
 const bolt = {require: require('require-extra')};
 const packageConfig = bolt.require.sync('./package.json').config || {};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
-require('./lib/requirex')(bolt, ()=>boltLoaded);
 require('./lib/platformScope')(bolt, __dirname);
+require('./lib/requirex')(bolt, ()=>boltLoaded);
 
 
 global.startTime = process.hrtime();

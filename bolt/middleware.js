@@ -37,7 +37,7 @@ function _annotateMiddlewareMethod(middleware, middlewareName) {
  * @returns {Promise}             Promise resolved when all middleware loaded.
  */
 async function _loadMiddleware(app, roots, importObj) {
-  let middleware = bolt.assign({}, ...await bolt.importIntoObject({
+  let middleware = Object.assign({}, ...await bolt.importIntoObject({
     roots, importObj, dirName:'middleware', eventName:'loadedMiddleware'})
   );
 

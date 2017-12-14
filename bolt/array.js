@@ -113,7 +113,7 @@ function prioritySorter(a, b) {
  * @returns {integer}     The index if found; if not found return -1.
  */
 function indexOfEquiv(ary, value) {
-  return bolt.findIndex(ary, _value=>bolt.isEqual(value, _value));
+  return ary.findIndex(_value=>bolt.isEqual(value, _value));
 }
 
 function toObjectMap(ary, iteree, context) {
