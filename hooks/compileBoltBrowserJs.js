@@ -1,7 +1,12 @@
 'use strict';
 
-const babel = require('babel-core');
-const rollup = require('rollup');
+const stream = require('stream');
+const rollupStream = require('rollup-stream');
+const source = require('vinyl-source-stream');
+const vinylBuffer = require('vinyl-buffer');
+const gulpSourcemaps = require('gulp-sourcemaps');
+const through = require('through2');
+const path = require('path');
 const rollupNodeResolve = require('rollup-plugin-node-resolve');
 const rollupCommonJs = require('rollup-plugin-commonjs');
 const rollupBabel = require('rollup-plugin-babel');
@@ -51,10 +56,15 @@ module.exports = function() {
   // @annotation key loadAllComponents
   // @annotation when after
 
-  async function compileBolt(contents) {
-    try {
-      const bundle = await rollup.rollup({
-        input: {contents, path: 'bolt.js'},
+  function compileBolt(contents) {
+    const compiled = {};
+
+    return new Promise((resolve, reject)=>{
+      rollupStream({
+        input: {contents, path:boltRootDir+'/bolt.js'},
+        format: 'iife',
+        name: 'bolt',
+        sourcemap: true,
         plugins: [
           rollupMemoryPlugin(),
           rollupNodeResolve({
@@ -83,12 +93,22 @@ module.exports = function() {
             ]
           })
         ]
-      });
-      const { code } = await bundle.generate({format:'iife', sourcemap:false, name:'bolt'});
-      return code.replace(xBreakingInCSPGetGlobal, 'window');  // So CSP does not break, it is always browser anyway.
-    } catch (error) {
-      console.error(error);
-    }
+      })
+        .pipe(source('bolt.js'))
+        .pipe(vinylBuffer())
+        .pipe(gulpSourcemaps.init({loadMaps: true}))
+        .pipe(through.obj(function (file, encoding, callback) {
+          // So CSP does not break, it is always browser anyway.
+          let contents = file.contents.toString().replace(xBreakingInCSPGetGlobal, 'window');
+          contents += `//# sourceMappingURL=${path.basename(file.path)}.map`;
+          compiled.file = contents;
+          compiled.sourceMap = file.sourceMap;
+          this.emit('end');
+          return callback(null, file);
+        })).on('end', ()=>{
+          resolve(compiled);
+        }).on('error', error=>reject(error));
+    });
   }
 
   return async (app)=>{
@@ -115,6 +135,8 @@ module.exports = function() {
     boltContent += ');\n';
     boltContent += 'export default bolt;';
 
-    app.__boltJs = await compileBolt(boltContent);
+    const compiled = await compileBolt(boltContent);
+    app.__boltJs = compiled.file;
+    app.__boltJsMap = compiled.sourceMap;
   }
 };

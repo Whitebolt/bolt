@@ -13,9 +13,6 @@ require('./lib/requirex')(bolt, ()=>boltLoaded);
 require('./lib/platformScope')(bolt, __dirname);
 
 
-const xUseStrict = /["']use strict["'](?:\;|)/;
-
-
 global.startTime = process.hrtime();
 
 
