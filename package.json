@@ -230,6 +230,12 @@
         "description": "bolt browser export"
       },
       {
+        "event": "exportReactComponentToBrowser",
+        "action": "export",
+        "property": "<%= params[0].target %>",
+        "description": "ReactBolt browser export"
+      },
+      {
         "event": "loadedRouter",
         "action": "load",
         "description": "router"

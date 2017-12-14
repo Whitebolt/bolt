@@ -13,7 +13,7 @@ const rollupBabel = require('rollup-plugin-babel');
 
 const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
 
-bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
+bolt.ExportToBrowserReactBoltEvent = class ExportToBrowserReactBoltEvent extends bolt.Event {};
 
 function rollupMemoryPlugin(config = {}) {
 	function isPath(path) {
@@ -51,36 +51,28 @@ function rollupMemoryPlugin(config = {}) {
 	};
 }
 
-
-module.exports = function() {
+module.exports = ()=>{
 	// @annotation key loadAllComponents
 	// @annotation when after
 
-	function compileBolt(contents, exported) {
+	function compileReactBolt(contents) {
 		const compiled = {};
-		const namedExports = {};
-
-		exported.forEach(exported=>{
-			namedExports[exported.target] = exported.namedExports
-		});
 
 		return new Promise((resolve, reject)=>{
 			rollupStream({
-				input: {contents, path:boltRootDir+'/bolt.js'},
+				input: {contents, path:boltRootDir+'/ReactBolt2.jsx'},
 				format: 'iife',
-				name: 'bolt',
+				name: 'ReactBolt2',
 				sourcemap: true,
 				plugins: [
 					rollupMemoryPlugin(),
 					rollupNodeResolve({
 						jsnext: true,
 						main: true,
-						extensions: ['.js', '.json'],
+						extensions: ['.jsx', '.js', '.json'],
 						browser: true
 					}),
-					rollupCommonJs({
-						namedExports
-					}),
+					rollupCommonJs(),
 					rollupBabel({
 						exclude: 'node_modules/**',
 						runtimeHelpers: true,
@@ -91,17 +83,18 @@ module.exports = function() {
 							useBuiltIns: true
 						}]],
 						plugins: [
+							'transform-react-jsx'/*,
 							'transform-runtime',
 							'syntax-async-functions',
 							'syntax-async-generators',
 							'transform-async-generator-functions',
 							'transform-regenerator',
-							'external-helpers'
+							'external-helpers'*/
 						]
 					})
 				]
 			})
-				.pipe(source('bolt.js'))
+				.pipe(source('ReactBolt2.jsx'))
 				.pipe(vinylBuffer())
 				.pipe(gulpSourcemaps.init({loadMaps: true}))
 				.pipe(through.obj(function (file, encoding, callback) {
@@ -118,54 +111,38 @@ module.exports = function() {
 		});
 	}
 
-	return async (app)=>{
-		let boltContent = '';
-		const exportedLookup = new Set();
-		const exportEventType = 'exportBoltToBrowserGlobal';
+	return async app=>{
+		let reactBoltContent = '';
+		const exportEventType = 'exportReactComponentToBrowser';
 
-		const exported = [boltRootDir + '/lib/lodash', ...bolt.__modules].map(target=>{
+		const names = [...bolt.__react].map(target=>{
 			const exports = require(target);
-			if (target === boltRootDir + '/lib/lodash') {
-				return {
-					target,
-					exportedNames:Object.keys(exports).filter(name=>bolt.isFunction(exports[name])),
-					namedExports:Object.keys(exports)
-				};
+
+			if (bolt.annotation.get(exports, 'browser-export') !== false) {
+				console.log('EXPORTING', bolt.annotation.get(exports, 'browser-export'), target);
+				const name = exports.default.name;
+				reactBoltContent += `import ${name} from "${target}";\n`;
+				bolt.emit(exportEventType, new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync: false}));
+				return name;
 			}
-			if (bolt.annotation.get(exports, 'browser-export')) {
-				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync: false}));
+		}).filter(name=>name);
 
-				return {
-					target,
-					exportedNames:Object.keys(exports).filter(key=>{
-						if (!bolt.isFunction(exports[key])) return true;
-						return !((bolt.isFunction(exports[key])) && (bolt.annotation.get(exports[key], 'browser-export') === false));
-					}),
-					namedExports:Object.keys(exports)
-				}
-			}
-		}).filter(name=>name).reverse().map(exported=>{
-			exported.exportedNames = exported.exportedNames.map(name=>{
-				if (!exportedLookup.has(name)) {
-					exportedLookup.add(name);
-					return name;
-				}
-			}).filter(name=>name);
-			return exported;
-		}).reverse().map(exported=>{
-			boltContent += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
-			return exported;
-		});
+		bolt.__react.clear();
+		delete bolt.__react;
 
-		bolt.__modules.clear();
-		delete bolt.__modules;
+		reactBoltContent += `export default {${names.join(',')}}`;
 
-		const exportedNames = bolt.flatten(exported.map(exported=>exported.exportedNames)).sort();
+		/*reactBoltContent = `
+			import lodash from "/home/simpo/Projects/cpd-react/components/quickform2/views/anchor.jsx";
+			export default {};
+		`;*/
 
-		boltContent += `export default {${exportedNames.join(',')}};`;
+		console.log(reactBoltContent);
 
-		const compiled = await compileBolt(boltContent, exported);
-		app.__boltJs = compiled.file;
-		app.__boltJsMap = compiled.sourceMap;
-	}
+		const compiled = await compileReactBolt(reactBoltContent);
+		app.__reactBoltJs = compiled.file;
+		app.__reactBoltJsMap = compiled.sourceMap;
+
+		console.log(app.__reactBoltJs);
+	};
 };

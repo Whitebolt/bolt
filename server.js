@@ -66,6 +66,7 @@ bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
     });
   }
 
+  if (!('__modules' in bolt)) bolt.__modules = new Set();
   return bolt.__modules.add(modulePath);
 };
 

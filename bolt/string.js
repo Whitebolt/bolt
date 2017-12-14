@@ -32,8 +32,6 @@ function replaceLast(txt, searcher, replacer) {
  * @returns {string}            The random string.
  */
 function randomString(length=32) {
-  // @annotation browser-export false
-
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
   if (! length) length = Math.floor(Math.random() * chars.length);
   let str = '';

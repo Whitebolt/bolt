@@ -417,6 +417,8 @@ function loadTemplates(app, options={}) {
   return bolt.emitThrough(()=>_loadTemplates(app, options), 'loadTemplates', app).then(()=>app);
 }
 
+const loadOrder = [];
+
 /**
  * Load all the ejs files in a given subdirectory of all the root directories supplied.
  *
@@ -435,11 +437,15 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
     extensions:['.ejs', '.jsx'],
     basedir:__dirname,
     parent: __filename,
+    retry: true,
     onload: (filename, compiled)=>{
+      if (path.extname(filename) === '.jsx') loadOrder.push(filename);
       viewOnload(filename, compiled, options.views);
       if (eventName) bolt.emit(eventName, filename)
     }
   });
+
+  console.log(bolt.ReactBolt);
 
   return _options.views;
 }
