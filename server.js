@@ -6,11 +6,11 @@ Error.stackTraceLimit = Infinity;
 let [configDone, boltLoaded] = [false, false];
 
 const path = require('path');
-const bolt = {requireX: require('require-extra')};
+const bolt = {require: require('require-extra')};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
 require('./lib/requirex')(bolt, ()=>boltLoaded);
 require('./lib/platformScope')(bolt, __dirname);
-const packageConfig = bolt.requireX.sync('./package.json').config || {};
+const packageConfig = bolt.require.sync('./package.json').config || {};
 
 const xUseStrict = /["']use strict["'](?:\;|)/;
 
@@ -45,9 +45,9 @@ async function appLauncher(config) {
       const boltLookup = new Map();
       const boltDir = path.resolve(__dirname, './bolt');
       const evaluateListener = onBoltEvaluate.bind(undefined, boltDir, boltLookup);
-      bolt.requireX.on('evaluate', evaluateListener);
+      bolt.require.on('evaluate', evaluateListener);
 
-      await bolt.requireX.import('./bolt/', {
+      await bolt.require.import('./bolt/', {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
@@ -63,7 +63,7 @@ async function appLauncher(config) {
       });
 
       boltLoaded = true;
-      bolt.requireX.removeListener(evaluateListener);
+      bolt.require.removeListener(evaluateListener);
       ready();
     }
 
@@ -110,13 +110,13 @@ async function pm2Controller() {
 
   const boltDir = path.resolve(__dirname, './bolt');
   const evaluateListener = onBoltEvaluate.bind(undefined, boltDir, boltLookup);
-  bolt.requireX.on('evaluate', evaluateListener);
+  bolt.require.on('evaluate', evaluateListener);
 
-  await bolt.requireX.import('./bolt/', boltImportOptions);
+  await bolt.require.import('./bolt/', boltImportOptions);
   boltLoaded = true;
-  bolt.requireX.removeListener('evaluate', evaluateListener);
+  bolt.require.removeListener('evaluate', evaluateListener);
   ready();
-  const args = await bolt.requireX('./cli');
+  const args = await bolt.require('./cli');
 
   return Promise.all(args._.map(cmd=>{
     if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
