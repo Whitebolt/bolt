@@ -56,8 +56,13 @@ module.exports = function() {
   // @annotation key loadAllComponents
   // @annotation when after
 
-  function compileBolt(contents) {
+  function compileBolt(contents, exported) {
     const compiled = {};
+    const namedExports = {};
+
+    exported.forEach(exported=>{
+      namedExports[exported.target] = exported.namedExports
+    });
 
     return new Promise((resolve, reject)=>{
       rollupStream({
@@ -73,7 +78,9 @@ module.exports = function() {
             extensions: ['.js', '.json'],
             browser: true
           }),
-          rollupCommonJs({}),
+          rollupCommonJs({
+            namedExports
+          }),
           rollupBabel({
             exclude: 'node_modules/**',
             runtimeHelpers: true,
@@ -113,29 +120,51 @@ module.exports = function() {
 
   return async (app)=>{
     let boltContent = '';
-    const names = [...bolt.__modules].map(target=>{
+    const exportedLookup = new Set();
+
+    const exported = ['lodash', ...bolt.__modules].map(target=>{
       const exports = require(target);
+      if (target === 'lodash') {
+        return {
+          target,
+          exportedNames:Object.keys(exports).filter(name=>bolt.isFunction(exports[name])),
+          namedExports:Object.keys(exports)
+        };
+      }
       if (bolt.annotation.get(exports, 'browser-export')) {
         const type = 'exportBoltToBrowserGlobal';
         bolt.emit(type, new bolt.ExportToBrowserBoltEvent({type, target, sync: false}));
-        const name = 'module'+bolt.randomString(10);
-        boltContent += `import ${name} from "${target}";\n`;
-        return name;
-      }
-    }).filter(name=>name);
 
-    boltContent += `import lodash from "lodash";\n`;
-    names.push('lodash');
+        return {
+          target,
+          exportedNames:Object.keys(exports).filter(key=>{
+            if (!bolt.isFunction(exports[key])) return true;
+            return !((bolt.isFunction(exports[key])) && (bolt.annotation.get(exports[key], 'browser-export') === false));
+          }),
+          namedExports:Object.keys(exports)
+        }
+      }
+    }).filter(name=>name).reverse().map(exported=>{
+      exported.exportedNames = exported.exportedNames.map(name=>{
+        if (!exportedLookup.has(name)) {
+          exportedLookup.add(name);
+          return name;
+        }
+      }).filter(name=>name);
+      return exported;
+    }).reverse().map(exported=>{
+      boltContent += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
+      return exported;
+    });
 
     bolt.__modules.clear();
     delete bolt.__modules;
 
-    boltContent += 'const bolt = Object.assign({}';
-    names.forEach(name=>{boltContent += ', ' + name;});
-    boltContent += ');\n';
-    boltContent += 'export default bolt;';
+    const exportedNames = bolt.flatten(exported.map(exported=>exported.exportedNames)).sort();
 
-    const compiled = await compileBolt(boltContent);
+    boltContent += `export default {${exportedNames.join(',')}};`;
+
+    const compiled = await compileBolt(boltContent, exported);
     app.__boltJs = compiled.file;
     app.__boltJsMap = compiled.sourceMap;
   }

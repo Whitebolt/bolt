@@ -46,7 +46,7 @@ async function appLauncher(config) {
         excludes: packageConfig.appLaunchExcludes,
         basedir: __dirname,
         parent: __filename,
-        onload: modulePath=>bolt.__modules.add(modulePath)
+        onload: bolt.boltOnLoad
       });
 
       boltLoaded = true;
@@ -56,6 +56,18 @@ async function appLauncher(config) {
     return _startApp(config);
   }
 }
+
+bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
+  if (bolt.isObject(exports)) {
+    Object.keys(exports).forEach(methodName=>{
+      if (bolt.isFunction(exports[methodName])) {
+        bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
+      }
+    });
+  }
+
+  return bolt.__modules.add(modulePath);
+};
 
 /**
  * PM2 app launcher.  Will launch given app using pm2.  The app launching actually, happens when config is sent via a
@@ -70,7 +82,7 @@ async function pm2Controller() {
     imports:bolt,
     basedir:__dirname,
     parent: __filename,
-    onload: modulePath=>bolt.__modules.add(modulePath)
+    onload: bolt.boltOnLoad
   };
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 

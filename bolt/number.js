@@ -1,5 +1,5 @@
 'use strict';
-// @annotation browser-export true
+// @annotation browser-export
 
 /**
  * @module bolt/bolt

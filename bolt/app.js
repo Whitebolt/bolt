@@ -174,8 +174,8 @@ async function _boltLoader(app) {
     return require.import(dirPath, {
       merge: true,
       imports: bolt,
-      onload:modulePath=>{
-        bolt.__modules.add(modulePath);
+      onload:(modulePath, exports)=>{
+        bolt.boltOnLoad(modulePath, exports);
         return bolt.emit('extraBoltModuleLoaded', modulePath);
       }
     });

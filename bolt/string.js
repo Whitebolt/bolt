@@ -1,5 +1,5 @@
 'use strict';
-// @annotation browser-export true
+// @annotation browser-export
 
 /**
  * @module bolt/bolt
@@ -32,16 +32,12 @@ function replaceLast(txt, searcher, replacer) {
  * @returns {string}            The random string.
  */
 function randomString(length=32) {
-  var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+  // @annotation browser-export false
 
-  if (! length) {
-    length = Math.floor(Math.random() * chars.length);
-  }
-
-  var str = '';
-  for (var i = 0; i < length; i++) {
-    str += chars[Math.floor(Math.random() * chars.length)];
-  }
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+  if (! length) length = Math.floor(Math.random() * chars.length);
+  let str = '';
+  for (let i = 0; i < length; i++) str += chars[Math.floor(Math.random() * chars.length)];
   return str;
 }
 

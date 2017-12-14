@@ -41,7 +41,7 @@ const _annotationParsers = [
   },
   value=>{
     // @annotation key cascade
-    return ((value === '')?true:bolt.toBool(value));
+    return (((value === '')||(value === undefined))?true:bolt.toBool(value));
   }
 ];
 
