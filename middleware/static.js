@@ -18,6 +18,6 @@ function init(app) {
     app.use(serve(rootDir + 'public/', {}));
     app.use(serve(rootDir + 'upload/', {}));
   });
-};
+}
 
 module.exports = init;

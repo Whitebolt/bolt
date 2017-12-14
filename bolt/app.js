@@ -11,6 +11,8 @@ const write = Promise.promisify(fs.write);
 const ejs = require('ejs');
 const path = require('path');
 
+const xUseStrict = /["']use strict["'](?:\;|)/;
+
 const { r, g, b, w, c, m, y, k } = [
   ['r', 1], ['g', 2], ['b', 4], ['w', 7],
   ['c', 6], ['m', 5], ['y', 3], ['k', 0]
@@ -170,13 +172,39 @@ async function _boltLoader(app) {
   const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
     .filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
 
-  await Promise.all(boltDirectories.map(dirPath=>require.import(dirPath, {
-    merge: true,
-    imports: bolt,
-    onload:(filePath)=>bolt.emit('extraBoltModuleLoaded', filePath)
-  })));
+  await Promise.all(boltDirectories.map(dirPath=>{
+    const boltLookup = new Map();
+    const evaluateListener = onBoltEvaluate.bind(undefined, dirPath, boltLookup);
+    require.on('evaluate', evaluateListener);
+
+    return require.import(dirPath, {
+      merge: true,
+      imports: bolt,
+      onload:(modulePath, exports)=>{
+        if (boltLookup.has(modulePath)) {
+          bolt.annotation.from(boltLookup.get(modulePath), exports);
+          bolt.annotation.set(exports, 'modulePath', modulePath);
+          bolt.__modules.add(exports);
+        }
+        return bolt.emit('extraBoltModuleLoaded', modulePath);
+      }
+    }).then(()=>{
+      require.removeListener('evaluate', evaluateListener);
+    })
+  }));
 
   return app;
+}
+
+function moduleWrapForAnnotations(content) {
+  return 'function(){'+content.replace(xUseStrict,'')+'}';
+}
+
+function onBoltEvaluate(boltDir, boltLookup, event) {
+  if (event.target.indexOf(boltDir) === 0) {
+    const content = event.moduleConfig.content.toString();
+    boltLookup.set(event.target, moduleWrapForAnnotations(content));
+  }
 }
 
 /**

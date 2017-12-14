@@ -1,14 +1,16 @@
 'use strict';
+// @annotation browser-export true
 
 /**
  * @module bolt/bolt
  */
 
-bolt.ready(()=>{
-  bolt.setDefault('bool.true', ['true', 'yes', 'on']);
-  bolt.setDefault('bool.false', ['false', 'no', 'off']);
-});
-
+if (bolt) {
+  bolt.ready(()=>{
+    bolt.setDefault('bool.true', ['true', 'yes', 'on']);
+    bolt.setDefault('bool.false', ['false', 'no', 'off']);
+  });
+}
 
 /**
  * Convert a text value to a boolean if it is in the list of matched values or return the original value.

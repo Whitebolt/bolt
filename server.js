@@ -5,11 +5,14 @@ Error.stackTraceLimit = Infinity;
 
 let [configDone, boltLoaded] = [false, false];
 
+const path = require('path');
 const bolt = {requireX: require('require-extra')};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
 require('./lib/requirex')(bolt, ()=>boltLoaded);
 require('./lib/platformScope')(bolt, __dirname);
 const packageConfig = bolt.requireX.sync('./package.json').config || {};
+
+const xUseStrict = /["']use strict["'](?:\;|)/;
 
 
 global.startTime = process.hrtime();
@@ -39,21 +42,46 @@ async function appLauncher(config) {
   if (!configDone) {
     configDone = true;
     if (!boltLoaded) {
+      const boltLookup = new Map();
+      const boltDir = path.resolve(__dirname, './bolt');
+      const evaluateListener = onBoltEvaluate.bind(undefined, boltDir, boltLookup);
+      bolt.requireX.on('evaluate', evaluateListener);
+
       await bolt.requireX.import('./bolt/', {
         merge: true,
         imports: bolt,
         excludes: packageConfig.appLaunchExcludes,
         basedir: __dirname,
-        parent: __filename
+        parent: __filename,
+        onload: (modulePath, exports)=>{
+          if (boltLookup.has(modulePath)) {
+            bolt.annotation.from(boltLookup.get(modulePath), exports);
+            bolt.annotation.set(exports, 'modulePath', modulePath);
+            bolt.__modules.add(exports);
+          }
+        }
       });
 
       boltLoaded = true;
+      bolt.requireX.removeListener(evaluateListener);
       ready();
     }
 
     return _startApp(config);
   }
 }
+
+function moduleWrapForAnnotations(content) {
+  return 'function(){'+content.replace(xUseStrict,'')+'}';
+}
+
+function onBoltEvaluate(boltDir, boltLookup, event) {
+  if (event.target.indexOf(boltDir) === 0) {
+    const content = event.moduleConfig.content.toString();
+    boltLookup.set(event.target, moduleWrapForAnnotations(content));
+  }
+}
+
 
 /**
  * PM2 app launcher.  Will launch given app using pm2.  The app launching actually, happens when config is sent via a
@@ -63,15 +91,30 @@ async function appLauncher(config) {
  * @returns {Promise}   Promise resolving when app launched.
  */
 async function pm2Controller() {
+  const boltLookup = new Map();
+
   let boltImportOptions = {
     merge:true,
     imports:bolt,
     basedir:__dirname,
-    parent: __filename
+    parent: __filename,
+    onload: (modulePath, exports)=>{
+      if (boltLookup.has(modulePath)) {
+        bolt.annotation.from(boltLookup.get(modulePath), exports);
+        bolt.annotation.set(exports, 'modulePath', modulePath);
+        bolt.__modules.add(exports);
+      }
+    }
   };
   if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
+
+  const boltDir = path.resolve(__dirname, './bolt');
+  const evaluateListener = onBoltEvaluate.bind(undefined, boltDir, boltLookup);
+  bolt.requireX.on('evaluate', evaluateListener);
+
   await bolt.requireX.import('./bolt/', boltImportOptions);
   boltLoaded = true;
+  bolt.requireX.removeListener('evaluate', evaluateListener);
   ready();
   const args = await bolt.requireX('./cli');
 
