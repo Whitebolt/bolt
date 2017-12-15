@@ -83,20 +83,25 @@ module.exports = function() {
 					}),
 					rollupBabel({
 						exclude: 'node_modules/**',
+						generatorOpts: {
+							compact:true,
+							quotes:'double',
+							sourceMaps:true
+						},
 						runtimeHelpers: true,
-						presets: [['env', {
+						presets: [['@babel/env', {
 							modules: false,
-							targets: {uglify: true},
-							include: ['babel-plugin-transform-es2015-spread'],
-							useBuiltIns: true
+							targets: {chrome:30},
+							useBuiltIns: false,
+							forceAllTransforms:true
 						}]],
 						plugins: [
-							'transform-runtime',
+							'@babel/transform-runtime',
 							'syntax-async-functions',
 							'syntax-async-generators',
 							'transform-async-generator-functions',
 							'transform-regenerator',
-							'external-helpers'
+							'babel-plugin-transform-es2015-spread'
 						]
 					})
 				]

@@ -439,7 +439,10 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
     parent: __filename,
     retry: true,
     onload: (filename, compiled)=>{
-      if (path.extname(filename) === '.jsx') loadOrder.push(filename);
+      if (path.extname(filename) === '.jsx') {
+        if (!('__react' in bolt)) bolt.__react = new Set();
+        bolt.__react.add(filename);
+      }
       viewOnload(filename, compiled, options.views);
       if (eventName) bolt.emit(eventName, filename)
     }

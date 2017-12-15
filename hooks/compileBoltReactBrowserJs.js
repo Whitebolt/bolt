@@ -60,9 +60,9 @@ module.exports = ()=>{
 
 		return new Promise((resolve, reject)=>{
 			rollupStream({
-				input: {contents, path:boltRootDir+'/ReactBolt2.jsx'},
+				input: {contents, path:boltRootDir+'/ReactBolt.js'},
 				format: 'iife',
-				name: 'ReactBolt2',
+				name: 'ReactBolt',
 				sourcemap: true,
 				plugins: [
 					rollupMemoryPlugin(),
@@ -73,34 +73,57 @@ module.exports = ()=>{
 						browser: true
 					}),
 					rollupCommonJs(),
+					(function(){
+						return {
+							transform: function(code, id){
+								if (bolt.__react.has(id)) {
+									const exports = require(id);
+									if (bolt.annotation.get(exports, 'browser-export') !== false) {
+										const name = exports.default.name;
+										code += `ReactBolt.${name} = ${name}`;
+									}
+								}
+								return {
+									code,
+									map: { mappings: '' }
+								}
+							}
+						};
+					})(),
 					rollupBabel({
-						exclude: 'node_modules/**',
+						//exclude: 'node_modules/**',
+						generatorOpts: {
+							compact:true,
+							quotes:'double',
+							sourceMaps:true
+						},
 						runtimeHelpers: true,
-						presets: [['env', {
+						presets: [['@babel/env', {
 							modules: false,
-							targets: {uglify: true},
-							include: ['babel-plugin-transform-es2015-spread'],
-							useBuiltIns: true
+							targets: {chrome:30},
+							useBuiltIns: false,
+							forceAllTransforms:true
 						}]],
 						plugins: [
-							'transform-react-jsx'/*,
-							'transform-runtime',
+							'@babel/transform-react-jsx',
 							'syntax-async-functions',
 							'syntax-async-generators',
 							'transform-async-generator-functions',
 							'transform-regenerator',
-							'external-helpers'*/
+							'babel-plugin-transform-es2015-spread'
 						]
 					})
 				]
 			})
-				.pipe(source('ReactBolt2.jsx'))
+				.pipe(source('ReactBolt.js'))
 				.pipe(vinylBuffer())
 				.pipe(gulpSourcemaps.init({loadMaps: true}))
 				.pipe(through.obj(function (file, encoding, callback) {
+					let contents = 'window.ReactBolt = {};';
 					// So CSP does not break, it is always browser anyway.
-					let contents = file.contents.toString().replace(xBreakingInCSPGetGlobal, 'window');
+					contents += file.contents.toString().replace(xBreakingInCSPGetGlobal, 'window');
 					contents += `//# sourceMappingURL=${path.basename(file.path)}.map`;
+					contents += '}();';
 					compiled.file = contents;
 					compiled.sourceMap = file.sourceMap;
 					this.emit('end');
@@ -112,8 +135,9 @@ module.exports = ()=>{
 	}
 
 	return async app=>{
-		let reactBoltContent = '';
+		let reactBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		const exportEventType = 'exportReactComponentToBrowser';
+		//return;
 
 		const names = [...bolt.__react].map(target=>{
 			const exports = require(target);
@@ -121,18 +145,23 @@ module.exports = ()=>{
 			if (bolt.annotation.get(exports, 'browser-export') !== false) {
 				const name = exports.default.name;
 				reactBoltContent += `import ${name} from "${target}";\n`;
-				bolt.emit(exportEventType, new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync: false}));
+				bolt.emit(exportEventType, new bolt.ExportToBrowserReactBoltEvent({
+					exportEventType,
+					target,
+					sync:false,
+					name
+				}));
 				return name;
 			}
 		}).filter(name=>name);
-
-		bolt.__react.clear();
-		delete bolt.__react;
 
 		reactBoltContent += `export default {${names.join(',')}}`;
 
 		const compiled = await compileReactBolt(reactBoltContent);
 		app.__reactBoltJs = compiled.file;
 		app.__reactBoltJsMap = compiled.sourceMap;
+
+		bolt.__react.clear();
+		delete bolt.__react;
 	};
 };
