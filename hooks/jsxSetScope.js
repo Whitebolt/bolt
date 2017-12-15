@@ -11,6 +11,11 @@ module.exports = function() {
   return event=>{
     event.scope.React = React;
     event.scope.ReactDOMServer = ReactDomServer;
-    event.scope.ReactBolt = bolt.ReactBolt;
+    event.scope.ReactBolt = new Proxy(bolt.ReactBolt, {
+      get: (target, property, receiver)=>{
+        console.log('Trying to get ', property, target);
+        return Reflect.get(target, property, receiver);
+      }
+    });
   }
 };

@@ -445,8 +445,6 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
     }
   });
 
-  console.log(bolt.ReactBolt);
-
   return _options.views;
 }
 

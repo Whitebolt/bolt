@@ -119,7 +119,6 @@ module.exports = ()=>{
 			const exports = require(target);
 
 			if (bolt.annotation.get(exports, 'browser-export') !== false) {
-				console.log('EXPORTING', bolt.annotation.get(exports, 'browser-export'), target);
 				const name = exports.default.name;
 				reactBoltContent += `import ${name} from "${target}";\n`;
 				bolt.emit(exportEventType, new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync: false}));
@@ -132,17 +131,8 @@ module.exports = ()=>{
 
 		reactBoltContent += `export default {${names.join(',')}}`;
 
-		/*reactBoltContent = `
-			import lodash from "/home/simpo/Projects/cpd-react/components/quickform2/views/anchor.jsx";
-			export default {};
-		`;*/
-
-		console.log(reactBoltContent);
-
 		const compiled = await compileReactBolt(reactBoltContent);
 		app.__reactBoltJs = compiled.file;
 		app.__reactBoltJsMap = compiled.sourceMap;
-
-		console.log(app.__reactBoltJs);
 	};
 };
