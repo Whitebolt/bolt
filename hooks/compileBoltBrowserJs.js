@@ -1,7 +1,6 @@
 'use strict';
 
 const config = require(`${boltRootDir}/package.json`).config;
-const stream = require('stream');
 const rollupStream = require('rollup-stream');
 const source = require('vinyl-source-stream');
 const vinylBuffer = require('vinyl-buffer');
@@ -105,7 +104,7 @@ module.exports = function() {
 		boltContent += `export default {${exportedNames.join(',')}};`;
 
 		const compiled = await compileBolt(boltContent, exported);
-		app.__boltJs = compiled.file;
-		app.__boltJsMap = compiled.sourceMap;
+		bolt.setVirtualFile('/lib/bolt.js', compiled.file, 'application/javascript');
+		bolt.setVirtualFile('/lib/bolt.js.map', compiled.sourceMap, 'application/json');
 	}
 };

@@ -1,7 +1,6 @@
 'use strict';
 
 const config = require(`${boltRootDir}/package.json`).config;
-const stream = require('stream');
 const rollupStream = require('rollup-stream');
 const source = require('vinyl-source-stream');
 const vinylBuffer = require('vinyl-buffer');
@@ -80,8 +79,8 @@ module.exports = function(){
 		reactBoltContent += `export default {${names.join(',')}}`;
 
 		const compiled = await compileReactBolt(reactBoltContent);
-		app.__reactBoltJs = compiled.file;
-		app.__reactBoltJsMap = compiled.sourceMap;
+		bolt.setVirtualFile('/lib/ReactBolt.js', compiled.file, 'application/javascript');
+		bolt.setVirtualFile('/lib/ReactBolt.js.map', compiled.sourceMap, 'application/json');
 
 		bolt.__react.clear();
 		delete bolt.__react;
