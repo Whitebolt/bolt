@@ -6,6 +6,9 @@ Error.stackTraceLimit = Infinity;
 let [configDone, boltLoaded] = [false, false];
 
 const path = require('path');
+const fs = require('fs');
+process.chdir(path.dirname(fs.realpathSync(__filename)));
+
 const bolt = {require: require('require-extra')};
 const packageConfig = bolt.require.sync('./package.json').config || {};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
@@ -24,8 +27,8 @@ global.startTime = process.hrtime();
  * @returns {Promise}       Promise resolving when app has fully loaded.
  */
 function _startApp(config) {
-  bolt.after('initialiseApp', (configPath, app)=>bolt.loadHooks(app));
-  return bolt.loadApplication(config);
+	bolt.after('initialiseApp', (configPath, app)=>bolt.loadHooks(app));
+	return bolt.loadApplication(config);
 }
 
 
@@ -37,37 +40,37 @@ function _startApp(config) {
  * @returns {Promise}       Promise resolving when app launched.
  */
 async function appLauncher(config) {
-  if (!configDone) {
-    configDone = true;
-    if (!boltLoaded) {
-      await bolt.require.import('./bolt/', {
-        merge: true,
-        imports: bolt,
-        excludes: packageConfig.appLaunchExcludes,
-        basedir: __dirname,
-        parent: __filename,
-        onload: bolt.boltOnLoad
-      });
+	if (!configDone) {
+		configDone = true;
+		if (!boltLoaded) {
+			await bolt.require.import('./bolt/', {
+				merge: true,
+				imports: bolt,
+				excludes: packageConfig.appLaunchExcludes,
+				basedir: __dirname,
+				parent: __filename,
+				onload: bolt.boltOnLoad
+			});
 
-      boltLoaded = true;
-      ready();
-    }
+			boltLoaded = true;
+			ready();
+		}
 
-    return _startApp(config);
-  }
+		return _startApp(config);
+	}
 }
 
 bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
-  if (bolt.isObject(exports)) {
-    Object.keys(exports).forEach(methodName=>{
-      if (bolt.isFunction(exports[methodName])) {
-        bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
-      }
-    });
-  }
+	if (bolt.isObject(exports)) {
+		Object.keys(exports).forEach(methodName=>{
+			if (bolt.isFunction(exports[methodName])) {
+				bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
+			}
+		});
+	}
 
-  if (!('__modules' in bolt)) bolt.__modules = new Set();
-  return bolt.__modules.add(modulePath);
+	if (!('__modules' in bolt)) bolt.__modules = new Set();
+	return bolt.__modules.add(modulePath);
 };
 
 /**
@@ -78,31 +81,31 @@ bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
  * @returns {Promise}   Promise resolving when app launched.
  */
 async function pm2Controller() {
-  let boltImportOptions = {
-    merge:true,
-    imports:bolt,
-    basedir:__dirname,
-    parent: __filename,
-    onload: bolt.boltOnLoad
-  };
-  if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
+	let boltImportOptions = {
+		merge:true,
+		imports:bolt,
+		basedir:__dirname,
+		parent: __filename,
+		onload: bolt.boltOnLoad
+	};
+	if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
-  await bolt.require.import('./bolt/', boltImportOptions);
-  boltLoaded = true;
-  ready();
-  const args = await bolt.require('./cli');
+	await bolt.require.import('./bolt/', boltImportOptions);
+	boltLoaded = true;
+	ready();
+	const args = await bolt.require('./cli');
 
-  return Promise.all(args._.map(cmd=>{
-    if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
-  }));
+	return Promise.all(args._.map(cmd=>{
+		if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
+	}));
 }
 
 process.on('message', message=>{
-  if (message.type === 'config') appLauncher(message.data);
+	if (message.type === 'config') appLauncher(message.data);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at: Promise', promise, 'reason:', reason);
+	console.error('Unhandled Rejection at: Promise', promise, 'reason:', reason);
 });
 
 if (!module.parent) pm2Controller();
