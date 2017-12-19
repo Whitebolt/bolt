@@ -50,9 +50,9 @@ function randomString(length=32) {
  */
 function splitAndTrim(value, splitter) {
   return value.split(splitter)
-    .filter(value=>value)
-    .map(value=>value.trim())
-    .filter(value=>(value!==''));
+      .filter(value=>value)
+      .map(value=>value.trim())
+      .filter(value=>(value!==''));
 }
 
 /**

@@ -35,7 +35,12 @@ module.exports = function(){
 			generatorOpts: config.browserExport.babel.generatorOpts,
 			runtimeHelpers: true,
 			presets: config.browserExport.babel.presets,
-			plugins: ['@babel/transform-react-jsx'].concat(config.browserExport.babel.plugins)
+			plugins: [
+				'@babel/transform-react-jsx',
+				...config.browserExport.babel.plugins,
+				'transform-decorators-legacy',
+				'transform-class-properties'
+			]
 		});
 
 		const reactBoltStream = rollupStream({
@@ -48,7 +53,7 @@ module.exports = function(){
 			.pipe(source('ReactBolt.js'))
 			.pipe(vinylBuffer())
 			.pipe(gulpSourcemaps.init({loadMaps: true}))
-			.pipe(gulpBoltBrowser({top:'window.ReactBolt = {};'}))
+			.pipe(gulpBoltBrowser({top:'window.ReactBolt = {DEBUG:true};'}))
 			.pipe(bolt.extractVinyl(function(file) {
 				compiled.file = file.contents.toString();
 				compiled.sourceMap = file.sourceMap;

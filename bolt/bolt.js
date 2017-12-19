@@ -6,8 +6,6 @@
  * @todo Extract some of this into a npm for watchable maps?
  */
 
-const string = require('./string');
-
 const defaults = new Map();
 const watchers = new Map();
 const lookup = new Map();
@@ -122,7 +120,7 @@ function watchDefault(key, callback) {
   let watchers = _getMap('watchers');
   if (!watchers.has(key)) watchers.set(key, []);
   let _watcers = watchers.get(key);
-  let id = string.randomString();
+  let id = bolt.randomString();
   let _callback = {callback, id};
   _watcers.push(_callback);
   watchers.set(key, _watcers);
