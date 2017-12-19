@@ -9,11 +9,12 @@ const path = require('path');
 const fs = require('fs');
 process.chdir(path.dirname(fs.realpathSync(__filename)));
 
-const bolt = {require: require('require-extra')};
+const bolt = {require:require('require-extra')};
+bolt.annotation =  new (bolt.require.sync('object-annotations'))();
 const packageConfig = bolt.require.sync('./package.json').config || {};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
-require('./lib/platformScope')(bolt, __dirname);
 require('./lib/requirex')(bolt, ()=>boltLoaded);
+require('./lib/platformScope')(bolt, __dirname);
 
 
 global.startTime = process.hrtime();

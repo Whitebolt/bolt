@@ -62,17 +62,15 @@ module.exports = function() {
 		const exportedLookup = new Set();
 		const exportEventType = 'exportBoltToBrowserGlobal';
 
-		const exported = [boltRootDir + '/lib/lodash', ...bolt.__modules].map(target=>{
+		const exported = [...bolt.__modules].map(target=>{
 			const exports = require(target);
-			if (target === boltRootDir + '/lib/lodash') {
-				return {
+			if (bolt.annotation.get(exports, 'browser-export')) {
+				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync: false}));
+				if (target === boltRootDir + '/lib/lodash') return {
 					target,
 					exportedNames:Object.keys(exports).filter(name=>bolt.isFunction(exports[name])),
 					namedExports:Object.keys(exports)
 				};
-			}
-			if (bolt.annotation.get(exports, 'browser-export')) {
-				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync: false}));
 
 				return {
 					target,
