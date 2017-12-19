@@ -117,6 +117,7 @@ function _loadComponents(app, roots) {
         bolt.emitThrough(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
         bolt.emitThrough(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
         bolt.emitThrough(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
+        bolt.emitThrough(()=>bolt.loadRedux(component, fullPath), 'loadComponentRedux', app),
         bolt.emitThrough(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
       ]).then(()=>{return {component, fullPath};})
   }).mapSeries(
