@@ -249,25 +249,25 @@
         "event": "exportReactComponentToBrowser",
         "action": "export",
         "property": "<%= params[0].target %>",
-        "description": "ReactBolt.<%= params[0].name %> browser export"
+        "description": "ReactBolt.<%= params[0].name %>"
       },
       {
         "event": "exportReduxTypesToBrowser",
         "action": "export",
         "property": "<%= params[0].target %>",
-        "description": "ReduxBolt.types.<%= params[0].name %> browser export"
+        "description": "ReduxBolt.types.<%= params[0].name %>"
       },
       {
         "event": "exportReduxReducersToBrowser",
         "action": "export",
         "property": "<%= params[0].target %>",
-        "description": "ReduxBolt.reducers.<%= params[0].name %> browser export"
+        "description": "ReduxBolt.reducers.<%= params[0].name %>"
       },
       {
         "event": "exportReduxActionCreatorsToBrowser",
         "action": "export",
         "property": "<%= params[0].target %>",
-        "description": "ReduxBolt.actionCreators.<%= params[0].name %> browser export"
+        "description": "ReduxBolt.actionCreators.<%= params[0].name %>"
       },
       {
         "event": "loadedRouter",

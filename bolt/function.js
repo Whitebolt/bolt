@@ -1,4 +1,5 @@
 'use strict';
+// @annotation browser-export
 
 const string = require('./string');
 
@@ -14,28 +15,28 @@ const getParameters = string.replaceSequence([[xPreFunctionParams],[xPostFunctio
  * @returns {Array.<string>}           Array of parameter names.
  */
 function parseParameters(func) {
-  return getParameters(func).split(',').map(param=>param.trim());
+	return getParameters(func).split(',').map(param=>param.trim());
 }
 
 function runSeries(async, series, ...params) {
-  if (async === true) return _runAsyncSeries(series, ...params);
-  if (!bolt.isBoolean(async)) {
-    params.unshift(series);
-    series = async;
-  }
+	if (async === true) return _runAsyncSeries(series, ...params);
+	if (!bolt.isBoolean(async)) {
+		params.unshift(series);
+		series = async;
+	}
 
-  series.forEach(item=>item(...params));
+	series.forEach(item=>item(...params));
 }
 
 function _runAsyncSeries(series, ...params) {
-  function next(item) {
-    return Promise.resolve(item(...params)).then(()=>
-      ((series.length)?next(series.shift()):Promise.resolve())
-    );
-  }
-  if (series.length) return next(series.shift());
+	function next(item) {
+		return Promise.resolve(item(...params)).then(()=>
+			((series.length)?next(series.shift()):Promise.resolve())
+		);
+	}
+	if (series.length) return next(series.shift());
 }
 
 module.exports = {
-  parseParameters, runSeries
+	parseParameters, runSeries
 };
