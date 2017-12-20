@@ -11,9 +11,9 @@ module.exports = function() {
 		actionCreators:[],
 		reducers:[],
 		types:[],
-		dispatch: (actionCreator, ...params)=>{
-			if (Redux && ReduxBolt && (actionCreator in ReduxBolt.actionCreators)) {
-				Redux.dispatch(ReduxBolt.actionCreators[actionCreator](...params));
+		dispatch: function (actionCreator, ...params) {
+			if (Redux && ReduxBolt && this.dispatch && (actionCreator in ReduxBolt.actionCreators)) {
+				this.dispatch(ReduxBolt.actionCreators[actionCreator](...params));
 			}
 		}
 	};
