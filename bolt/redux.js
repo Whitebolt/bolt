@@ -1,10 +1,11 @@
 'use strict';
 
-function importer(root, type, onload) {
-	return require.import(`${root}/${type}/`, {
-		extensions:['.jsx'],
-		basedir:__dirname,
-		parent: __filename,
+function importer({root, type, onload, extensions='.jsx', basedir=__dirname, parent=__filename}) {
+	const importPaths = bolt.makeArray(root).map(root=>`${root}/${type}/`);
+	return require.import(importPaths, {
+		extensions,
+		basedir,
+		parent,
 		onload: (filename, exports)=>{
 			Object.keys(exports).forEach(exportName=>{
 				if (exportName === 'default') return undefined;
@@ -14,21 +15,20 @@ function importer(root, type, onload) {
 			bolt.__redux = bolt.__redux || {};
 			if (!(type in bolt)) bolt.__redux[type] = new Set();
 			bolt.__redux[type].add(filename);
-
 			if (onload) onload(filename, exports);
 		}
 	});
 }
 
-async function _loadRedux(roots, app) {
-	const reduxDirs = await bolt.directoriesInDirectory(roots, ['redux']);
-	if (reduxDirs.length) {
-		await Promise.all(reduxDirs.map(async (reduxDir)=>{
-			await importer(reduxDir, 'types');
-			await importer(reduxDir, 'actionCreators');
-			await importer(reduxDir, 'reducers');
-		}));
-	}
+async function _loadRedux(root, app) {
+	await importer({root, type:'types', extensions:'.json', onload:(filename, types)=>{
+		Object.keys(types).forEach(type=>{
+			types[type] = Symbol(types[type]);
+			types[types[type]] = type;
+		});
+	}});
+	await importer({root, type:'actionCreators'});
+	await importer({root, type:'reducers'});
 }
 
 function loadRedux(app, roots=app.config.root) {

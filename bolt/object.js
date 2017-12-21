@@ -117,7 +117,7 @@ function pickDeep(obj, properties) {
 }
 
 function cloneAndMerge(toClone, toMergeIn, picks) {
-  return bolt.merge({}, toClone, pickDeep(toMergeIn, picks))
+  return Object.assign({}, toClone, pickDeep(toMergeIn, picks))
 }
 
 module.exports = {

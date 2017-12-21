@@ -18,12 +18,17 @@ module.exports = function(){
 			const exports = require(target);
 
 			if (bolt.annotation.get(exports, 'browser-export') !== false) {
-				const name = `types${bolt.randomString(10)}`;
+				const name = `redux${bolt.randomString(10)}`;
 				reduxBoltContent += `import ${name} from "${target}";\n`;
-				Object.keys(exports.default).forEach(name=>bolt.emit(
+				Object.keys(exports.default||exports).forEach(name=>bolt.emit(
 					exportEventType,
 					new bolt.ExportToBrowserReduxBoltEvent({exportEventType, target, sync:false, name})
 				));
+				if (type === 'types') reduxBoltContent += `Object.keys(${name}).forEach(type=>{
+					${name}[type] = Symbol(${name}[type]);
+					${name}[${name}[type]] = type;
+				});`;
+
 				return name;
 			}
 		}).filter(name=>name);

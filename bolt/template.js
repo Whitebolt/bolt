@@ -13,55 +13,55 @@ const rxStartEndSlash = /^\/|\/$/g;
 
 
 const templateFunctions = {
-  /**
-   * Component function for use inside ejs templates.
-   *
-   * @param {string} componentName            Component name.
-   * @param {Object} doc                      The current doc.
-   * @param {external:express:request} req    The current request object.
-   * @param {Object} parent                   A parent object needed in called component (can be anything).
-   */
-  component: async function (componentName, doc={}, req={}, parent={}) {
-    let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
-    let method = _getMethod(_componentName.split('?').shift(), req.app);
+	/**
+	 * Component function for use inside ejs templates.
+	 *
+	 * @param {string} componentName            Component name.
+	 * @param {Object} doc                      The current doc.
+	 * @param {external:express:request} req    The current request object.
+	 * @param {Object} parent                   A parent object needed in called component (can be anything).
+	 */
+	component: async function (componentName, doc={}, req={}, parent={}) {
+		let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
+		let method = _getMethod(_componentName.split('?').shift(), req.app);
 
-    if (method) {
-      req.doc = req.doc || doc;
-      const proxiedReq = new Proxy(req, {
-        get: function(target, property, receiver) {
-          if (property === 'doc') return doc;
-          if (property === '__unproxied') return req.__unproxied || req;
-          return Reflect.get(target, property, receiver);
-        }
-      });
-      this.viaView = true;
-      this.viaViewPath = _componentName;
-      Object.assign(this, {req:proxiedReq, parent, doc});
-      bolt.emit("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
-      return method(this);
-    } else {
-      return 'Could not find component: ' + componentName;
-    }
-  },
+		if (method) {
+			req.doc = req.doc || doc;
+			const proxiedReq = new Proxy(req, {
+				get: function(target, property, receiver) {
+					if (property === 'doc') return doc;
+					if (property === '__unproxied') return req.__unproxied || req;
+					return Reflect.get(target, property, receiver);
+				}
+			});
+			this.viaView = true;
+			this.viaViewPath = _componentName;
+			Object.assign(this, {req:proxiedReq, parent, doc});
+			bolt.emit("firingControllerMethod in template", bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(req));
+			return method(this);
+		} else {
+			return 'Could not find component: ' + componentName;
+		}
+	},
 
-  /**
-   * View function for use instead ejs template.
-   *
-   * @param {string} viewName                 View name.
-   * @param {Object} doc                      The current doc.
-   * @param {external:express:request} req    The current request object.
-   * @param {Object} parent                   A parent object needed in called view (can be anything).
-   * @returns {Promise.<string>}              The view applied to given document.
-   */
-  view: async function (viewName, doc, req, parent) {
-    let view = _getViewFromPath(viewName, this.__componentName, req);
-    if (view) {
-      bolt.emit("firingView", view.path, bolt.getPathFromRequest(req));
-      return view.compiled(doc, req, parent);
-    } else {
-      return 'Could not find view: ' + viewName;
-    }
-  }
+	/**
+	 * View function for use instead ejs template.
+	 *
+	 * @param {string} viewName                 View name.
+	 * @param {Object} doc                      The current doc.
+	 * @param {external:express:request} req    The current request object.
+	 * @param {Object} parent                   A parent object needed in called view (can be anything).
+	 * @returns {Promise.<string>}              The view applied to given document.
+	 */
+	view: async function (viewName, doc, req, parent) {
+		let view = _getViewFromPath(viewName, this.__componentName, req);
+		if (view) {
+			bolt.emit("firingView", view.path, bolt.getPathFromRequest(req));
+			return view.compiled(doc, req, parent);
+		} else {
+			return 'Could not find view: ' + viewName;
+		}
+	}
 };
 
 /**
@@ -75,12 +75,12 @@ const templateFunctions = {
  * @returns {Promise}                                     Prtomise resolving when all templates loaded.
  */
 function _loadAllTemplates(options, templateName=options.templateName) {
-  return loadEjsDirectory(
-    _getDirectoryPaths(options.roots, 'templates'),
-    templateName,
-    options,
-    'loadedTemplate'
-  );
+	return loadEjsDirectory(
+		_getDirectoryPaths(options.roots, 'templates'),
+		templateName,
+		options,
+		'loadedTemplate'
+	);
 }
 
 /**
@@ -92,25 +92,25 @@ function _loadAllTemplates(options, templateName=options.templateName) {
  * @returns {Object}
  */
 function _parseLoadOptions(app, options={}) {
-  const config = _getConfig(app) || {};
+	const config = _getConfig(app) || {};
 
-  let _options = Object.assign(options, {
-    templateName: options.templateName || config.template,
-    views: options.views || app.templates || {},
-    roots: options.roots || config.root,
-    delimiter: options.delimiter || '%',
-    strict: true,
-    _with: false,
-    debug: false,
-    awaitPromises: true
-  });
+	let _options = Object.assign(options, {
+		templateName: options.templateName || config.template,
+		views: options.views || app.templates || {},
+		roots: options.roots || config.root,
+		delimiter: options.delimiter || '%',
+		strict: true,
+		_with: false,
+		debug: false,
+		awaitPromises: true
+	});
 
-  if (options.localsName !== false) _options.localsName = options.localsName || ['doc', 'req', 'parent'];
-  if (options.locals !== false) _options.locals = options.locals || addTemplateFunctions();
-  options.localsName = options.localsName || [];
-  options.locals = options.locals || {};
+	if (options.localsName !== false) _options.localsName = options.localsName || ['doc', 'req', 'parent'];
+	if (options.locals !== false) _options.locals = options.locals || addTemplateFunctions();
+	options.localsName = options.localsName || [];
+	options.locals = options.locals || {};
 
-  return _options;
+	return _options;
 }
 
 /**
@@ -121,7 +121,7 @@ function _parseLoadOptions(app, options={}) {
  * @returns {BoltConfig}                          The bolt config object.
  */
 function _getConfig(app) {
-  return (app.config ? app.config : (app.parent ? _getConfig(app.parent) : undefined));
+	return (app.config ? app.config : (app.parent ? _getConfig(app.parent) : undefined));
 }
 
 /**
@@ -131,10 +131,10 @@ function _getConfig(app) {
  * @returns {Object}          The mutated object.
  */
 function addTemplateFunctions(locals = {}) {
-  Object.keys(templateFunctions).forEach(funcName => {
-    locals[funcName] = templateFunctions[funcName].bind(locals);
-  });
-  return locals;
+	Object.keys(templateFunctions).forEach(funcName => {
+		locals[funcName] = templateFunctions[funcName].bind(locals);
+	});
+	return locals;
 }
 
 
@@ -148,12 +148,12 @@ function addTemplateFunctions(locals = {}) {
  * @returns {Object}                    Options from parentOptions and those derived from the component.
  */
 function _getComponentOptions(component, componentDir, parentOptions={}) {
-  const options = Object.assign({}, parentOptions);
-  options.views = component.views;
-  options.roots = [componentDir];
-  options.locals.__componentName = component.path;
+	const options = Object.assign({}, parentOptions);
+	options.views = component.views;
+	options.roots = [componentDir];
+	options.locals.__componentName = component.path;
 
-  return options;
+	return options;
 }
 
 /**
@@ -165,14 +165,14 @@ function _getComponentOptions(component, componentDir, parentOptions={}) {
  * @returns {Promise.<Function>}  Promise resolving to compiled view
  */
 function _loadComponentViews(roots, options) {
-  return loadEjsDirectory(roots, 'views', options, 'loadedComponentView');
+	return loadEjsDirectory(roots, 'views', options, 'loadedComponentView');
 }
 
 function viewOnload(filename, compiled, views) {
-  let viewName = path.basename(path.basename(filename, '.ejs'), '.jsx');
-  views[viewName] = views[viewName] || {};
-  views[viewName].path = filename;
-  views[viewName].compiled = compiled.default || compiled;
+	let viewName = path.basename(path.basename(filename, '.ejs'), '.jsx');
+	views[viewName] = views[viewName] || {};
+	views[viewName].path = filename;
+	views[viewName].compiled = compiled.default || compiled;
 }
 
 /**
@@ -184,7 +184,7 @@ function viewOnload(filename, compiled, views) {
  * @returns {Object}                  The template object.
  */
 function _getTemplate(app, control) {
-  return app.templates[control.template];
+	return app.templates[control.template];
 }
 
 /**
@@ -197,10 +197,10 @@ function _getTemplate(app, control) {
  * @returns {Object}                The view.
  */
 function _getView(app, router, tag ={}) {
-  const componentName = bolt.annotation.get(router, 'componentPath') || router.componentPath || tag.componentPath;
-  const component = _getComponent(componentName, app);
-  const viewName = router.view || tag.view;
-  if (component && component.views[viewName]) return component.views[viewName];
+	const componentName = bolt.annotation.get(router, 'componentPath') || router.componentPath || tag.componentPath;
+	const component = _getComponent(componentName, app);
+	const viewName = router.view || tag.view;
+	if (component && component.views[viewName]) return component.views[viewName];
 }
 
 /**
@@ -213,10 +213,10 @@ function _getView(app, router, tag ={}) {
  * @returns {Object}                        The view.
  */
 function _getViewFromPath(viewName, componentName, req) {
-  return (req.app.templates.hasOwnProperty(viewName) ?
-    req.app.templates[viewName] :
-    _getAppViewFromPath(req.app, getComponentViewPath(viewName, componentName))
-  );
+	return (req.app.templates.hasOwnProperty(viewName) ?
+			req.app.templates[viewName] :
+			_getAppViewFromPath(req.app, getComponentViewPath(viewName, componentName))
+	);
 }
 
 /**
@@ -228,19 +228,19 @@ function _getViewFromPath(viewName, componentName, req) {
  * @returns {BoltComponent}           The got component.
  */
 function _getComponent(componentName, app) {
-  if (componentName.indexOf('/') === -1) {
-    return app.components[componentName];
-  } else {
-    let component = app;
-    let components = componentName.split('/');
-    while (components.length && component && component.components) {
-      let componentName = components.shift();
-      if (componentName !== '') {
-        component = component.components[componentName];
-      }
-    }
-    return ((components.length === 0)?component:undefined);
-  }
+	if (componentName.indexOf('/') === -1) {
+		return app.components[componentName];
+	} else {
+		let component = app;
+		let components = componentName.split('/');
+		while (components.length && component && component.components) {
+			let componentName = components.shift();
+			if (componentName !== '') {
+				component = component.components[componentName];
+			}
+		}
+		return ((components.length === 0)?component:undefined);
+	}
 }
 
 /**
@@ -253,19 +253,19 @@ function _getComponent(componentName, app) {
  *
  */
 async function _applyTemplate(router, req=router.req) {
-  let view = false;
-  const app = req.app || router.req;
-  const doc = router.doc || req.doc;
-  const parent = router.parent || {};
-  let template = _getTemplate(app, router);
-  if (!template) {
-    template = _getView(app, router);
-    view = true;
-  }
+	let view = false;
+	const app = req.app || router.req;
+	const doc = router.doc || req.doc;
+	const parent = router.parent || {};
+	let template = _getTemplate(app, router);
+	if (!template) {
+		template = _getView(app, router);
+		view = true;
+	}
 
-  if (!template) return '';
-  bolt.emit(view?"fireingView":"firingTemplate", template.path, bolt.getPathFromRequest(req));
-  return template.compiled(doc, req, parent);
+	if (!template) return '';
+	bolt.emit(view?"fireingView":"firingTemplate", template.path, bolt.getPathFromRequest(req));
+	return template.compiled(doc, req, parent);
 }
 
 /**
@@ -276,15 +276,15 @@ async function _applyTemplate(router, req=router.req) {
  * @returns {Array}           All possible routes for given route.
  */
 function _getPaths(route) {
-  let routes = [];
-  while (route.length) {
-    routes.push(route);
-    let routeParts = route.split('/');
-    routeParts.pop();
-    route = routeParts.join('/')
-  }
-  routes.push('/');
-  return routes;
+	let routes = [];
+	while (route.length) {
+		routes.push(route);
+		let routeParts = route.split('/');
+		routeParts.pop();
+		route = routeParts.join('/')
+	}
+	routes.push('/');
+	return routes;
 }
 
 /**
@@ -296,13 +296,13 @@ function _getPaths(route) {
  * @returns {Function}              The controller method.
  */
 function _getMethod(route, app) {
-  let methods = [];
-  _getPaths(route).forEach(route=>{
-    if (app.controllerRoutes[route]) {
-      app.controllerRoutes[route].sort(bolt.prioritySorter).forEach(method=>methods.push(method.method));
-    }
-  });
-  return methods.shift();
+	let methods = [];
+	_getPaths(route).forEach(route=>{
+		if (app.controllerRoutes[route]) {
+			app.controllerRoutes[route].sort(bolt.prioritySorter).forEach(method=>methods.push(method.method));
+		}
+	});
+	return methods.shift();
 }
 
 /**
@@ -313,37 +313,37 @@ function _getMethod(route, app) {
  * @returns {Array.<string>}            Override directory paths.
  */
 function _getComponentOverridePaths(component) {
-  let rootApp = bolt.getApp(component);
-  let overridePaths = [];
-  if (rootApp.config) {
-    (rootApp.config.template || []).forEach(templateName => {
-      (rootApp.config.root || []).forEach(
-        root=>overridePaths.push(`${root}templates/${templateName}${component.filePath}`)
-      );
-    });
-  }
+	let rootApp = bolt.getApp(component);
+	let overridePaths = [];
+	if (rootApp.config) {
+		(rootApp.config.template || []).forEach(templateName => {
+			(rootApp.config.root || []).forEach(
+				root=>overridePaths.push(`${root}templates/${templateName}${component.filePath}`)
+			);
+		});
+	}
 
-  return overridePaths;
+	return overridePaths;
 }
 
 function _getAppViewFromPath(app, path) {
-  let componentPath = `${path.component}`;
-  if (componentPath !== '') return bolt.get(app, `components.${path.component}.views.${path.view}`);
-  return bolt.get(app, `components.${path.view}.views.index`);
+	let componentPath = `${path.component}`;
+	if (componentPath !== '') return bolt.get(app, `components.${path.component}.views.${path.view}`);
+	return bolt.get(app, `components.${path.view}.views.index`);
 }
 
 function getComponentViewPath(viewName, componentName) {
-  let parts = viewName.split('/');
-  let view = parts.pop();
-  let component = bolt.replaceSequence(parts.join('/') + '/', [
-    [rxRelativeDir, componentName],
-    [rxStartEndSlash],
-    ['/', '.components.']
-  ]);
+	let parts = viewName.split('/');
+	let view = parts.pop();
+	let component = bolt.replaceSequence(parts.join('/') + '/', [
+		[rxRelativeDir, componentName],
+		[rxStartEndSlash],
+		['/', '.components.']
+	]);
 
-  return {
-    view, component
-  }
+	return {
+		view, component
+	}
 }
 
 /**
@@ -355,11 +355,11 @@ function getComponentViewPath(viewName, componentName) {
  * @returns {Promise}               Promise resolving when all have loaded.
  */
 function _loadTemplates(app, options) {
-  options = _parseLoadOptions(app, options);
-  if (!options.templateName || !options.roots) return app;
-  app.applyTemplate = _applyTemplate;
+	options = _parseLoadOptions(app, options);
+	if (!options.templateName || !options.roots) return app;
+	app.applyTemplate = _applyTemplate;
 
-  return _loadAllTemplates(options);
+	return _loadAllTemplates(options);
 }
 
 /**
@@ -369,14 +369,14 @@ function _loadTemplates(app, options) {
  * @returns {TemplateFunction}   The template function.
  */
 function compileTemplate(config) {
-  let optionsTree = [{}];
-  if (config.app) {
-    optionsTree.push(_parseLoadOptions(config.app, config.options || {}));
-  } else if (config.options) {
-    optionsTree.push(config.options);
-  }
-  if (config.filename) optionsTree.push({filename: config.filename});
-  return ejs.compile(config.text, Object.assign.apply(Object, optionsTree));
+	let optionsTree = [{}];
+	if (config.app) {
+		optionsTree.push(_parseLoadOptions(config.app, config.options || {}));
+	} else if (config.options) {
+		optionsTree.push(config.options);
+	}
+	if (config.filename) optionsTree.push({filename: config.filename});
+	return ejs.compile(config.text, Object.assign.apply(Object, optionsTree));
 }
 
 /**
@@ -386,9 +386,9 @@ function compileTemplate(config) {
  * @returns {Promise}                   Promise resolving when views loaded.
  */
 function loadComponentViewsTemplateOverrides(component) {
-  return Promise.all(
-    _getComponentOverridePaths(component).map(dirPath=>bolt.loadComponentViews(component, dirPath))
-  );
+	return Promise.all(
+		_getComponentOverridePaths(component).map(dirPath=>bolt.loadComponentViews(component, dirPath))
+	);
 }
 
 /**
@@ -400,9 +400,9 @@ function loadComponentViewsTemplateOverrides(component) {
  * @returns {Promise.<string>}
  */
 function loadComponentViews(component, dirPath) {
-  const app = bolt.getApp(component);
-  const componentOptions = _getComponentOptions(component, dirPath, _parseLoadOptions(app));
-  return _loadComponentViews(dirPath, componentOptions).then(()=>app);
+	const app = bolt.getApp(component);
+	const componentOptions = _getComponentOptions(component, dirPath, _parseLoadOptions(app));
+	return _loadComponentViews(dirPath, componentOptions).then(()=>app);
 }
 
 /**
@@ -414,7 +414,7 @@ function loadComponentViews(component, dirPath) {
  * @returns {Promise.<BoltApplication>}     The bolt application that was supplied.
  */
 function loadTemplates(app, options={}) {
-  return bolt.emitThrough(()=>_loadTemplates(app, options), 'loadTemplates', app).then(()=>app);
+	return bolt.emitThrough(()=>_loadTemplates(app, options), 'loadTemplates', app).then(()=>app);
 }
 
 const loadOrder = [];
@@ -429,47 +429,48 @@ const loadOrder = [];
  * @returns {Promise.<Object>}      Promise resolving to all the loaded views.
  */
 async function loadEjsDirectory(roots, dirName, options={}, eventName) {
-  let _options = _parseLoadOptions({}, Object.assign({roots}, options));
-  const dirs = _getDirectoryPaths(roots, dirName);
+	let _options = _parseLoadOptions({}, Object.assign({roots}, options));
+	const dirs = _getDirectoryPaths(roots, dirName);
 
-  await require.import(dirs, {
-    options:options,
-    extensions:['.ejs', '.jsx'],
-    basedir:__dirname,
-    parent: __filename,
-    retry: true,
-    onload: (filename, compiled)=>{
-      if (path.extname(filename) === '.jsx') {
-        if (!('__react' in bolt)) bolt.__react = new Set();
-        bolt.__react.add(filename);
-      }
-      viewOnload(filename, compiled, options.views);
-      if (eventName) bolt.emit(eventName, filename)
-    }
-  });
+	await require.import(dirs, {
+		options:options,
+		extensions:['.ejs', '.jsx'],
+		basedir:__dirname,
+		parent: __filename,
+		retry: true,
+		rescursive: true,
+		onload: (filename, compiled)=>{
+			if (path.extname(filename) === '.jsx') {
+				if (!('__react' in bolt)) bolt.__react = new Set();
+				bolt.__react.add(filename);
+			}
+			viewOnload(filename, compiled, options.views);
+			if (eventName) bolt.emit(eventName, filename)
+		}
+	});
 
-  return _options.views;
+	return _options.views;
 }
 
 function _getDirectoryPaths(roots, dirName) {
-  return bolt.flattenDeep(bolt.makeArray(roots).map(
-    root=>bolt.makeArray(dirName).map(dir=>`${root}/${dir}/`.replace(/\/+/g, '/'))
-  ));
+	return bolt.flattenDeep(bolt.makeArray(roots).map(
+		root=>bolt.makeArray(dirName).map(dir=>`${root}/${dir}/`.replace(/\/+/g, '/'))
+	));
 }
 
 function getControllerMethodProperty(method, property) {
-  if (method[property]) return method[property];
-  const sourceMethod = bolt.annotation.get(method, 'sourceMethod');
-  if (sourceMethod[property]) return sourceMethod[property];
-  return bolt.annotation.get(method, property) || bolt.annotation.get(sourceMethod, property);
+	if (method[property]) return method[property];
+	const sourceMethod = bolt.annotation.get(method, 'sourceMethod');
+	if (sourceMethod[property]) return sourceMethod[property];
+	return bolt.annotation.get(method, property) || bolt.annotation.get(sourceMethod, property);
 }
 
 module.exports = {
-  loadTemplates,
-  loadComponentViews,
-  loadComponentViewsTemplateOverrides,
-  compileTemplate,
-  loadEjsDirectory,
-  addTemplateFunctions,
-  getControllerMethodProperty
+	loadTemplates,
+	loadComponentViews,
+	loadComponentViewsTemplateOverrides,
+	compileTemplate,
+	loadEjsDirectory,
+	addTemplateFunctions,
+	getControllerMethodProperty
 };
