@@ -325,8 +325,9 @@ async function loadConfig(name, profile) {
 	await _assignPort(config);
 
 	config.development = (config.hasOwnProperty('development') ? config.development : false);
+	config.debug = (config.hasOwnProperty('debug') ? config.debug : false);
 	if (bolt.fire) await bolt.emit('configLoaded', config);
-	if (config.development) process.kill(process.pid, 'SIGUSR1');
+	if (config.debug) process.kill(process.pid, 'SIGUSR1');
 
 	return config;
 }
