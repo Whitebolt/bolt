@@ -19,7 +19,11 @@ module.exports = function(){
 
 			if (bolt.annotation.get(exports, 'browser-export') !== false) {
 				const name = `redux${bolt.randomString(10)}`;
-				reduxBoltContent += `import ${name} from "${target}";\n`;
+
+				reduxBoltContent += ((type === 'types') ?
+					`import ${name} from "${target}";\n` : `import * as ${name} from "${target}";\n`
+				);
+
 				Object.keys(exports.default||exports).forEach(name=>bolt.emit(
 					exportEventType,
 					new bolt.ExportToBrowserReduxBoltEvent({exportEventType, target, sync:false, name})
