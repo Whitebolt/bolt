@@ -13,6 +13,11 @@ module.exports = function(){
 		let reactBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		const exportEventType = 'exportReactComponentToBrowser';
 
+		setVirtualJsFile(name, {
+			file:bolt.VirtualFile.AWAIT,
+			sourceMap:bolt.VirtualFile.AWAIT
+		});
+
 		const names = [...bolt.__react].map(target=>{
 			const exports = require(target);
 

@@ -15,6 +15,11 @@ module.exports = function() {
 		const exportedLookup = new Set();
 		const exportEventType = 'exportBoltToBrowserGlobal';
 
+		setVirtualJsFile(name, {
+			file:bolt.VirtualFile.AWAIT,
+			sourceMap:bolt.VirtualFile.AWAIT
+		});
+
 		const exported = [...bolt.__modules].map(target=>{
 			const exports = require(target);
 			if (bolt.annotation.get(exports, 'browser-export')) {

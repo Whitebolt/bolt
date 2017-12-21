@@ -46,6 +46,11 @@ module.exports = function(){
 		let reduxBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		reduxBoltContent += reduxType.map(type=>loadReduxExport(type)).join('\n') + '\n';
 
+		setVirtualJsFile(name, {
+			file:bolt.VirtualFile.AWAIT,
+			sourceMap:bolt.VirtualFile.AWAIT
+		});
+
 		const extras = Object.keys(bolt.ReduxBolt)
 			.filter(prop=>(reduxType.indexOf(prop) === -1))
 			.map(prop=>{
