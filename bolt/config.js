@@ -23,11 +23,11 @@ const env = getKeyedEnvVars();
  * @returns {Array|*}       Parsed value.
  */
 function _parseEnvValue(value) {
-  [_parseEnvArray, bolt.toBool, bolt.toTypedNumber].forEach(converter=>{
-    value = _parseEnvValueConvert(value, converter);
-  });
+	[_parseEnvArray, bolt.toBool, bolt.toTypedNumber].forEach(converter=>{
+		value = _parseEnvValueConvert(value, converter);
+	});
 
-  return value;
+	return value;
 }
 
 /**
@@ -38,10 +38,10 @@ function _parseEnvValue(value) {
  * @returns {string|array}    New array or original string.
  */
 function _parseEnvArray(value) {
-  return (value.indexOf(path.delimiter) !== -1 ?
-      value.split(path.delimiter).map(value=>value.trim()) :
-      value
-  );
+	return (value.indexOf(path.delimiter) !== -1 ?
+			value.split(path.delimiter).map(value=>value.trim()) :
+			value
+	);
 }
 
 /**
@@ -53,7 +53,7 @@ function _parseEnvArray(value) {
  * @returns {*}                   Converted value.
  */
 function _parseEnvValueConvert(value, converter) {
-  return (Array.isArray(value) ? value.map(value=>_parseEnvValueConvertItem(value, converter)) : _parseEnvValueConvertItem(value, converter));
+	return (Array.isArray(value) ? value.map(value=>_parseEnvValueConvertItem(value, converter)) : _parseEnvValueConvertItem(value, converter));
 }
 
 /**
@@ -65,8 +65,8 @@ function _parseEnvValueConvert(value, converter) {
  * @returns {*}                   Converted value.
  */
 function _parseEnvValueConvertItem(value, converter) {
-  let converted = converter(value);
-  return ((converted !== value) ? converted :value);
+	let converted = converter(value);
+	return ((converted !== value) ? converted :value);
 }
 
 
@@ -78,19 +78,19 @@ function _parseEnvValueConvertItem(value, converter) {
  * @returns {BoltConfig}        The parsed config.
  */
 async function _parseConfig(config) {
-  config.script = boltRootDir + '/server.js';
-  const dbConfig = bolt.substituteInObject(config);
-  const root = await getRoots(dbConfig, env, packageConfig);
+	config.script = boltRootDir + '/server.js';
+	const dbConfig = bolt.substituteInObject(config);
+	const root = await getRoots(dbConfig, env, packageConfig);
 
-  const _config = bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerger);
-  _config.root = root;
-  return bolt.substituteInObject(_config);
+	const _config = bolt.mergeWith(_getConfig({root}), env, dbConfig, _configMerger);
+	_config.root = root;
+	return bolt.substituteInObject(_config);
 }
 
 async function getRoots(...configs) {
-  return Promise.all(_concatPropertyArray(configs, 'root').map(
-    root=>realpath(path.normalize(root)).then(root=>root+'/',err=>undefined)
-  )).filter(root=>root);
+	return Promise.all(_concatPropertyArray(configs, 'root').map(
+		root=>realpath(path.normalize(root)).then(root=>root+'/',err=>undefined)
+	)).filter(root=>root);
 }
 
 /**
@@ -102,7 +102,7 @@ async function getRoots(...configs) {
  * @returns {BoltConfig[]}          Merged array.
  */
 function _concatPropertyArray(objects, property) {
-  return bolt.uniq(bolt.flatten(objects.map(_property=>_property[property] || [])));
+	return bolt.uniq(bolt.flatten(objects.map(_property=>_property[property] || [])));
 }
 
 /**
@@ -113,15 +113,15 @@ function _concatPropertyArray(objects, property) {
  * @returns {BoltConfig}      The config with port assigned.
  */
 function _assignPort(config) {
-  if (config.assignFreePort && config.portRange && config.portRange.start && config.portRange.end) {
-    return freeport(config.portRange.start, config.portRange.end).then(portNo=>{
-      config.devPort = config.port;
-      config.port = portNo;
-      return config;
-    })
-  }
+	if (config.assignFreePort && config.portRange && config.portRange.start && config.portRange.end) {
+		return freeport(config.portRange.start, config.portRange.end).then(portNo=>{
+			config.devPort = config.port;
+			config.port = portNo;
+			return config;
+		})
+	}
 
-  return config;
+	return config;
 }
 
 /**
@@ -133,22 +133,22 @@ function _assignPort(config) {
  * @returns {Array}   Merged array of unique values.
  */
 function _concatArrayUnique(ary1, ary2) {
-  let combined = [].concat(ary1 || []).concat(ary2 || []);
-  return [...new Set(combined)];
+	let combined = [].concat(ary1 || []).concat(ary2 || []);
+	return [...new Set(combined)];
 }
 
 const _configMergeOverrides = {
-  boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
+	boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 
-  /**
-   * Merge eventConsoleLogging arrays together avoid duplicates and merging of
-   * the actual objects (default lodash action).
-   *
-   * @param {Array} objValue    The value being merged into.
-   * @param {Array} srcValue    The value to merge in.
-   * @returns {Array}           The merged value.
-   */
-  eventConsoleLogging: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue)
+	/**
+	 * Merge eventConsoleLogging arrays together avoid duplicates and merging of
+	 * the actual objects (default lodash action).
+	 *
+	 * @param {Array} objValue    The value being merged into.
+	 * @param {Array} srcValue    The value to merge in.
+	 * @returns {Array}           The merged value.
+	 */
+	eventConsoleLogging: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue)
 };
 
 /**
@@ -163,10 +163,10 @@ const _configMergeOverrides = {
  *                        default method.
  */
 function _configMerger(objValue, srcValue, key) {
-  return (_configMergeOverrides.hasOwnProperty(key) ?
-      _configMergeOverrides[key](objValue, srcValue) :
-      undefined
-  );
+	return (_configMergeOverrides.hasOwnProperty(key) ?
+			_configMergeOverrides[key](objValue, srcValue) :
+			undefined
+	);
 }
 
 /**
@@ -177,13 +177,13 @@ function _configMerger(objValue, srcValue, key) {
  * @returns {BoltConfig}        The new constructed config with default available.
  */
 function _getConfig(config) {
-  let packageConfigs = [];
-  let _packageConfigs = mergePackageConfigs(config.root);
-  packageConfigs.push(bolt.pickDeep(packageData, ['version', 'name', 'description']));
-  packageConfigs.push({template:'index', serverName: packageData.name});
-  packageConfigs.push(bolt.pick(packageData.config, _packageConfigs.boltConfigProperties || []));
-  packageConfigs.push(_packageConfigs);
-  return bolt.mergeWith.apply(bolt, packageConfigs);
+	let packageConfigs = [];
+	let _packageConfigs = mergePackageConfigs(config.root);
+	packageConfigs.push(bolt.pickDeep(packageData, ['version', 'name', 'description']));
+	packageConfigs.push({template:'index', serverName: packageData.name});
+	packageConfigs.push(bolt.pick(packageData.config, _packageConfigs.boltConfigProperties || []));
+	packageConfigs.push(_packageConfigs);
+	return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
 /**
@@ -221,10 +221,10 @@ function _getConfig(config) {
  * @returns {BoltConfig}    The config object.
  */
 function getConfigLoadPaths(serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile)) {
-  const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
-  if (env.hasOwnProperty('config')) bolt.makeArray(env.config).forEach(config=>configLoadPaths.push(config + '/' + serverConfigFile));
-  if (packageConfig.serverConfigPath) configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
-  return bolt.flattenDeep(configLoadPaths);
+	const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
+	if (env.hasOwnProperty('config')) bolt.makeArray(env.config).forEach(config=>configLoadPaths.push(config + '/' + serverConfigFile));
+	if (packageConfig.serverConfigPath) configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
+	return bolt.flattenDeep(configLoadPaths);
 }
 
 /**
@@ -235,17 +235,17 @@ function getConfigLoadPaths(serverConfigFile = (env.serverConfigFile || packageC
  * @returns {BoltConfig}          The package object.
  */
 function getPackage(dirPath=boltRootDir) {
-  try {
-    return require((dirPath + '/package.json').replace('//', '/'));
-  } catch(e) {
-    return {};
-  }
+	try {
+		return require((dirPath + '/package.json').replace('//', '/'));
+	} catch(e) {
+		return {};
+	}
 }
 
 function _getPackage(dirPath=boltRootDir) {
-  const data = getPackage(dirPath);
-  if (Object.keys(data).length && data.hasOwnProperty('name')) data[bolt.camelCase(data.name)+'Path'] = dirPath;
-  return data;
+	const data = getPackage(dirPath);
+	if (Object.keys(data).length && data.hasOwnProperty('name')) data[bolt.camelCase(data.name)+'Path'] = dirPath;
+	return data;
 }
 
 /**
@@ -258,12 +258,12 @@ function _getPackage(dirPath=boltRootDir) {
  * @returns {Object}                            Merged object with selected properties.
  */
 function mergePackageProperties(roots, properties=[], merger=()=>{}) {
-  const packageConfigs = bolt.makeArray(roots).map(root=>
-    bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
-  );
-  packageConfigs.unshift({});
-  if (bolt.isFunction(merger)) packageConfigs.push(_configMerger);
-  return bolt.mergeWith.apply(bolt, packageConfigs);
+	const packageConfigs = bolt.makeArray(roots).map(root=>
+		bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
+	);
+	packageConfigs.unshift({});
+	if (bolt.isFunction(merger)) packageConfigs.push(_configMerger);
+	return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
 /**
@@ -275,15 +275,15 @@ function mergePackageProperties(roots, properties=[], merger=()=>{}) {
  * @returns {Object}                  The imported values.
  */
 function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.env) {
-  let vars = {};
-  Object.keys(env)
-    .filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
-    .forEach(envKey=>{
-      let varKey = bolt.camelCase(envKey.substr(key.length));
-      vars[varKey] = _parseEnvValue(env[envKey]);
-    });
+	let vars = {};
+	Object.keys(env)
+		.filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
+		.forEach(envKey=>{
+			let varKey = bolt.camelCase(envKey.substr(key.length));
+			vars[varKey] = _parseEnvValue(env[envKey]);
+		});
 
-  return vars;
+	return vars;
 }
 
 /**
@@ -296,9 +296,9 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.
  * @returns {Object}                          The merged package.
  */
 function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
-  let _configProp = bolt.isString(merger)?merger:configProp;
-  let _merger = bolt.isFunction(merger)?merger:()=>{};
-  return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
+	let _configProp = bolt.isString(merger)?merger:configProp;
+	let _merger = bolt.isFunction(merger)?merger:()=>{};
+	return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
 }
 
 /**
@@ -310,26 +310,27 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 async function loadConfig(name, profile) {
-  const config = await _parseConfig(
-    await require.try(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
-  );
+	const config = await _parseConfig(
+		await require.try(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
+	);
 
-  if (!profile) profile = (config.development ? 'development' : 'production');
+	if (!profile) profile = (config.development ? 'development' : 'production');
 
-  const profileConfig = await require.try(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
-  if (profileConfig) {
-    delete profileConfig.name;
-    bolt.mergeWith(config, profileConfig, _configMerger);
-  }
+	const profileConfig = await require.try(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
+	if (profileConfig) {
+		delete profileConfig.name;
+		bolt.mergeWith(config, profileConfig, _configMerger);
+	}
 
-  await _assignPort(config);
+	await _assignPort(config);
 
-  config.development = (config.hasOwnProperty('development') ? config.development : false);
-  if (bolt.fire) await bolt.emit('configLoaded', config);
+	config.development = (config.hasOwnProperty('development') ? config.development : false);
+	if (bolt.fire) await bolt.emit('configLoaded', config);
+	if (config.development) process.kill(process.pid, 'SIGUSR1');
 
-  return config;
+	return config;
 }
 
 module.exports = {
-  loadConfig, getKeyedEnvVars, mergePackageConfigs, mergePackageProperties, getConfigLoadPaths, getPackage
+	loadConfig, getKeyedEnvVars, mergePackageConfigs, mergePackageProperties, getConfigLoadPaths, getPackage
 };
