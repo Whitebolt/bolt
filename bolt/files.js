@@ -21,11 +21,11 @@ const mkdir = Promise.promisify(fs.mkdir);
  * @returns {string}    The root file path.
  */
 function getRoot() {
-  return path.dirname(process.argv[1]);
+	return path.dirname(process.argv[1]);
 }
 
 function fileExists(filePath) {
-  return lstat(filePath).then(stat=>!!stat,err=>false);
+	return lstat(filePath).then(stat=>!!stat,err=>false);
 }
 
 /**
@@ -38,24 +38,24 @@ function fileExists(filePath) {
  * @returns {string}    The file name of the calling function.
  */
 function getCallerFileName() {
-  let prepareStackTrace = Error.prepareStackTrace;
-  let err = new Error();
-  let callerfile;
-  let currentfile;
+	let prepareStackTrace = Error.prepareStackTrace;
+	let err = new Error();
+	let callerfile;
+	let currentfile;
 
-  try {
-    Error.prepareStackTrace = (err, stack) => stack;
-    currentfile = err.stack.shift().getFileName();
-    while (err.stack.length) {
-      let level = err.stack.shift();
-      callerfile = level.getFileName();
-      if(callerfile && (currentfile !== callerfile)) break;
-    }
-  } catch (err) {
-  }
+	try {
+		Error.prepareStackTrace = (err, stack) => stack;
+		currentfile = err.stack.shift().getFileName();
+		while (err.stack.length) {
+			let level = err.stack.shift();
+			callerfile = level.getFileName();
+			if(callerfile && (currentfile !== callerfile)) break;
+		}
+	} catch (err) {
+	}
 
-  Error.prepareStackTrace = prepareStackTrace;
-  return callerfile;
+	Error.prepareStackTrace = prepareStackTrace;
+	return callerfile;
 }
 
 /**
@@ -70,14 +70,14 @@ function getCallerFileName() {
  * @returns {Promise}               The found directories.
  */
 function directoriesInDirectory(dirPath, dirNameToFind) {
-  return ((Array.isArray(dirPath)) ?
-    _directoriesInDirectories(dirPath) :
-    _directoriesInDirectory(dirPath)
-  ).filter(dirPath => {
-    return (dirNameToFind && dirNameToFind.length) ?
-      dirNameToFind.indexOf(path.basename(dirPath)) !== -1 :
-      true;
-  });
+	return ((Array.isArray(dirPath)) ?
+			_directoriesInDirectories(dirPath) :
+			_directoriesInDirectory(dirPath)
+	).filter(dirPath => {
+		return (dirNameToFind && dirNameToFind.length) ?
+			dirNameToFind.indexOf(path.basename(dirPath)) !== -1 :
+			true;
+	});
 }
 
 /**
@@ -89,9 +89,9 @@ function directoriesInDirectory(dirPath, dirNameToFind) {
  * @returns {Promise}               Found directories.
  */
 function _directoriesInDirectories(dirPaths) {
-  return Promise.all(
-    dirPaths.map(dirPath => directoriesInDirectory(dirPath))
-  ).then(dirPaths => bolt.flattenDeep(dirPaths));
+	return Promise.all(
+		dirPaths.map(dirPath => directoriesInDirectory(dirPath))
+	).then(dirPaths => bolt.flattenDeep(dirPaths));
 }
 
 /**
@@ -105,14 +105,14 @@ function _directoriesInDirectories(dirPaths) {
  * @returns {Promise}         Found directories.
  */
 function _directoriesInDirectory(dirPath) {
-  const root = getCallerFileName();
-  dirPath = root?path.resolve(path.dirname(root), dirPath):dirPath;
+	const root = getCallerFileName();
+	dirPath = root?path.resolve(path.dirname(root), dirPath):dirPath;
 
-  return Promise.promisify(fs.readdir)(dirPath)
-    .then(file => file, err => [])
-    .map(filename => path.join(dirPath, filename))
-    .filter(fileName => lstat(fileName).then(stat => stat.isDirectory()))
-    .map(dirName => path.resolve(dirPath, dirName));
+	return Promise.promisify(fs.readdir)(dirPath)
+		.then(file => file, err => [])
+		.map(filename => path.join(dirPath, filename))
+		.filter(fileName => lstat(fileName).then(stat => stat.isDirectory()))
+		.map(dirName => path.resolve(dirPath, dirName));
 }
 
 /**
@@ -126,33 +126,35 @@ function _directoriesInDirectory(dirPath) {
  * @returns {Promise}           Promise resoving to found files.
  */
 function filesInDirectory(dirPath, ext = 'js') {
-  const resolveTo = getCallerFileName();
-  dirPath = resolveTo?path.resolve(path.dirname(resolveTo), dirPath):dirPath;
-  let xExt = new RegExp('\.' + ext);
+	const resolveTo = getCallerFileName();
+	dirPath = resolveTo?path.resolve(path.dirname(resolveTo), dirPath):dirPath;
+	let xExt = new RegExp('\.' + ext);
 
-  return Promise.promisify(fs.readdir)(dirPath)
-    .then(file => file, err => [])
-    .filter(fileName => xExt.test(fileName))
-    .map(fileName => path.resolve(dirPath, fileName))
+	return Promise.promisify(fs.readdir)(dirPath)
+		.then(file => file, err => [])
+		.filter(fileName => xExt.test(fileName))
+		.map(fileName => path.resolve(dirPath, fileName))
 }
 
 function isPathRelativeTo(testPath, isRelativeTo) {
-  const xRelativeToDir = new RegExp('^' + path.normalize(isRelativeTo).replace('/', '\/'));
-  return xRelativeToDir.test(path.normalize(testPath));
+	const xRelativeToDir = new RegExp('^' + path.normalize(isRelativeTo).replace('/', '\/'));
+	return xRelativeToDir.test(path.normalize(testPath));
 }
 
 async function makeDirectory(dir) {
-  const sep = path.sep;
-  const initDir = path.isAbsolute(dir) ? sep : '';
-  await dir.split(sep).reduce(async (parentDir, childDir)=>{
-    const curDir = path.resolve(await parentDir, childDir);
-    if (!(await fileExists(curDir))) await mkdir(curDir);
-    return curDir;
-  }, initDir);
+	const sep = path.sep;
+	const initDir = path.isAbsolute(dir) ? sep : '';
+	await dir.split(sep).reduce(async (parentDir, childDir)=>{
+		const curDir = path.resolve(await parentDir, childDir);
+		try {
+			if (!(await fileExists(curDir))) await mkdir(curDir);
+		} catch(error) {}
+		return curDir;
+	}, initDir);
 }
 
 module.exports = {
-  filesInDirectory, directoriesInDirectory,
-  getCallerFileName, getRoot,
-  fileExists, isPathRelativeTo, makeDirectory
+	filesInDirectory, directoriesInDirectory,
+	getCallerFileName, getRoot,
+	fileExists, isPathRelativeTo, makeDirectory
 };

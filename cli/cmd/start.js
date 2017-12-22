@@ -34,15 +34,14 @@ async function _createChoicesMenu(section) {
 }
 
 async function _provideMenu(args) {
-	if (args._[1]) args.name = args._[1];
 	const questions = [];
-	if (!args.hasOwnProperty('name')) questions.push({
+	if (!args.name) questions.push({
 		type:'list',
 		choices: await _createChoicesMenu('apps'),
 		name:'name',
 		message: 'Please select an App to launch:'
 	});
-	if (!args.hasOwnProperty('profile')) questions.push({
+	if (!args.profile) questions.push({
 		type:'list',
 		choices: await _createChoicesMenu('profiles'),
 		name:'profile',
@@ -59,7 +58,7 @@ async function _provideMenu(args) {
  * @returns {Promise}       Promise resolving when app has launched.
  */
 async function start(args) {
-	if (!args.hasOwnProperty('name') || !args.hasOwnProperty('profile')) await _provideMenu(args);
+	if (!args.name || !args.profile) await _provideMenu(args);
 
 	if (args.hasOwnProperty('name') && args.hasOwnProperty('profile')) {
 		const siteConfig = await bolt.loadConfig(args.name, args.profile);

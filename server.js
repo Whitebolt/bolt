@@ -7,8 +7,8 @@ let [configDone, boltLoaded] = [false, false];
 
 const path = require('path');
 const fs = require('fs');
+global.__originalCwd = process.cwd();
 process.chdir(path.dirname(fs.realpathSync(__filename)));
-
 const bolt = {require:require('require-extra')};
 bolt.annotation =  new (bolt.require.sync('object-annotations'))();
 const packageConfig = bolt.require.sync('./package.json').config || {};
