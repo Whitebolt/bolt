@@ -61,6 +61,7 @@ async function start(args) {
 	if (!args.name || !args.profile) await _provideMenu(args);
 
 	if (args.hasOwnProperty('name') && args.hasOwnProperty('profile')) {
+		console.log('\x1bc'); // Clear the console
 		const siteConfig = await bolt.loadConfig(args.name, args.profile);
 		siteConfig.development = ((process.getuid && process.getuid() !== 0)?true:args.development) || siteConfig.development;
 		if (!siteConfig.development) {
