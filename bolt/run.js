@@ -4,8 +4,8 @@
  * @module bolt/bolt
  */
 
-const Promise = require('bluebird');
-const figlet =  Promise.promisify(require('figlet'));
+const util = require('util');
+const figlet =  util.promisify(require('figlet'));
 const {upgrade} = require('websocket-express');
 
 /**
@@ -21,7 +21,7 @@ function _runApp(app) {
     process.setuid(app.config.uid);
   }
 
-  return new Promise(resolve=>{
+  return new Promise(async (resolve)=>{
     let server;
 
     if (app.config.development) {
@@ -37,6 +37,9 @@ function _runApp(app) {
       } catch(err) {}
     }
     if (!server) server = require('http').createServer(app);
+
+    const pidController = new bolt.Pid_Controller('/tmp/run/bolt/pids', app.config.name);
+    await pidController.create();
 
     server.listen(app.config.port, async ()=>{
       bolt.emit('appListening', app.config.port);

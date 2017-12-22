@@ -211,6 +211,22 @@
         "level": 4
       },
       {
+        "event": "createdPidFile",
+        "action": "system",
+        "description": "created pid file",
+        "property": "<%= params[0] %>",
+        "level": 2,
+        "propertyColour": "green"
+      },
+      {
+        "event": "removedPidFile",
+        "action": "system",
+        "description": "removed pid file",
+        "property": "<%= params[0] %>",
+        "level": 2,
+        "propertyColour": "green"
+      },
+      {
         "event": "firingView",
         "action": "view",
         "description": "firing view <%= params[0] %> for",

@@ -148,7 +148,9 @@ async function makeDirectory(dir) {
 		const curDir = path.resolve(await parentDir, childDir);
 		try {
 			if (!(await fileExists(curDir))) await mkdir(curDir);
-		} catch(error) {}
+		} catch(error) {
+			console.log(error);
+		}
 		return curDir;
 	}, initDir);
 }
