@@ -8,6 +8,19 @@ const util = require('util');
 const figlet =  util.promisify(require('figlet'));
 const {upgrade} = require('websocket-express');
 
+const { r, g, b, w, c, m, y, k } = [
+	['r', 1], ['g', 2], ['b', 4], ['w', 7],
+	['c', 6], ['m', 5], ['y', 3], ['k', 0]
+].reduce((cols, col) => ({...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`}), {});
+
+const colourLookup = {
+	red:r, green:g, blue:b, white:w, cyan:c, magenta:m, yellow:y
+};
+
+function colour(name, text) {
+	return text?colourLookup[name](text):colourLookup[name];
+}
+
 /**
  * Run the given express app, binding to correct port.
  *
@@ -44,8 +57,12 @@ function _runApp(app) {
     server.listen(app.config.port, async ()=>{
       bolt.emit('appListening', app.config.port);
       let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName));
-      let welcome = await figlet(`${serverName} v${app.config.version}`);
-      console.log(welcome);
+      let welcome = await figlet(`${serverName} `);
+      let version = await figlet(`v${app.config.version}`);
+      welcome = welcome.split('\n').map(line=>colour('blue', line));
+      version = welcome.split('\n').map(line=>colour('green', line));
+      
+      console.log(colour('blue', welcome));
       bolt.emit('appRunning', app.config.name, process.hrtime(global.startTime));
       resolve(app);
     });

@@ -61,9 +61,23 @@ async function start(args) {
 	if (!args.name || !args.profile) await _provideMenu(args);
 
 	if (args.hasOwnProperty('name') && args.hasOwnProperty('profile')) {
-		console.log('\x1bc'); // Clear the console
 		const siteConfig = await bolt.loadConfig(args.name, args.profile);
 		siteConfig.development = ((process.getuid && process.getuid() !== 0)?true:args.development) || siteConfig.development;
+
+		if (siteConfig.hasOwnProperty('questions')) {
+			const questions = siteConfig.questions.filter(question=>{
+				if (!question.profile) return true;
+				if (bolt.makeArray(question.profile).indexOf(args.profile) !== -1) return true;
+			});
+			const answers = await inquirer.prompt(questions);
+			Object.keys(answers).forEach(propPath=>
+				bolt.set(siteConfig, propPath, answers[propPath])
+			);
+			delete siteConfig.questions;
+		}
+
+		console.log('\x1bc'); // Clear the console
+
 		if (!siteConfig.development) {
 			await bolt.addUser(siteConfig);
 			await bolt.launchNginx(siteConfig);

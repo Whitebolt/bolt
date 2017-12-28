@@ -150,7 +150,8 @@
       "domains",
       "csp",
       "sessionStore",
-      "sessionStoreDb"
+      "sessionStoreDb",
+      "questions"
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [

@@ -139,6 +139,7 @@ function _concatArrayUnique(ary1, ary2) {
 
 const _configMergeOverrides = {
 	boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
+	questions: (objValue, srcValue)=>[...bolt.makeArray(srcValue), ...bolt.makeArray(objValue)],
 
 	/**
 	 * Merge eventConsoleLogging arrays together avoid duplicates and merging of
