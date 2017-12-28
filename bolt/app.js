@@ -11,18 +11,7 @@ const write = Promise.promisify(fs.write);
 const ejs = require('ejs');
 const path = require('path');
 
-const { r, g, b, w, c, m, y, k } = [
-  ['r', 1], ['g', 2], ['b', 4], ['w', 7],
-  ['c', 6], ['m', 5], ['y', 3], ['k', 0]
-].reduce((cols, col) => ({...cols,  [col[0]]: f => `\x1b[3${col[1]}m${f}\x1b[0m`}), {});
-
-const colourLookup = {
-  red:r, green:g, blue:b, white:w, cyan:c, magenta:m, yellow:y
-};
-
-function colour(name, text) {
-  return text?colourLookup[name](text):colourLookup[name];
-}
+const chalk = require('chalk');
 
 /**
  *  @external ejsOptions
@@ -94,11 +83,11 @@ function _registerLogEvent(config) {
 function _initLogging(app) {
   app.config.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
   _initConsoleLogging(app.config.logLevel, message=>{
-    const pc = colour(message.data.style.property.colour || 'yellow');
-    const tc = colour(message.data.style.type.colour || 'green');
-    const mc = colour(message.data.style.description.colour || 'white');
+    const pc = message.data.style.property.colour || 'yellow';
+    const tc = ((message.data.style.type.colour || 'green') + 'Bright').replace('BrightBright', 'Bright');
+    const mc = message.data.style.description.colour || 'white';
 
-    const _message = `[${tc(message.data.type)}] ${mc(message.data.description)} ${pc(message.data.property)}`;
+    const _message = `[${chalk[tc](message.data.type)}] ${chalk[mc].bold(message.data.description)} ${chalk[pc].italic(message.data.property)}`;
     console.log(_message)
   });
   _initAccessLogging(app.config.accessLog);
