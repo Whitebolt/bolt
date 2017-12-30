@@ -1,5 +1,5 @@
 {
-  "name": "bolt-server",
+  "name": "@simpo/bolt-server",
   "description": "Bolt NodeJs Server",
   "author": "Whitebolt <hello@whitebolt.net>",
   "contributors": [
