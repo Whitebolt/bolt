@@ -1,6 +1,6 @@
 'use strict';
 
-const {compileReact, setVirtualJsFile, clearCache} = bolt.requireLib('build');
+const {compileReact, setVirtualJsFile, clearCache, logExportSequence} = bolt.requireLib('build');
 const reduxType = ['types', 'actionCreators', 'reducers'];
 
 bolt.ExportToBrowserReduxBoltEvent = class ExportToBrowserReduxBoltEvent extends bolt.Event {};
@@ -10,11 +10,11 @@ module.exports = function(){
 	// @annotation key loadAllComponents
 	// @annotation when after
 
-	function loadReduxExport(type) {
+	function loadReduxExport(type, files) {
 		const exportEventType = `exportRedux${bolt.peakCase(type)}ToBrowser`;
 		let reduxBoltContent = '';
 
-		const items = [...bolt.__redux[type]].map(target=>{
+		const items = files.map(target=>{
 			const exports = require(target);
 
 			if (bolt.annotation.get(exports, 'browser-export') !== false) {
@@ -44,7 +44,11 @@ module.exports = function(){
 	return async app=>{
 		const name = 'ReduxBolt';
 		let reduxBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
-		reduxBoltContent += reduxType.map(type=>loadReduxExport(type)).join('\n') + '\n';
+		reduxBoltContent += reduxType.map(type=>{
+			const files = [...bolt.__redux[type]];
+			if (app.config.development || app.config.debug) logExportSequence(type+name, files);
+			return loadReduxExport(type, files);
+		}).join('\n') + '\n';
 
 		setVirtualJsFile(name, {
 			file:bolt.VirtualFile.AWAIT,
