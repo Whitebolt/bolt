@@ -120,6 +120,10 @@ function cloneAndMerge(toClone, toMergeIn, picks) {
   return Object.assign({}, toClone, pickDeep(toMergeIn, picks))
 }
 
+function toKeyValueArray(obj) {
+	return bolt.flatten(Object.keys(obj).map(key=>[key, obj[key]]));
+}
+
 module.exports = {
-  addDefaultObjects, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge
+  addDefaultObjects, firstKey: toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge
 };
