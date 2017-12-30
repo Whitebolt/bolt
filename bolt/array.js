@@ -15,7 +15,7 @@
  * @returns {Array}   Converted value.
  */
 function _makeArrayConvertFunction(ary) {
-  return ((ary===undefined)?[]:[ary]);
+	return ((ary===undefined)?[]:[ary]);
 }
 
 /**
@@ -36,7 +36,7 @@ function _makeArrayConvertFunction(ary) {
  * @returns {Array}                                                 New array or supplied parameter returned.
  */
 function makeArray(ary, convertFunction=_makeArrayConvertFunction) {
-  return (Array.isArray(ary) ? ary : convertFunction(ary));
+	return (Array.isArray(ary) ? ary : convertFunction(ary));
 }
 
 /**
@@ -62,44 +62,44 @@ function makeArray(ary, convertFunction=_makeArrayConvertFunction) {
  *                                      supplied then return a sort function instead.
  */
 function prioritySorter(a, b) {
-  let sortProperty = 'priority';
-  let sortProperty2 = 'priority2';
-  let direction = 'ASC';
+	let sortProperty = 'priority';
+	let sortProperty2 = 'priority2';
+	let direction = 'ASC';
 
-  let sorter = (a, b)=>{
-    let aP = (a !== undefined ? (a.hasOwnProperty(sortProperty) ? a[sortProperty] : bolt.annotation.get(a, sortProperty) || 0) : 0);
-    let bP = (a !== undefined ? (b.hasOwnProperty(sortProperty) ? b[sortProperty] : bolt.annotation.get(b, sortProperty) || 0) : 0);
-    let aP2 = (a !== undefined ? (a.hasOwnProperty(sortProperty2) ? a[sortProperty2] : bolt.annotation.get(a, sortProperty2) || 0) : 0);
-    let bP2 = (a !== undefined ? (b.hasOwnProperty(sortProperty2) ? b[sortProperty2] : bolt.annotation.get(b, sortProperty2) || 0) : 0);
+	let sorter = (a, b)=>{
+		let aP = (a !== undefined ? (a.hasOwnProperty(sortProperty) ? a[sortProperty] : bolt.annotation.get(a, sortProperty) || 0) : 0);
+		let bP = (a !== undefined ? (b.hasOwnProperty(sortProperty) ? b[sortProperty] : bolt.annotation.get(b, sortProperty) || 0) : 0);
+		let aP2 = (a !== undefined ? (a.hasOwnProperty(sortProperty2) ? a[sortProperty2] : bolt.annotation.get(a, sortProperty2) || 0) : 0);
+		let bP2 = (a !== undefined ? (b.hasOwnProperty(sortProperty2) ? b[sortProperty2] : bolt.annotation.get(b, sortProperty2) || 0) : 0);
 
-    if (direction === 'ASC') {
-      return ((aP > bP)?1:((aP < bP)?-1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));
-    } else if (direction === 'DESC') {
-      return ((aP > bP)?-1:((aP < bP)?1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));
-    } else {
-      throw new RangeError('Sort direction for prioritySorter() should be either ASC or DESC');
-    }
-  };
+		if (direction === 'ASC') {
+			return ((aP > bP)?1:((aP < bP)?-1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));
+		} else if (direction === 'DESC') {
+			return ((aP > bP)?-1:((aP < bP)?1:((aP2 > bP2)?1:((aP2 < bP2)?-1:0))));
+		} else {
+			throw new RangeError('Sort direction for prioritySorter() should be either ASC or DESC');
+		}
+	};
 
-  if (arguments.length > 1) return sorter(a, b);
-  if (arguments.length === 0) {
-    throw new SyntaxError('No arguments supplied to prioritySorter()');
-  }
+	if (arguments.length > 1) return sorter(a, b);
+	if (arguments.length === 0) {
+		throw new SyntaxError('No arguments supplied to prioritySorter()');
+	}
 
-  if (bolt.isString(a)) {
-    sortProperty = a;
-  } else if (bolt.isObject(a)) {
-    if (a.hasOwnProperty('sortProperty')) sortProperty = a.sortProperty.toString();
-    if (a.hasOwnProperty('sortProperty2')) sortProperty2 = a.sortProperty2.toString();
-    if (a.hasOwnProperty('direction')) direction = a.direction.toString().toUpperCase().trim();
-    if ((direction !== 'ASC') && (direction !== 'DESC')) {
-      throw new RangeError('Sort direction for prioritySorter() should be either ASC or DESC');
-    }
-  } else {
-    throw new TypeError('Wrong argument type supplied as first parameter for prioritySorter()');
-  }
+	if (bolt.isString(a)) {
+		sortProperty = a;
+	} else if (bolt.isObject(a)) {
+		if (a.hasOwnProperty('sortProperty')) sortProperty = a.sortProperty.toString();
+		if (a.hasOwnProperty('sortProperty2')) sortProperty2 = a.sortProperty2.toString();
+		if (a.hasOwnProperty('direction')) direction = a.direction.toString().toUpperCase().trim();
+		if ((direction !== 'ASC') && (direction !== 'DESC')) {
+			throw new RangeError('Sort direction for prioritySorter() should be either ASC or DESC');
+		}
+	} else {
+		throw new TypeError('Wrong argument type supplied as first parameter for prioritySorter()');
+	}
 
-  return sorter;
+	return sorter;
 }
 
 /**
@@ -113,21 +113,35 @@ function prioritySorter(a, b) {
  * @returns {integer}     The index if found; if not found return -1.
  */
 function indexOfEquiv(ary, value) {
-  return ary.findIndex(_value=>bolt.isEqual(value, _value));
+	return ary.findIndex(_value=>bolt.isEqual(value, _value));
 }
 
 function toObjectMap(ary, iteree, context) {
-  const _iteree = context?iteree.bind(context):iteree;
-  const exportObj = {};
+	const _iteree = context?iteree.bind(context):iteree;
+	const exportObj = {};
 
-  bolt.makeArray(ary).forEach((item, n, ary)=>{
-    const [key, value] = _iteree(item, n, ary);
-    exportObj[key] = value;
-  });
+	bolt.makeArray(ary).forEach((item, n, ary)=>{
+		const [key, value] = _iteree(item, n, ary);
+		exportObj[key] = value;
+	});
 
-  return exportObj;
+	return exportObj;
+}
+
+function mapReduce(ary, iteree, context=null) {
+	const _iteree = iteree.bind(context);
+	if (bolt.isArray(ary)) {
+		return ary.map(_iteree).filter(value=>(value !== undefined));
+	} else if (ary instanceof Set) {
+		return [...ary].map(_iteree).filter(value=>(value !== undefined));
+	} else if (ary instanceof Map) {
+		return [...ary.keys()].map(key=>_iteree(ary.get(key), key, ary)).filter(value=>(value !== undefined));
+	} else if (bolt.isObject(ary)) {
+		return Object.keys(ary).map(key=>_iteree(ary[key], key, ary)).filter(value=>(value !== undefined));
+	}
+	throw 'mapReduce can only work on arrays, maps, objects and sets.'
 }
 
 module.exports = {
-  makeArray, prioritySorter, indexOfEquiv, toObjectMap
+	makeArray, prioritySorter, indexOfEquiv, toObjectMap, mapReduce
 };
