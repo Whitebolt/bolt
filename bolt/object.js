@@ -125,5 +125,5 @@ function toKeyValueArray(obj) {
 }
 
 module.exports = {
-  addDefaultObjects, firstKey: toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge
+  addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge
 };
