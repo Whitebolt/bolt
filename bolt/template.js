@@ -446,6 +446,10 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
 			}
 			viewOnload(filename, compiled, options.views);
 			if (eventName) bolt.emit(eventName, filename)
+		},
+		onerror: error=>{
+			console.log('Failed to load template: ', error.source);
+			console.error(error.error);
 		}
 	});
 
