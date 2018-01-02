@@ -1,4 +1,5 @@
 'use strict';
+// @annotation browser-export
 
 /**
  * @module bolt/bolt
@@ -17,9 +18,10 @@ const xEndSlash = /\/$/;
  * @returns {string}        The found path or '/'.
  */
 function getPathFromRequest(req) {
-  let path = req.path.trim().replace(xEndSlash, '');
+	// @annotation browser-export false
 
-  return ((path === '') ? '/' : path);
+	let path = req.path.trim().replace(xEndSlash, '');
+	return ((path === '') ? '/' : path);
 }
 
 /**
@@ -32,7 +34,9 @@ function getPathFromRequest(req) {
  * @returns {Array}         The path parts.
  */
 function getPathPartsFromRequest(req) {
-  return getPathFromRequest(req).split('/').filter(part => (part.trim() !== ''));
+	// @annotation browser-export false
+
+	return getPathFromRequest(req).split('/').filter(part => (part.trim() !== ''));
 }
 
 /**
@@ -54,20 +58,20 @@ function getPathPartsFromRequest(req) {
  * @returns {string}                                  The url query style string.
  */
 function objectToQueryString(obj, splitter='&', defaultValue=undefined, addEquals=false) {
-  let queryString = [];
+	let queryString = [];
 
-  if (splitter && !bolt.isString(splitter)) {
-    defaultValue = splitter.defaultValue || undefined;
-    addEquals = splitter.addEquals || false;
-    splitter = splitter.splitter || '&';
-  }
+	if (splitter && !bolt.isString(splitter)) {
+		defaultValue = splitter.defaultValue || undefined;
+		addEquals = splitter.addEquals || false;
+		splitter = splitter.splitter || '&';
+	}
 
-  Object.keys(obj).forEach(key=>{
-    let value = ((obj[key] !== '') ? obj[key] : defaultValue);
-    queryString.push(encodeURIComponent(key) + ((value !== undefined) ? '='+encodeURIComponent(value) : (addEquals?'=':'')));
-  });
+	Object.keys(obj).forEach(key=>{
+		let value = ((obj[key] !== '') ? obj[key] : defaultValue);
+		queryString.push(encodeURIComponent(key) + ((value !== undefined) ? '='+encodeURIComponent(value) : (addEquals?'=':'')));
+	});
 
-  return queryString.join(splitter);
+	return queryString.join(splitter);
 }
 
 /**
@@ -81,14 +85,14 @@ function objectToQueryString(obj, splitter='&', defaultValue=undefined, addEqual
  * @returns {Object}                The parse query object.
  */
 function queryStringToObject(queryString, splitter='&', defaultValue=undefined) {
-  let obj = {};
-  let parts = queryString.split(splitter);
-  parts.forEach(part=>{
-    let _parts = part.split('=');
-    let key = _parts.shift();
-    obj[key] = ((_parts.length) ? _parts.join('=') : defaultValue);
-  });
-  return obj;
+	let obj = {};
+	let parts = queryString.split(splitter);
+	parts.forEach(part=>{
+		let _parts = part.split('=');
+		let key = _parts.shift();
+		obj[key] = ((_parts.length) ? _parts.join('=') : defaultValue);
+	});
+	return obj;
 }
 
 /**
@@ -99,11 +103,11 @@ function queryStringToObject(queryString, splitter='&', defaultValue=undefined) 
  * @returns {Object}      The query object.
  */
 function getUrlQueryObject(url) {
-  let parts = url.split('?');
-  if (parts.length > 1) {
-    return queryStringToObject(parts[1]);
-  }
-  return {};
+	let parts = url.split('?');
+	if (parts.length > 1) {
+		return queryStringToObject(parts[1].split('#').shift());
+	}
+	return {};
 }
 
 /**
@@ -115,22 +119,22 @@ function getUrlQueryObject(url) {
  * @returns {string}            The new url.
  */
 function addQueryObjectToUrl(url, ...objs) {
-  let addEquals = ((objs.length && bolt.isBoolean(objs[0])) ? objs.shift() : false);
-  let _obj = Object.assign.apply(Object, objs);
-  let parts = url.split('?');
-  if (parts.length > 1) {
-    parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), _obj), {addEquals});
-    return parts.join('?');
-  }
-  parts = url.split('#');
-  let queryString = objectToQueryString(_obj, {addEquals});
-  parts[0] += ((queryString.trim() !== '') ? '?'+queryString : '');
-  return parts.join('#');
+	let addEquals = ((objs.length && bolt.isBoolean(objs[0])) ? objs.shift() : false);
+	let _obj = Object.assign.apply(Object, objs);
+	let parts = url.split('?');
+	if (parts.length > 1) {
+		parts[1] = objectToQueryString(Object.assign(queryStringToObject(parts[1]), _obj), {addEquals});
+		return parts.join('?');
+	}
+	parts = url.split('#');
+	let queryString = objectToQueryString(_obj, {addEquals});
+	parts[0] += ((queryString.trim() !== '') ? '?'+queryString : '');
+	return parts.join('#');
 }
 
 
 
 module.exports = {
-  getPathFromRequest, getPathPartsFromRequest, objectToQueryString, queryStringToObject,
-  addQueryObjectToUrl, getUrlQueryObject
+	getPathFromRequest, getPathPartsFromRequest, objectToQueryString, queryStringToObject,
+	addQueryObjectToUrl, getUrlQueryObject
 };
