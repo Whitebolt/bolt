@@ -11,7 +11,10 @@ function exitHandler(controller) {
 	process.on('SIGINT', controller.remove.bind(controller, true));
 	process.on('SIGUSR1', controller.remove.bind(controller, true));
 	process.on('SIGUSR2', controller.remove.bind(controller, true));
-	process.on('uncaughtException', controller.remove.bind(controller, true));
+	process.on('uncaughtException', error=>{
+		console.error(error);
+		return controller.remove.bind(controller, true);
+	});
 }
 
 class Pid_Controller {
