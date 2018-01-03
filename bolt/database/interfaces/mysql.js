@@ -42,8 +42,11 @@ queryBuilder.registerQueryHelper( 'order', function( order, values, query ) {
 
 	if (output.trim() === 'order by') return '';
 	return output;
-
 });
+
+queryBuilder.conditionalHelpers.add('$eq', (...params)=>
+	queryBuilder.conditionalHelpers.get('$equals').fn(...params)
+);
 
 /**
  * @external MysqlConnectionConfig
