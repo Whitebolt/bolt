@@ -15,7 +15,7 @@ const xIsInt = /^[0-9]+$/;
  * @returns {boolen}    Is it numeric?
  */
 function isNumeric(value) {
-  return !isNaN(parseFloat(value)) && isFinite(value);
+  return !bolt.isNaN(parseFloat(value)) && isFinite(value);
 }
 
 /**

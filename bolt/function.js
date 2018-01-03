@@ -3,9 +3,13 @@
 
 const string = require('./string');
 
+const xQuoted = /^(["'])(.*)\1$/;
+const xObject = /^\{.*\}$/;
+const xArray = /^\[.*\]$/;
 const xPreFunctionParams = /\)[\s\S]*/;
 const xPostFunctionParams = /^.*?\(/;
 const getParameters = string.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
+const paramDefaultMatchers = new Map([['null',null],['undefined',undefined],['true',true],['false',false]]);
 
 /**
  * Parse the source of a function returning an array of parameter names.
@@ -15,7 +19,37 @@ const getParameters = string.replaceSequence([[xPreFunctionParams],[xPostFunctio
  * @returns {Array.<string>}           Array of parameter names.
  */
 function parseParameters(func) {
-	return getParameters(func).split(',').map(param=>param.trim());
+	const defaults = new Map();
+	const params = getParameters(func)
+		.split(',')
+		.map(param=>param.trim())
+		.map(param=>{
+			const [paramName, defaultValue] = param.split('=').map(item=>item.trim());
+			if (defaultValue) {
+				if (xQuoted.test(defaultValue)) {
+					const _defaultValue = xQuoted.exec(defaultValue)[2];
+					defaults.set(paramName, ()=>()=>_defaultValue);
+				} else if (paramDefaultMatchers.has(defaultValue)) {
+					const _defaultValue = paramDefaultMatchers.get(defaultValue);
+					defaults.set(paramName, ()=>_defaultValue);
+				} else if (bolt.isNumeric(defaultValue)) {
+					if (defaultValue.indexOf('.') !== -1) {
+						const _defaultValue = parseFloat(defaultValue);
+						defaults.set(paramName, ()=>_defaultValue);
+					} else {
+						const _defaultValue = parseInt(defaultValue, 10);
+						defaults.set(paramName, ()=>_defaultValue);
+					}
+				} else if (xArray.test(defaultValue) || xObject.test(defaultValue)) {
+					defaults.set(paramName, ()=>JSON.parse(defaultValue));
+				} else {
+					defaults.set(paramName, ()=>defaultValue);
+				}
+			}
+			return paramName;
+		});
+	params.defaults = defaults;
+	return params;
 }
 
 function runSeries(async, series, ...params) {
