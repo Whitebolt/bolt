@@ -1,6 +1,6 @@
 'use strict';
 
-const {AdvancedSet} = require('map-watch');
+const {AdvancedSet} = require('@simpo/map-watch');
 const xSpaceOrComma = /,| /;
 
 function _parseAnnotationSet(value, lowecase=false) {

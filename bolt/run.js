@@ -7,7 +7,7 @@
 const util = require('util');
 const chalk = require('chalk');
 const figlet =  util.promisify(require('figlet'));
-const {upgrade} = require('websocket-express');
+const {upgrade} = require('@simpo/websocket-express');
 
 
 /**

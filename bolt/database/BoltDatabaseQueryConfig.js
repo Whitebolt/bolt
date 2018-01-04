@@ -1,6 +1,6 @@
 'use strict';
 
-const {FreezeSet} = require('map-watch');
+const {FreezeSet} = require('@simpo/map-watch');
 
 const defaults = Object.freeze({
   accessLevel: 'read',

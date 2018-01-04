@@ -1,6 +1,6 @@
 'use strict';
 
-const {Memory} = require('map-watch');
+const {Memory} = require('@simpo/map-watch');
 const $private = new Memory();
 const errorClasses = new Map();
 

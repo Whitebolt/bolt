@@ -120,7 +120,7 @@ function loadMysql(config) {
 }
 
 loadMysql.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
-	const MySqlStore = require('express-mysql-session')(session);
+	const MySqlStore = require('@simpo/express-mysql-session')(session);
 
 	return new MySqlStore({
 		createDatabaseTable: true

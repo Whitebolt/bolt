@@ -4,7 +4,7 @@
  * @module bolt/bolt
  */
 
-const linuxUser = require.try(true, 'linux-user');
+const linuxUser = require.try(true, '@simpo/linux-user');
 const Promise = require('bluebird');
 const chown = Promise.promisify(require('chownr'));
 const exec = Promise.promisify(require('child_process').exec);

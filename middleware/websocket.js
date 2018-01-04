@@ -1,6 +1,6 @@
 'use strict';
 
-const {websocketMiddleware} = require('websocket-express');
+const {websocketMiddleware} = require('@simpo/websocket-express');
 
 /**
  * Create the session object using mongo store. Duplicate session to websocket routes.

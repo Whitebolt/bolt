@@ -4,7 +4,7 @@
  * @module bolt/bolt
  */
 
-const {Memory} = require('map-watch');
+const {Memory} = require('@simpo/map-watch');
 
 const _memory = new Memory();
 const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;

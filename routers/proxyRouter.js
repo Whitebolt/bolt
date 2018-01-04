@@ -2,7 +2,6 @@
 
 const Promise = require('bluebird');
 const proxy = require('express-http-proxy');
-const ejs = require('ejs');
 const iconv = require('iconv-lite');
 
 /**

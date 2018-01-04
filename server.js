@@ -10,7 +10,7 @@ const fs = require('fs');
 global.__originalCwd = process.cwd();
 process.chdir(path.dirname(fs.realpathSync(__filename)));
 const bolt = {require:require('require-extra')};
-bolt.annotation =  new (bolt.require.sync('object-annotations'))();
+bolt.annotation =  new (bolt.require.sync('@simpo/object-annotations'))();
 const packageConfig = bolt.require.sync('./package.json').config || {};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
 require('./lib/requirex')(bolt, ()=>boltLoaded);

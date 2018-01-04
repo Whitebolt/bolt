@@ -8,7 +8,7 @@ const Promise = require('bluebird');
 const fs = require('fs');
 const open = Promise.promisify(fs.open);
 const write = Promise.promisify(fs.write);
-const ejs = require('ejs');
+const ejs = require('@simpo/ejs');
 const path = require('path');
 
 const chalk = require('chalk');

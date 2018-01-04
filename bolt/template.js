@@ -5,7 +5,7 @@
  */
 
 const path = require('path');
-const ejs = require('ejs');
+const ejs = require('@simpo/ejs');
 
 const rxRelativeDir = /^\.\//;
 const rxStartEndSlash = /^\/|\/$/g;

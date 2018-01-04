@@ -1,6 +1,6 @@
 'use strict';
 
-const rrulestr = require('rrule').rrulestr;
+const rrulestr = require('@simpo/rrule').rrulestr;
 const dateParser = require('ical-date-parser');
 const BoltDatabaseQueryConfig = require('./BoltDatabaseQueryConfig');
 const {prioritySorter} = require('../array');
