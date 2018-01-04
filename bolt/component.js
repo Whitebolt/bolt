@@ -9,6 +9,15 @@ const Promise = require('bluebird');
 
 const xSlash = /\//g;
 
+const componentLoadSequence = [
+	['Hooks', 'loadComponentHooks'],
+	['Controllers', 'loadComponentControllers'],
+	['ComponentViews','loadComponentViews'],
+	['Shortcodes', 'loadComponentShortcodes'],
+	['Redux','loadComponentRedux'],
+	['Components', 'loadComponentComponents']
+];
+
 /**
  * Flow up a component tree constructing the path of the supplied component and returning it.
  *
@@ -114,15 +123,11 @@ async function _loadComponents(app, roots) {
 
 	await bolt.mapAsync(componentDirectories, async (fullPath)=>{
 		const component = _createComponent(app, fullPath);
-
-		await Promise.all([
-			bolt.emitThrough(()=>bolt.loadHooks(component, fullPath), 'loadComponentHooks', app),
-			bolt.emitThrough(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
-			bolt.emitThrough(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
-			bolt.emitThrough(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
-			bolt.emitThrough(()=>bolt.loadRedux(component, fullPath), 'loadComponentRedux', app),
-			bolt.emitThrough(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
-		]);
+		await Promise.all(componentLoadSequence.map(
+			([loadName, eventName])=>bolt.emitThrough(
+				()=>bolt[`load${loadName}`](component, fullPath), eventName, app
+			)
+		));
 	});
 }
 
