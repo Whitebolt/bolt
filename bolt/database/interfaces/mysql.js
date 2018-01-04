@@ -84,8 +84,16 @@ function _getDbConfig(config) {
 function _query(db, queryMethod, sql) {
 	if (bolt.isString(sql)) return queryMethod.call(db, sql);
 	let _query = queryBuilder.sql(sql);
-	console.log(mutateToMySqlFormat(_query), _query.values);
-	return queryMethod.call(db, mutateToMySqlFormat(_query), _query.values);
+	const _sql = mutateToMySqlFormat(_query);
+	_logQuery(_sql, _query.values);
+	return queryMethod.call(db, _sql, _query.values);
+}
+
+function _logQuery(sql, values) {
+	values.forEach(value=>{
+		sql = sql.replace('?', value);
+	});
+	bolt.emit('sqlQuery', sql);
 }
 
 /**

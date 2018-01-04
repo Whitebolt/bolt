@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "keywords": [
     "Server",
     "React",
@@ -259,6 +259,14 @@
         "event": "appRunning",
         "action": "running",
         "description": "<%= params[1][0] %>.<%= params[1][1].toString().substr(0,3) %>s"
+      },
+      {
+        "event": "sqlQuery",
+        "action": "sql",
+        "property": "<%= params[0] %>",
+        "propertyColour": "blue",
+        "description": "database query",
+        "level": 2
       },
       {
         "event": "exportBoltToBrowserGlobal",
