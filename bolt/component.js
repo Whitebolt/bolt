@@ -13,15 +13,15 @@ const xSlash = /\//g;
  * Flow up a component tree constructing the path of the supplied component and returning it.
  *
  * @private
- * @param {BoltComponent} component    The component to get the path of.
+ * @param {BoltComponent} component    The componcomponentt the path of.
  * @returns {string}                   The component path.
  */
 function _getComponentPath(component) {
-  let compPath = [component.name];
-  while (component = component.parent) {
-    compPath.unshift((component.componentType !== 'app')?component.name:'');
-  }
-  return compPath.join('/');
+	let compPath = [component.name];
+	while (component = component.parent) {
+		compPath.unshift((component.componentType !== 'app')?component.name:'');
+	}
+	return compPath.join('/');
 }
 
 /**
@@ -32,7 +32,7 @@ function _getComponentPath(component) {
  * @returns {string}                 The component file path.
  */
 function _getRelativeDirectoryPathForComponent(component) {
-  return component.path.replace(xSlash, '/components/');
+	return component.path.replace(xSlash, '/components/');
 }
 
 /**
@@ -49,20 +49,20 @@ function _getRelativeDirectoryPathForComponent(component) {
  *                                                    load component data.
  */
 class BoltComponent {
-  constructor(parent, name, fullPath) {
-    Object.defineProperties(this, {
-      parent: {enumerable: true, configurable: false, value: parent, writable: false},
-      name: {enumerable: true, configurable: false, value: name, writable: false},
-      fullPath: {enumerable: true, configurable: false, value: new Set(fullPath), writable: false},
-      componentType: {enumerable: true, configurable: false, value: 'component', writable: false},
-      controllers: {enumerable: true, configurable: false, value: {}, writable: false},
-      views: {enumerable: true, configurable: false, value: {}, writable: false},
-      components: {enumerable: true, configurable: false, value: {}, writable: true}
-    });
+	constructor(parent, name, fullPath) {
+		Object.defineProperties(this, {
+			parent: {enumerable: true, configurable: false, value: parent, writable: false},
+			name: {enumerable: true, configurable: false, value: name, writable: false},
+			fullPath: {enumerable: true, configurable: false, value: new Set([fullPath]), writable: false},
+			componentType: {enumerable: true, configurable: false, value: 'component', writable: false},
+			controllers: {enumerable: true, configurable: false, value: {}, writable: false},
+			views: {enumerable: true, configurable: false, value: {}, writable: false},
+			components: {enumerable: true, configurable: false, value: {}, writable: true}
+		});
 
-    Object.defineProperty(this, 'path', {enumerable: true, configurable: false, value: _getComponentPath(this), writable: false});
-    Object.defineProperty(this, 'filePath', {enumerable: true, configurable: false, value: _getRelativeDirectoryPathForComponent(this), writable: false});
-  }
+		Object.defineProperty(this, 'path', {enumerable: true, configurable: false, value: _getComponentPath(this), writable: false});
+		Object.defineProperty(this, 'filePath', {enumerable: true, configurable: false, value: _getRelativeDirectoryPathForComponent(this), writable: false});
+	}
 }
 
 /**
@@ -74,16 +74,16 @@ class BoltComponent {
  * @returns {BoltComponent}                          The component object.
  */
 function _createComponent(app, fullPath) {
-  let name = path.basename(fullPath);
+	let name = path.basename(fullPath);
 
-  if (app.components.hasOwnProperty(name)) {
-    let component = app.components[name];
-    component.fullPath.add(fullPath);
-    return component
-  } else {
-    app.components[name] = new BoltComponent(app, name, fullPath);
-    return app.components[name];
-  }
+	if (app.components.hasOwnProperty(name)) {
+		let component = app.components[name];
+		component.fullPath.add(fullPath);
+		return component
+	} else {
+		app.components[name] = new BoltComponent(app, name, fullPath);
+		return app.components[name];
+	}
 }
 
 /**
@@ -94,9 +94,9 @@ function _createComponent(app, fullPath) {
  * @returns {Promise.<string[]>}     Promise resolving to an array of full paths to load from.
  */
 function _getComponentDirectories(roots) {
-  return bolt.directoriesInDirectory(roots, ['components'])
-    .mapSeries(dirPath=>bolt.directoriesInDirectory(dirPath))
-    .then(dirPaths=>bolt.flattenDeep(dirPaths));
+	return bolt.directoriesInDirectory(roots, ['components'])
+		.mapSeries(dirPath=>bolt.directoriesInDirectory(dirPath))
+		.then(dirPaths=>bolt.flattenDeep(dirPaths));
 }
 
 /**
@@ -107,22 +107,23 @@ function _getComponentDirectories(roots) {
  * @param {Array.<string>} roots                         The roots to load from.
  * @returns {Promise.<BoltApplication|BoltComponent>}    Promise fulfilled when all done.
  */
-function _loadComponents(app, roots) {
-  bolt.addDefaultObjects(app, 'components');
+async function _loadComponents(app, roots) {
+	bolt.addDefaultObjects(app, 'components');
 
-  return _getComponentDirectories(roots).mapSeries(fullPath=>{
-      let component = _createComponent(app, fullPath);
-      return Promise.all([
-        bolt.emitThrough(()=>bolt.loadHooks(component, fullPath), 'loadComponentHooks', app),
-        bolt.emitThrough(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
-        bolt.emitThrough(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
-        bolt.emitThrough(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
-        bolt.emitThrough(()=>bolt.loadRedux(component, fullPath), 'loadComponentRedux', app),
-        bolt.emitThrough(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
-      ]).then(()=>{return {component, fullPath};})
-  }).mapSeries(
-    config=>bolt.emitThrough(()=>bolt.loadComponents(config.component, config.fullPath), 'loadComponentComponents', app)
-  );
+	const componentDirectories = await _getComponentDirectories(roots);
+
+	await bolt.mapAsync(componentDirectories, async (fullPath)=>{
+		const component = _createComponent(app, fullPath);
+
+		await Promise.all([
+			bolt.emitThrough(()=>bolt.loadHooks(component, fullPath), 'loadComponentHooks', app),
+			bolt.emitThrough(()=>bolt.loadControllers(component, fullPath), 'loadComponentControllers', app),
+			bolt.emitThrough(()=>bolt.loadComponentViews(component, fullPath), 'loadComponentViews', app),
+			bolt.emitThrough(()=>bolt.loadShortcodes(component, fullPath), 'loadComponentShortcodes', app),
+			bolt.emitThrough(()=>bolt.loadRedux(component, fullPath), 'loadComponentRedux', app),
+			bolt.emitThrough(()=>bolt.loadComponents(component, fullPath), 'loadComponentComponents', app)
+		]);
+	});
 }
 
 /**
@@ -132,12 +133,16 @@ function _loadComponents(app, roots) {
  * @param {Array.<string>} [roots=app.config.roots]     The roots to load from.
  * @returns {Promise.<BoltApplication|BoltComponent>}   Promise resolving to the supplied app object.
  */
-function loadComponents(app, roots=app.config.root) {
-  let fireEvent = 'loadComponents' + (!app.parent?',loadAllComponents':'');
-  return bolt.emitThrough(()=>_loadComponents(app, roots), fireEvent, app).then(()=>app);
+async function loadComponents(app, roots=app.config.root) {
+	let fireEvent = 'loadComponents' + (!app.parent?',loadAllComponents':'');
+	await bolt.emitThrough(()=>_loadComponents(app, roots), fireEvent, app);
+
+	// You need to know when all the hooks (and hooks on hooks) that run after loadAllComponents have completed.
+	if (!app.parent) await bolt.emit('loadAllComponentsDone', app);
+	return app;
 }
 
 
 module.exports = {
-  loadComponents, BoltComponent
+	loadComponents, BoltComponent
 };

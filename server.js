@@ -47,10 +47,15 @@ async function appLauncher(config) {
 			await bolt.require.import('./bolt/', {
 				merge: true,
 				imports: bolt,
+				retry: true,
 				excludes: packageConfig.appLaunchExcludes,
 				basedir: __dirname,
 				parent: __filename,
-				onload: bolt.boltOnLoad
+				onload: bolt.boltOnLoad,
+				onerror: error=>{
+					console.log('Failed to load bolt module: ', error.source);
+					console.error(error.error);
+				}
 			});
 
 			boltLoaded = true;
@@ -85,9 +90,14 @@ async function pm2Controller() {
 	let boltImportOptions = {
 		merge:true,
 		imports:bolt,
+		retry: true,
 		basedir:__dirname,
 		parent: __filename,
-		onload: bolt.boltOnLoad
+		onload: bolt.boltOnLoad,
+		onerror: error=>{
+			console.log('Failed to load bolt module: ', error.source);
+			console.error(error.error);
+		}
 	};
 	if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 

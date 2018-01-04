@@ -6,7 +6,6 @@
 
 const path = require('path');
 const ejs = require('ejs');
-const babel = require('babel-core');
 
 const rxRelativeDir = /^\.\//;
 const rxStartEndSlash = /^\/|\/$/g;

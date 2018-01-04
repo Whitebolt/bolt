@@ -9,11 +9,7 @@ const xCasted = /\:\:(.*)/;
 const xDollarDigit = /\$\d+/g;
 const xDoubleQuotes = /\"/g;
 
-let mutateToMySqlFormat;
-
-bolt.ready(()=>{
-	mutateToMySqlFormat = bolt.replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
-});
+const mutateToMySqlFormat = bolt.replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
 
 function _getOrderItem(field, direction, query) {
 	if (bolt.isObject(field)) {

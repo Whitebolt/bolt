@@ -4,17 +4,12 @@
  * @module bolt/bolt
  */
 
-const util = require('util');
 const {Memory} = require('map-watch');
 
 const _memory = new Memory();
 const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;
+const errorFactory = new bolt.ErrorFactory('controllerContext');
 
-let errorFactory;
-
-bolt.ready(()=>{
-  errorFactory = new bolt.ErrorFactory('controllerContext');
-});
 
 /**
  * Get the controller cascade for a given controller.
@@ -25,15 +20,15 @@ bolt.ready(()=>{
  * @returns {Set|Array}                   The cascade as a Set object unless an array requested.
  */
 function _getControllerCascade(controller, returnArray=false) {
-  let cascade;
-  if (_memory.has(controller, 'cascade')) {
-    cascade = _memory.get(controller, 'cascade')
-  } else {
-    let component = bolt.annotation.get(controller, 'parent');
-    cascade = _getNamedControllerCascade(component, bolt.annotation.get(controller, 'name'));
-    _memory.set(controller, 'cascade', cascade);
-  }
-  return ((returnArray===true) ? Array.from(cascade) : cascade);
+	let cascade;
+	if (_memory.has(controller, 'cascade')) {
+		cascade = _memory.get(controller, 'cascade')
+	} else {
+		let component = bolt.annotation.get(controller, 'parent');
+		cascade = _getNamedControllerCascade(component, bolt.annotation.get(controller, 'name'));
+		_memory.set(controller, 'cascade', cascade);
+	}
+	return ((returnArray===true) ? Array.from(cascade) : cascade);
 }
 
 /**
@@ -45,43 +40,43 @@ function _getControllerCascade(controller, returnArray=false) {
  * @returns {Set}                       The controller cascade.
  */
 function _getNamedControllerCascade(component, name) {
-  return bolt.annotation.get(component, "controllers", name);
+	return bolt.annotation.get(component, "controllers", name);
 }
 
 
 function get(component, extraParams) {
 
-  function getBoundProperty(sourceMethod) {
-    let method = bolt.annotation.get(sourceMethod, 'controllerMethod');
-    return (method ? method.bind({}, component, ...extraParams) : sourceMethod);
-  }
+	function getBoundProperty(sourceMethod) {
+		let method = bolt.annotation.get(sourceMethod, 'controllerMethod');
+		return (method ? method.bind({}, component, ...extraParams) : sourceMethod);
+	}
 
-  /**
-   * Proxy get() method for controller..
-   *
-   * @throws ReferenceError
-   *
-   * @param {Object} controller     Controller to get on.
-   * @param {string} name           The property to get.
-   * @returns {*}                   The property value.
-   */
-  return (controller, name)=>{
-    if (name === '$parent') return createComponentScope(controller);
-    if (name === '$me') {
-      let callee = xStackFindProxy.exec((new Error).stack);
-      let cascade = _getControllerCascade(controller, true)
-        .map(controller=>controller[callee[1]])
-        .filter(method=>method);
-      if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade);
-    }
-    if (controller.hasOwnProperty(name)) return getBoundProperty(controller[name]);
-    let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
-    if (found) {
-      let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
-      if ((visibility === 'public') || (visibility === 'private') || (visibility === 'protected')) return getBoundProperty(found[name]);
-    }
-    if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
-  };
+	/**
+	 * Proxy get() method for controller..
+	 *
+	 * @throws ReferenceError
+	 *
+	 * @param {Object} controller     Controller to get on.
+	 * @param {string} name           The property to get.
+	 * @returns {*}                   The property value.
+	 */
+	return (controller, name)=>{
+		if (name === '$parent') return createComponentScope(controller);
+		if (name === '$me') {
+			let callee = xStackFindProxy.exec((new Error).stack);
+			let cascade = _getControllerCascade(controller, true)
+				.map(controller=>controller[callee[1]])
+				.filter(method=>method);
+			if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade);
+		}
+		if (controller.hasOwnProperty(name)) return getBoundProperty(controller[name]);
+		let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
+		if (found) {
+			let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
+			if ((visibility === 'public') || (visibility === 'private') || (visibility === 'protected')) return getBoundProperty(found[name]);
+		}
+		if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
+	};
 }
 
 /**
@@ -92,8 +87,8 @@ function get(component, extraParams) {
  * @returns {boolean}             Does the controller have the given property/method?
  */
 function has(controller, name) {
-  let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
-  return (found || controller.hasOwnProperty(name));
+	let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
+	return (found || controller.hasOwnProperty(name));
 }
 
 /**
@@ -102,7 +97,7 @@ function has(controller, name) {
  * @throws RangeError
  */
 function set() {
-  throw errorFactory.error('afterInitProperty', {});
+	throw errorFactory.error('afterInitProperty', {});
 }
 
 /**
@@ -111,7 +106,7 @@ function set() {
  * @throws RangeError
  */
 function setComponent() {
-  throw errorFactory.error('afterInitController', {});
+	throw errorFactory.error('afterInitController', {});
 }
 
 /**
@@ -121,11 +116,11 @@ function setComponent() {
  * @returns {Array}              The controller keys.
  */
 function ownKeys(controller) {
-  let casscade = _getControllerCascade(controller);
-  let keys = new Set();
-  casscade.forEach(controller=>Object.keys(controller=>keys.add(key)));
-  Object.keys(controller).forEach(key=>keys.add(key));
-  return Array.from(keys);
+	let casscade = _getControllerCascade(controller);
+	let keys = new Set();
+	casscade.forEach(controller=>Object.keys(controller=>keys.add(key)));
+	Object.keys(controller).forEach(key=>keys.add(key));
+	return Array.from(keys);
 }
 
 /**
@@ -134,7 +129,7 @@ function ownKeys(controller) {
  * @returns {boolean}     Returns false.
  */
 function setPrototypeOf() {
-  return false;
+	return false;
 }
 
 /**
@@ -143,7 +138,7 @@ function setPrototypeOf() {
  * @returns {boolean}     Returns false.
  */
 function isExtensible() {
-  return false;
+	return false;
 }
 
 /**
@@ -152,7 +147,7 @@ function isExtensible() {
  * @returns {boolean}     Returns true.
  */
 function preventExtensions() {
-  return true;
+	return true;
 }
 
 /**
@@ -163,7 +158,7 @@ function preventExtensions() {
  * @returns {Object}            Property descriptor.
  */
 function getOwnPropertyDescriptor(controller, name) {
-  return Object.getOwnPropertyDescriptor(controller, name);
+	return Object.getOwnPropertyDescriptor(controller, name);
 }
 
 /**
@@ -172,7 +167,7 @@ function getOwnPropertyDescriptor(controller, name) {
  * @returns {boolean}     Returns false.
  */
 function defineProperty() {
-  return false;
+	return false;
 }
 
 /**
@@ -181,7 +176,7 @@ function defineProperty() {
  * @returns {boolean}     Returns false.
  */
 function deleteProperty() {
-  return false;
+	return false;
 }
 
 /**
@@ -190,7 +185,7 @@ function deleteProperty() {
  * @returns {Object}     Returns Object.prototype.
  */
 function getPrototypeOf() {
-  return Object.prototype;
+	return Object.prototype;
 }
 
 /**
@@ -199,7 +194,7 @@ function getPrototypeOf() {
  * @throws SyntaxError
  */
 function apply() {
-  throw errorFactory.error('ccontrollerAsFunction', {});
+	throw errorFactory.error('ccontrollerAsFunction', {});
 }
 
 /**
@@ -208,7 +203,7 @@ function apply() {
  * @throws SyntaxError
  */
 function applyComponent() {
-  throw errorFactory.error('componentrAsFunction', {});
+	throw errorFactory.error('componentrAsFunction', {});
 }
 
 /**
@@ -221,16 +216,16 @@ function applyComponent() {
  * @returns {Proxy}                 The controller scope to get.
  */
 function componentGet(controllers, name) {
-  if (name === '$parent') {
-    let controllerNames = ownKeysComponent(controllers);
-    if (controllerNames.length) {
-      let parent = bolt.annotation.get(get(controllers, controllerNames[0]), 'parent');
-      if (component.parent) return createComponentScope(parent);
-    }
-  } else {
-    if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
-    if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noController', {name});
-  }
+	if (name === '$parent') {
+		let controllerNames = ownKeysComponent(controllers);
+		if (controllerNames.length) {
+			let parent = bolt.annotation.get(get(controllers, controllerNames[0]), 'parent');
+			if (component.parent) return createComponentScope(parent);
+		}
+	} else {
+		if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
+		if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noController', {name});
+	}
 }
 
 /**
@@ -241,7 +236,7 @@ function componentGet(controllers, name) {
  * @returns {Object}              Property descriptor.
  */
 function getOwnPropertyDescriptorComponent(controllers, name) {
-  return Object.getOwnPropertyDescriptor(controllers, name);
+	return Object.getOwnPropertyDescriptor(controllers, name);
 }
 
 /**
@@ -252,7 +247,7 @@ function getOwnPropertyDescriptorComponent(controllers, name) {
  * @returns {boolean}             Does the component have the given controller?
  */
 function hasComponent(controllers, name) {
-  return controllers.hasOwnProperty(name);
+	return controllers.hasOwnProperty(name);
 }
 
 /**
@@ -262,7 +257,7 @@ function hasComponent(controllers, name) {
  * @returns {Array}              The controller names.
  */
 function ownKeysComponent(controllers) {
-  return Object.keys(controllers);
+	return Object.keys(controllers);
 }
 
 /**
@@ -272,26 +267,26 @@ function ownKeysComponent(controllers) {
  * @returns {Proxy}
  */
 function createComponentScope(controller) {
-  let component = ((controller instanceof bolt.BoltComponent) ? controller : bolt.annotation.get(controller, 'parent'));
+	let component = ((controller instanceof bolt.BoltComponent) ? controller : bolt.annotation.get(controller, 'parent'));
 
-  if (_memory.has(component.controllers, 'componentScope')) return _memory.get(component.controllers, 'componentScope');
-  let scope = new Proxy(component.controllers, {
-    apply: applyComponent,
-    defineProperty,
-    deleteProperty,
-    get: componentGet,
-    getOwnPropertyDescriptor: getOwnPropertyDescriptorComponent,
-    getPrototypeOf,
-    has: hasComponent,
-    isExtensible,
-    ownKeys: ownKeysComponent,
-    preventExtensions,
-    set: setComponent,
-    setPrototypeOf
-  });
-  _memory.set(component.controllers, scope, 'componentScope');
+	if (_memory.has(component.controllers, 'componentScope')) return _memory.get(component.controllers, 'componentScope');
+	let scope = new Proxy(component.controllers, {
+		apply: applyComponent,
+		defineProperty,
+		deleteProperty,
+		get: componentGet,
+		getOwnPropertyDescriptor: getOwnPropertyDescriptorComponent,
+		getPrototypeOf,
+		has: hasComponent,
+		isExtensible,
+		ownKeys: ownKeysComponent,
+		preventExtensions,
+		set: setComponent,
+		setPrototypeOf
+	});
+	_memory.set(component.controllers, scope, 'componentScope');
 
-  return scope;
+	return scope;
 }
 
 /**
@@ -302,27 +297,27 @@ function createComponentScope(controller) {
  * @returns {Proxy}
  */
 function createControllerScope(controller, router, extraParams) {
-  let component = bolt.annotation.get(controller, 'parent');
-  let name = bolt.annotation.get(controller, 'name');
+	let component = bolt.annotation.get(controller, 'parent');
+	let name = bolt.annotation.get(controller, 'name');
 
-  if (_memory.has(component.controllers[name], 'controllerScope')) return _memory.get(component.controllers[name], 'controllerScope');
-  let scope = new Proxy(component.controllers[name], {
-    apply,
-    defineProperty,
-    deleteProperty,
-    get: get(router, extraParams),
-    getOwnPropertyDescriptor,
-    getPrototypeOf,
-    has,
-    isExtensible,
-    ownKeys,
-    preventExtensions,
-    set,
-    setPrototypeOf
-  });
-  _memory.set(component.controllers[name], scope, 'controllerScope');
+	if (_memory.has(component.controllers[name], 'controllerScope')) return _memory.get(component.controllers[name], 'controllerScope');
+	let scope = new Proxy(component.controllers[name], {
+		apply,
+		defineProperty,
+		deleteProperty,
+		get: get(router, extraParams),
+		getOwnPropertyDescriptor,
+		getPrototypeOf,
+		has,
+		isExtensible,
+		ownKeys,
+		preventExtensions,
+		set,
+		setPrototypeOf
+	});
+	_memory.set(component.controllers[name], scope, 'controllerScope');
 
-  return scope;
+	return scope;
 }
 
 module.exports = createControllerScope;

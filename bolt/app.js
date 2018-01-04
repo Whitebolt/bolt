@@ -22,10 +22,10 @@ const chalk = require('chalk');
  * @type {external:ejsOptions}
  */
 const ejsOptions = Object.freeze({
-  strict: true,
-  localsName: ['params'],
-  awaitPromises: true,
-  _with: false
+	strict: true,
+	localsName: ['params'],
+	awaitPromises: true,
+	_with: false
 });
 
 /**
@@ -38,40 +38,40 @@ const ejsOptions = Object.freeze({
  * @returns {Function}          Unreg function.
  */
 function _registerLogEvent(config) {
-  let description = ejs.compile(config.description, ejsOptions);
-  let property = config.property?ejs.compile(config.property, ejsOptions):undefined;
+	let description = ejs.compile(config.description, ejsOptions);
+	let property = config.property?ejs.compile(config.property, ejsOptions):undefined;
 
-  return bolt.on(config.event, (...params) => {
-    let level = config.level || 3; // Placed here so level can be changed in-flight.
-    const channel = '/logging';
+	return bolt.on(config.event, (...params) => {
+		let level = config.level || 3; // Placed here so level can be changed in-flight.
+		const channel = '/logging';
 
-    let promises = [
-      description(params),
-      config.property ? property(params) : Promise.resolve(params[0])
-    ];
+		let promises = [
+			description(params),
+			config.property ? property(params) : Promise.resolve(params[0])
+		];
 
-    Promise.all(promises).spread((description, property) => {
-      let message = {
-        level,
-        type: config.action || config.event,
-        description,
-        property,
-        style: {
-          property: {
-            colour: config.propertyColour || 'yellow'
-          },
-          type: {
-            colour: config.typeColour || 'green'
-          },
-          description: {
-            colour: config.descriptionColour || 'white'
-          }
-        }
-      };
+		Promise.all(promises).spread((description, property) => {
+			let message = {
+				level,
+				type: config.action || config.event,
+				description,
+				property,
+				style: {
+					property: {
+						colour: config.propertyColour || 'yellow'
+					},
+					type: {
+						colour: config.typeColour || 'green'
+					},
+					description: {
+						colour: config.descriptionColour || 'white'
+					}
+				}
+			};
 
-      bolt.publish(channel, message);
-    });
-  });
+			bolt.publish(channel, message);
+		});
+	});
 }
 
 /**
@@ -81,18 +81,18 @@ function _registerLogEvent(config) {
  * @param {BoltApplication} app    The express application.
  */
 function _initLogging(app) {
-  app.config.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
-  _initConsoleLogging(app.config.logLevel, message=>{
-    const pc = message.data.style.property.colour || 'yellow';
-    const tc = ((message.data.style.type.colour || 'green') + 'Bright').replace('BrightBright', 'Bright');
-    const mc = message.data.style.description.colour || 'white';
+	app.config.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
+	_initConsoleLogging(app.config.logLevel, message=>{
+		const pc = message.data.style.property.colour || 'yellow';
+		const tc = ((message.data.style.type.colour || 'green') + 'Bright').replace('BrightBright', 'Bright');
+		const mc = message.data.style.description.colour || 'white';
 
-    const _message = `[${chalk[tc](message.data.type)}] ${chalk[mc].bold(message.data.description)} ${chalk[pc].italic(message.data.property)}`;
-    console.log(_message)
-  });
-  _initAccessLogging(app.config.accessLog);
+		const _message = `[${chalk[tc](message.data.type)}] ${chalk[mc].bold(message.data.description)} ${chalk[pc].italic(message.data.property)}`;
+		console.log(_message)
+	});
+	_initAccessLogging(app.config.accessLog);
 
-  return app;
+	return app;
 }
 
 /**
@@ -103,7 +103,7 @@ function _initLogging(app) {
  * @param {function} listener   Callback to fire on event.
  */
 function _initConsoleLogging(level, listener) {
-  bolt.subscribe('/logging', {level: {$gte: level}}, message=>listener(message));
+	bolt.subscribe('/logging', {level: {$gte: level}}, message=>listener(message));
 }
 
 /**
@@ -116,11 +116,11 @@ function _initConsoleLogging(level, listener) {
  * @param {string} logPath    Path to log to.
  */
 function _initAccessLogging(logPath) {
-  if (logPath) {
-    bolt.makeDirectory(path.dirname(logPath)).then(()=>open(logPath, 'a').then(fd=>{
-      bolt.subscribe('/logging/access', (options, message)=>write(fd, message));
-    }));
-  }
+	if (logPath) {
+		bolt.makeDirectory(path.dirname(logPath)).then(()=>open(logPath, 'a').then(fd=>{
+			bolt.subscribe('/logging/access', (options, message)=>write(fd, message));
+		}));
+	}
 }
 
 /**
@@ -131,19 +131,19 @@ function _initAccessLogging(logPath) {
  * @returns {BoltApplication}      The express application instance.
  */
 function _createApp(config) {
-  return new BoltApplication(config);
+	return new BoltApplication(config);
 }
 
 async function getComponentDirectories(root) {
-  const componentsDirectories = (await bolt.directoriesInDirectory(root, ['components']));
-  if (componentsDirectories.length) {
-    const componentDirectories = await bolt.directoriesInDirectory(componentsDirectories);
-    if (componentDirectories.length) {
-      return [...componentDirectories, ... await getComponentDirectories(componentDirectories)];
-    }
-    return componentDirectories;
-  }
-  return [];
+	const componentsDirectories = (await bolt.directoriesInDirectory(root, ['components']));
+	if (componentsDirectories.length) {
+		const componentDirectories = await bolt.directoriesInDirectory(componentsDirectories);
+		if (componentDirectories.length) {
+			return [...componentDirectories, ... await getComponentDirectories(componentDirectories)];
+		}
+		return componentDirectories;
+	}
+	return [];
 }
 
 /**
@@ -155,22 +155,27 @@ async function getComponentDirectories(root) {
  * @returns {Promise.<BoltApplication>}       Promise resolving to app when all is loaded.
  */
 async function _boltLoader(app) {
-  const root = [...app.config.root, ...await getComponentDirectories(app.config.root)];
-  const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
-    .filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
+	const root = [...app.config.root, ...await getComponentDirectories(app.config.root)];
+	const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
+		.filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
 
-  await Promise.all(boltDirectories.map(dirPath=>{
-    return require.import(dirPath, {
-      merge: true,
-      imports: bolt,
-      onload:(modulePath, exports)=>{
-        bolt.boltOnLoad(modulePath, exports);
-        return bolt.emit('extraBoltModuleLoaded', modulePath);
-      }
-    });
-  }));
+	await Promise.all(boltDirectories.map(dirPath=>{
+		return require.import(dirPath, {
+			merge: true,
+			retry: true,
+			imports: bolt,
+			onload:(modulePath, exports)=>{
+				bolt.boltOnLoad(modulePath, exports);
+				return bolt.emit('extraBoltModuleLoaded', modulePath);
+			},
+			onerror: error=>{
+				console.log('Failed to load bolt module: ', error.source);
+				console.error(error.error);
+			}
+		});
+	}));
 
-  return app;
+	return app;
 }
 
 /**
@@ -181,14 +186,14 @@ async function _boltLoader(app) {
  * @returns {Promise.<BoltApplication>}      Promise resolving to app object once it is loaded.
  */
 function _loadApplication(configPath) {
-  return (bolt.isString(configPath) ? require.async(configPath) : Promise.resolve(configPath))
-    .then(_createApp)
-    .then(_initLogging)
-    .then(app=>{
-      bolt.emit('configLoaded', configPath);
-      return app;
-    })
-    .then(_boltLoader);
+	return (bolt.isString(configPath) ? require.async(configPath) : Promise.resolve(configPath))
+		.then(_createApp)
+		.then(_initLogging)
+		.then(app=>{
+			bolt.emit('configLoaded', configPath);
+			return app;
+		})
+		.then(_boltLoader);
 }
 
 /**
@@ -203,16 +208,16 @@ function _loadApplication(configPath) {
  * @returns {Promise}
  */
 function importIntoObject(options) {
-  return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
-    .mapSeries(dirPath => {
-      return require.import(dirPath, {
-        imports: options.importObj || {},
-        onload: filepath=>bolt.emit(options.eventName, filepath),
-        basedir: boltRootDir,
-        parent: __filename
-      });
-    })
-  );
+	return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
+		.mapSeries(dirPath => {
+			return require.import(dirPath, {
+				imports: options.importObj || {},
+				onload: filepath=>bolt.emit(options.eventName, filepath),
+				basedir: boltRootDir,
+				parent: __filename
+			});
+		})
+	);
 }
 
 /**
@@ -223,9 +228,9 @@ function importIntoObject(options) {
  * @returns {BoltApplication}                                   Express application instance.
  */
 function getApp(component) {
-  let app = component;
-  while (app.parent) app = app.parent;
-  return app;
+	let app = component;
+	while (app.parent) app = app.parent;
+	return app;
 }
 
 /**
@@ -243,9 +248,9 @@ function getApp(component) {
  *                              loaded and events fired.
  */
 async function loadApplication(configPath) {
-  await bolt.emitBefore('initialiseApp');
-  const app = await _loadApplication(configPath);
-  await bolt.emitAfter('initialiseApp', configPath, app);
+	await bolt.emitBefore('initialiseApp');
+	const app = await _loadApplication(configPath);
+	await bolt.emitAfter('initialiseApp', configPath, app);
 }
 
 /**
@@ -262,20 +267,20 @@ async function loadApplication(configPath) {
  *  @property {string} componentType          The componernt type, is constant "app".
  */
 class BoltApplication extends express {
-  constructor(config) {
-    super();
+	constructor(config) {
+		super();
 
-    Object.defineProperties(this, {
-      config: {enumerable: true, configurable: false, value: config, writable: false},
-      routers: {enumerable: true, configurable: false, value: {}, writable: false},
-      controllerRoutes: {enumerable: true, configurable: false, value: {}, writable: true},
-      shortcodes: {enumerable: true, configurable: false, value: {}, writable: false},
-      templates: {enumerable: true, configurable: false, value: {}, writable: false},
-      componentType: {enumerable: true, configurable: false, value: 'app', writable: false}
-    });
-  }
+		Object.defineProperties(this, {
+			config: {enumerable: true, configurable: false, value: config, writable: false},
+			routers: {enumerable: true, configurable: false, value: {}, writable: false},
+			controllerRoutes: {enumerable: true, configurable: false, value: {}, writable: true},
+			shortcodes: {enumerable: true, configurable: false, value: {}, writable: false},
+			templates: {enumerable: true, configurable: false, value: {}, writable: false},
+			componentType: {enumerable: true, configurable: false, value: 'app', writable: false}
+		});
+	}
 }
 
 module.exports = {
-  loadApplication, getApp, importIntoObject, BoltApplication
+	loadApplication, getApp, importIntoObject, BoltApplication
 };

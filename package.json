@@ -152,7 +152,8 @@
       "csp",
       "sessionStore",
       "sessionStoreDb",
-      "questions"
+      "questions",
+      "errors"
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [

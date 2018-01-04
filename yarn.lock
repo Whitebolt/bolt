@@ -5322,8 +5322,8 @@ require-directory@^2.1.1:
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
 
 require-extra@^1.5.2:
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.5.5.tgz#81bd085071a814eee31cac41724e948bdddd8056"
+  version "1.5.6"
+  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.5.6.tgz#6bce763b656d146afdb6fe684625460bf37abd6d"
   dependencies:
     "@babel/plugin-proposal-decorators" "^7.0.0-beta.35"
     babel-polyfill "^6.26.0"
