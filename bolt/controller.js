@@ -259,7 +259,15 @@ function _setControllerMethodFilePathAnnotation(filePath, controller) {
 async function _loadControllers(component, roots, importObj) {
 	bolt.on('loadedController', filePath=>_setControllerMethodFilePathAnnotation(filePath, importObj));
 
-	let controllers = await bolt.importIntoObject({roots, importObj, dirName:'controllers', eventName:'loadedController'});
+	let controllers = await bolt.importIntoObject({
+		roots,
+		importObj,
+		dirName:'controllers',
+		eventName:'loadedController',
+		importOptions: {
+			extensions:['.js']
+		}
+	});
 	_addControllerRoutes(component, controllers);
 	_addControllerRoutesToApplication();
 

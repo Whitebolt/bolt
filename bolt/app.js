@@ -209,13 +209,14 @@ function _loadApplication(configPath) {
  */
 function importIntoObject(options) {
 	return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
-		.mapSeries(dirPath => {
-			return require.import(dirPath, {
+		.mapSeries(dirPath=>{
+			const importOptions = Object.assign({}, {
 				imports: options.importObj || {},
 				onload: filepath=>bolt.emit(options.eventName, filepath),
 				basedir: boltRootDir,
 				parent: __filename
-			});
+			}, options.importOptions || {});
+			return require.import(dirPath, importOptions);
 		})
 	);
 }

@@ -1,8 +1,7 @@
 {
   "name": "@simpo/bolt-server",
   "description": "Bolt NodeJs Server",
-  "author": "Whitebolt <hello@whitebolt.net>",
-  "contributors": [
+  "author": "Whitebolt <hello@whitebolunpredictableontributors": [
     {
       "name": "Stephen Simpson",
       "email": "stephen@whitebolt.net"
@@ -12,7 +11,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "0.11.3",
+  "version": "0.11.4",
   "private": false,
   "keywords": [
     "Server",

@@ -18,6 +18,7 @@ const componentLoadSequence = [
 	['Components', 'loadComponentComponents']
 ];
 
+
 /**
  * Flow up a component tree constructing the path of the supplied component and returning it.
  *
@@ -120,7 +121,6 @@ async function _loadComponents(app, roots) {
 	bolt.addDefaultObjects(app, 'components');
 
 	const componentDirectories = await _getComponentDirectories(roots);
-
 	await bolt.mapAsync(componentDirectories, async (fullPath)=>{
 		const component = _createComponent(app, fullPath);
 		await Promise.all(componentLoadSequence.map(
