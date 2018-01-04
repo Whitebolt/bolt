@@ -45,8 +45,8 @@ function _runApp(app) {
 
 		server.listen(app.config.port, async ()=>{
 			bolt.emit('appListening', app.config.port);
-			let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName)).match(/[A-Z][a-z]+/g).join(' ');
-			let welcome = await figlet(`${serverName.split('/').pop()} `);
+			let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName.split('/').pop())).match(/[A-Z][a-z]+/g).join(' ');
+			let welcome = await figlet(`${serverName} `);
 			let version = await figlet(`v${app.config.version}`);
 			let wLineLength = 0;
 			let vLineLength = 0;
