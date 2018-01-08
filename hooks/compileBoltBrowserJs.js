@@ -1,6 +1,7 @@
 'use strict';
 
 const {compileBolt, setVirtualJsFile, clearCache, logExportSequence} = bolt.requireLib('build');
+const filesId = '__modules';
 
 bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
 
@@ -10,9 +11,10 @@ module.exports = function() {
 	// @annotation when after
 
 	return async (app)=>{
+		if (!bolt[filesId]) return;
 		let boltContent = '';
 		const name = 'bolt';
-		const files = [...bolt.__modules];
+		const files = [...bolt[filesId]];
 		if (app.config.development || app.config.debug) await logExportSequence(name, files);
 		const exportedLookup = new Set();
 		const exportEventType = 'exportBoltToBrowserGlobal';
@@ -60,6 +62,6 @@ module.exports = function() {
 
 		const compiled = await compileBolt(boltContent, exported, name);
 		setVirtualJsFile(name, compiled);
-		clearCache('__modules');
+		clearCache(filesId);
 	}
 };

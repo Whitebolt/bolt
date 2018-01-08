@@ -1,6 +1,7 @@
 'use strict';
 
 const {compileReact, setVirtualJsFile, clearCache, logExportSequence} = bolt.requireLib('build');
+const filesId = '__react';
 
 bolt.ExportToBrowserReactBoltEvent = class ExportToBrowserReactBoltEvent extends bolt.Event {};
 
@@ -9,8 +10,9 @@ module.exports = function(){
 	// @annotation when after
 
 	return async app=>{
+		if (!bolt[filesId]) return;
 		const name = 'ReactBolt';
-		const files = [...bolt.__react];
+		const files = [...bolt[filesId]];
 		if (app.config.development || app.config.debug) await logExportSequence(name, files);
 		let reactBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		const exportEventType = 'exportReactComponentToBrowser';
@@ -38,6 +40,6 @@ module.exports = function(){
 
 		const compiled = await compileReact(reactBoltContent, name);
 		setVirtualJsFile(name, compiled);
-		clearCache('__react');
+		clearCache(filesId);
 	};
 };
