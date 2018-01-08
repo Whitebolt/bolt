@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 const mongo = require('mongodb');
 
 /**
@@ -11,10 +10,10 @@ const mongo = require('mongodb');
  * @returns {string}                The connection url or blank string.
  */
 function _createMongoUrl(config) {
-  config.server = config.server || 'localhost';
-  config.port = config.port || 27017;
+	config.server = config.server || 'localhost';
+	config.port = config.port || 27017;
 
-  return `mongodb://${_createMongoAuthenticationPart(config)}${config.server}:${config.port}/${config.database}${config.username ? '?authSource=' + config.adminDatabase : ''}`
+	return `mongodb://${_createMongoAuthenticationPart(config)}${config.server}:${config.port}/${config.database}${config.username ? '?authSource=' + config.adminDatabase : ''}`
 }
 
 /**
@@ -25,14 +24,14 @@ function _createMongoUrl(config) {
  * @returns {string}                The authentication section of a database url.
  */
 function _createMongoAuthenticationPart(config) {
-  if (config.username) {
-    config.adminDatabase = config.adminDatabase || 'admin';
-    return encodeURIComponent(config.username)
-      + (config.password ? ':' + encodeURIComponent(config.password) : '')
-      + '@';
-  }
+	if (config.username) {
+		config.adminDatabase = config.adminDatabase || 'admin';
+		return encodeURIComponent(config.username)
+			+ (config.password ? ':' + encodeURIComponent(config.password) : '')
+			+ '@';
+	}
 
-  return '';
+	return '';
 }
 
 /**
@@ -48,12 +47,14 @@ function _createMongoAuthenticationPart(config) {
  * @returns {Promise.<external:Db>}    The  mongo database instance object.
  */
 function loadMongo(config) {
-  return mongo.MongoClient.connect(_createMongoUrl(config), {
-    promiseLibrary: Promise
-  }).then(results=>{
-    if (global.bolt && bolt.fire) bolt.emit('mongoConnected', config.database);
-    return results;
-  })
+	return mongo.MongoClient.connect(_createMongoUrl(config), {
+		// @todo At some point we need to get rid of bluebird as now using async/await.
+		promiseLibrary: require('bluebird')
+	}).then(client=>{
+		bolt.emit('mongoConnected', config.database);
+		return client.db(config.database);
+	});
+
 }
 
 /**
@@ -69,14 +70,14 @@ function loadMongo(config) {
  * @returns {external:ObjectId}    Mongo-id object.
  */
 function mongoId(id) {
-  return new mongo.ObjectID(id);
+	return new mongo.ObjectID(id);
 }
 
 loadMongo.mongoId = mongoId;
 
 loadMongo.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
-  const MongoStore = require('connect-mongo')(session);
-  return new MongoStore({db: app.dbs[db]});
+	const MongoStore = require('connect-mongo')(session);
+	return new MongoStore({db: app.dbs[db]});
 };
 
 module.exports = loadMongo;
