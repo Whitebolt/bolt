@@ -14,7 +14,7 @@ const iconv = require('iconv-lite');
  */
 function contentIsType(type, matchType) {
   let matchTypes = bolt.makeArray(matchType);
-  return ((type.filter(_type=>(bolt.indexOf(matchTypes, _type) !== -1))).length > 0);
+  return ((type.filter(_type=>(matchTypes.indexOf(_type) !== -1))).length > 0);
 }
 
 /**
@@ -223,7 +223,7 @@ function _proxyRouter(app, appProxyConfig) {
  * @returns {Object}                The router object.
  */
 function proxyRouter(app) {
-  // @annotation priority 10
+  // @annotation priority -10
 
   let routing = [(req, res, next)=>next()];
   if (app.config.proxy && app.config.proxy.forwardPath) {
