@@ -18,11 +18,12 @@ const stat = util.promisify(fs.stat);
  * @param {boltConfig} config   The bolt config object.
  * @returns {Promise.<Object>}
  */
-function _createUser(config) {
+async function _createUser(config) {
+	const linuxUser = await linuxUserAwait;
 	var options = {username: config.userName};
 	if (config.homeDir) options.d = config.homeDir;
-	return linuxUser.addUser(options)
-		.then(result=>linuxUser.getUserInfo(config.userName));
+	await  linuxUser.addUser(options)
+	return linuxUser.getUserInfo(config.userName);
 }
 
 /**
