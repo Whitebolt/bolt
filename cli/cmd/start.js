@@ -63,6 +63,7 @@ async function start(args) {
 	if (args.hasOwnProperty('name') && args.hasOwnProperty('profile')) {
 		const siteConfig = await bolt.loadConfig(args.name, args.profile);
 		siteConfig.development = ((process.getuid && process.getuid() !== 0)?true:args.development) || siteConfig.development;
+		siteConfig.production = ((process.getuid && process.getuid() === 0)?true:args.production) || siteConfig.production;
 
 		if (siteConfig.hasOwnProperty('questions')) {
 			const questions = siteConfig.questions.filter(question=>{

@@ -19,6 +19,9 @@
     "Redux",
     "ExpressJs"
   ],
+  "peerDependencies": {
+    "pm2": "^2.9.1"
+  },
   "dependencies": {
     "@babel/cli": "^7.0.0-beta.36",
     "@babel/core": "^7.0.0-beta.36",
@@ -61,6 +64,7 @@
     "express-session": "^1.15.6",
     "figlet": "^1.2.0",
     "find-free-port": "^1.1.0",
+    "global-modules": "^1.0.0",
     "gulp-sourcemaps": "^2.6.3",
     "gulp-uglify": "^3.0.0",
     "helmet": "^3.9.0",
@@ -81,7 +85,6 @@
     "nodemailer": "^4.4.0",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
-    "pm2": "^2.9.1",
     "prepend-file": "^1.3.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
@@ -164,15 +167,18 @@
       "nginx"
     ],
     "pm2LaunchIncludes": [
-      "config",
-      "nginx",
-      "database",
-      "pm2",
-      "system",
-      "template",
       "array",
+      "database",
+      "config",
+      "event",
       "files",
-      "object"
+      "function",
+      "nginx",
+      "object",
+      "pm2",
+      "string",
+      "system",
+      "template"
     ],
     "csp": {
       "sandbox": [

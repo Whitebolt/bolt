@@ -26,7 +26,7 @@ function _runApp(app) {
 	return new Promise(async (resolve)=>{
 		let server;
 
-		if (app.config.development) {
+		if (app.config.development && !app.config.production) {
 			try {
 				const fs = require('fs');
 				let options = {

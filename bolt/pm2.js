@@ -4,8 +4,9 @@
  * @module bolt/bolt
  */
 
-const pm2 = require('bluebird').promisifyAll(require('pm2'));
-const processFileProperties = Object.keys(require('pm2/lib/API/schema.json'));
+const globalModules = require('global-modules');
+const pm2 = require('bluebird').promisifyAll(require(`${globalModules}/pm2`));
+const processFileProperties = Object.keys(require(`${globalModules}/pm2/lib/API/schema.json`));
 
 
 /**
@@ -16,11 +17,11 @@ const processFileProperties = Object.keys(require('pm2/lib/API/schema.json'));
  * @returns {Promise.<Object|boolean>}
  */
 function _removeOldInstances(pm2Config) {
-  return _getPm2Instances(pm2Config.name).then(apps=>(
-    apps.length ?
-      Promise.all(apps.map(app=>pm2.deleteAsync(app.pm2_env.pm_id))) :
-      true
-  ));
+	return _getPm2Instances(pm2Config.name).then(apps=>(
+		apps.length ?
+			Promise.all(apps.map(app=>pm2.deleteAsync(app.pm2_env.pm_id))) :
+			true
+	));
 }
 
 /**
@@ -31,8 +32,8 @@ function _removeOldInstances(pm2Config) {
  * @returns {Promise.<Object>}    Promise resolving to instance object.
  */
 function _getPm2Instances(name) {
-  return pm2.listAsync()
-    .filter(apps=>(apps.name === name));
+	return pm2.listAsync()
+		.filter(apps=>(apps.name === name));
 }
 
 /**
@@ -44,11 +45,12 @@ function _getPm2Instances(name) {
  * @returns {Promise.<Object>}
  */
 function _startInstance(pm2Config, boltConfig) {
-  return pm2.startAsync(pm2Config).then(app=>{
-    const id = app[0].pm2_env.pm_id;
-    pm2.sendDataToProcessId(id, {type:'config', data:boltConfig, id, topic:'config'});
-    return pm2.disconnectAsync().then(()=>app[0]);
-  });
+	return pm2.startAsync(pm2Config).then(app=>{
+		const id = app[0].pm2_env.pm_id;
+		if (boltConfig.debug) process.kill(app[0].pid, 'SIGUSR1');
+		pm2.sendDataToProcessId(id, {type:'config', data:boltConfig, id, topic:'config'});
+		return pm2.disconnectAsync().then(()=>app[0]);
+	});
 }
 
 /**
@@ -60,15 +62,17 @@ function _startInstance(pm2Config, boltConfig) {
  * @returns {Promise.<Object>}      Promise resolving to pm2 application object.
  */
 function pm2LaunchApp(siteConfig) {
-  const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root || []) || {}).boltConfigProperties;
-  let pm2Config = bolt.pick(siteConfig, processFileProperties);
-  let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
+	const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root || []) || {}).boltConfigProperties;
+	let pm2Config = bolt.pick(siteConfig, processFileProperties);
+	if (pm2Config.uid) delete pm2Config.uid;
+	if (pm2Config.gid) delete pm2Config.gid;
+	let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
 
-  return pm2.connectAsync()
-    .then(()=>_removeOldInstances(pm2Config))
-    .then(()=>_startInstance(pm2Config, boltConfig));
+	return pm2.connectAsync()
+		.then(()=>_removeOldInstances(pm2Config))
+		.then(()=>_startInstance(pm2Config, boltConfig));
 }
 
 module.exports = {
-  pm2LaunchApp
+	pm2LaunchApp
 };

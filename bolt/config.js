@@ -328,7 +328,7 @@ async function loadConfig(name, profile) {
 	config.development = (config.hasOwnProperty('development') ? config.development : false);
 	config.debug = (config.hasOwnProperty('debug') ? config.debug : false);
 	if (bolt.fire) await bolt.emit('configLoaded', config);
-	if (config.debug) process.kill(process.pid, 'SIGUSR1');
+	if (config.debug && !config.production) process.kill(process.pid, 'SIGUSR1');
 
 	return config;
 }

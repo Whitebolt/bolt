@@ -121,11 +121,16 @@ function _directoriesInDirectory(dirPath) {
  * @todo  Add better filter on multiple extension types and/or other criteria.
  *
  * @public
- * @param {string} dirPath      Path to search.
- * @param {string} [ext='js']   Filter files based on this extension.
- * @returns {Promise}           Promise resoving to found files.
+ * @param {string|Array.<string>} dirPath      	Path(s) to search.
+ * @param {string} [ext='js']   				Filter files based on this extension.
+ * @returns {Promise}          				 	Promise resoving to found files.
  */
 function filesInDirectory(dirPath, ext = 'js') {
+	if (Array.isArray(dirPath)) {
+		return Promise.all(dirPath.map(dirPath=>filesInDirectory(dirPath, ext)))
+			.then(files=>bolt.flatten(files));
+	}
+
 	const resolveTo = getCallerFileName();
 	dirPath = resolveTo?path.resolve(path.dirname(resolveTo), dirPath):dirPath;
 	let xExt = new RegExp('\.' + ext);

@@ -4,12 +4,14 @@
  * @module bolt/bolt
  */
 
-const Promise = require('bluebird');
 const fs = require('fs');
-const writeFile = Promise.promisify(fs.writeFile);
-const symLink = Promise.promisify(fs.symlink);
-const unlink = Promise.promisify(fs.unlink);
-const rename = Promise.promisify(fs.rename);
+const path = require('path');
+const util = require('util');
+const writeFile = util.promisify(fs.writeFile);
+const readFile = util.promisify(fs.readFile);
+const symLink = util.promisify(fs.symlink);
+const unlink = util.promisify(fs.unlink);
+const rename = util.promisify(fs.rename);
 const Nginx = require('nginx-o');
 
 /**
@@ -20,11 +22,14 @@ const Nginx = require('nginx-o');
  *                                folders in.
  * @returns {Promise}             Promise resolving gto the templates.
  */
-function _loadNginxTemplates(roots) {
-  return bolt.loadEjsDirectory(roots, 'nginx', {
-    locals: false,
-    localsName: ['config']
-  });
+async function _loadNginxTemplates(roots, siteConfig) {
+	const config = Object.assign({boltRootDir}, siteConfig);
+	const nginxDirs = await bolt.directoriesInDirectory(roots, 'nginx');
+	const templateFileNames = await bolt.filesInDirectory(nginxDirs, ['conf']);
+	return Object.assign(...await Promise.all(templateFileNames.map(async (templateFileName)=>{
+		const template = bolt.runTemplate(await readFile(templateFileName), config);
+		return {[path.basename(templateFileName, '.conf')]: template};
+	})));
 }
 
 /**
@@ -35,25 +40,10 @@ function _loadNginxTemplates(roots) {
  * @returns {Nginx}   Nginx controller instance.
  */
 function getNginx() {
-  const nginx = new Nginx();
-  nginx.on('started', ()=>console.log('nginx has started'));
-  nginx.on('stopped', ()=>console.log('nginx has stopped'));
-  return nginx;
-}
-
-/**
- * Apply a nginx template.
- *
- * @private
- * @param {Object} siteConfig                       The main config.
- * @param {Object} nginxTemplates                   The ejs template.
- * @param {Object} [nginxConfig=siteConfig.nginx]   The nginx section of the
- *                                                  main config.
- * @returns {Promise}                               Promise resolving to the
- *                                                  template result string.
- */
-function _applyTemplate(siteConfig, nginxTemplates, nginxConfig=siteConfig.nginx) {
-  return nginxTemplates[nginxConfig.template].compiled(siteConfig)
+	const nginx = new Nginx();
+	nginx.on('started', ()=>console.log('nginx has started'));
+	nginx.on('stopped', ()=>console.log('nginx has stopped'));
+	return nginx;
 }
 
 /**
@@ -66,17 +56,17 @@ function _applyTemplate(siteConfig, nginxTemplates, nginxConfig=siteConfig.nginx
  * @returns {Promise}     Promise resolving when the operation is complete.
  */
 function _symlinker(from, to) {
-  let tempSymLinker = ()=>symLink(from, to+'_TEMP');
+	let tempSymLinker = ()=>symLink(from, to+'_TEMP');
 
-  return tempSymLinker().then(
-    value=>value,
-    err=>{
-      if (err && err.code && (err.code.toUpperCase() === 'EEXIST')) return unlink(to+'_TEMP').then(tempSymLinker);
-      throw err;
-    }
-  ).then(
-    ()=>rename(to+'_TEMP', to)
-  )
+	return tempSymLinker().then(
+		value=>value,
+		err=>{
+			if (err && err.code && (err.code.toUpperCase() === 'EEXIST')) return unlink(to+'_TEMP').then(tempSymLinker);
+			throw err;
+		}
+	).then(
+		()=>rename(to+'_TEMP', to)
+	)
 }
 
 /**
@@ -86,25 +76,16 @@ function _symlinker(from, to) {
  * @param {string} siteName                         The site name to launch.
  * @param {Object} siteConfig                       The main config.
  * @param {Object} nginxTemplates                   The ejs template.
- * @param {Object} [nginxConfig=siteConfig.nginx]   The nginx section of the
- *                                                  main config.
- * @returns {Promise}                               Promise resolving to the
- *                                                  main config.
+ * @param {Object} [nginxConfig=siteConfig.nginx]   The nginx section of the main config.
  */
-function _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig=siteConfig.nginx) {
-  const nginx = getNginx();
-  const siteAvailable = nginxConfig.sitesAvailable + siteName;
-  const siteEnabled = nginxConfig.sitesEnabled + siteName;
+async function _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig=siteConfig.nginx) {
+	const nginx = getNginx();
+	const siteAvailable = nginxConfig.sitesAvailable + siteName;
+	const siteEnabled = nginxConfig.sitesEnabled + siteName;
 
-  return _applyTemplate(siteConfig, nginxTemplates, nginxConfig).then(
-    template=>writeFile(siteAvailable, template, {flags:'w', encoding:'utf-8'})
-  ).then(
-    ()=>_symlinker(siteAvailable, siteEnabled)
-  ).then(
-    ()=>nginx.reload()
-  ).then(
-    ()=>siteConfig
-  );
+	await writeFile(siteAvailable, nginxTemplates[nginxConfig.template], {flags:'w', encoding:'utf-8'});
+	await _symlinker(siteAvailable, siteEnabled);
+	await nginx.reload();
 }
 
 /**
@@ -112,22 +93,20 @@ function _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig=siteConf
  *
  * @public
  * @param {Object} siteConfig   The site config.
- * @returns {Promise}           Promise resolving when nginx reloaded with
- *                              site running.
+ * @returns {Promise}           Promise resolving when nginx reloaded with site running.
  */
-function launchNginx(siteConfig) {
-  const roots = siteConfig.root;
-  const siteName = (siteConfig.shortName || siteConfig.userName);
-  const nginxConfig = siteConfig.nginx;
+async function launchNginx(siteConfig) {
+	const roots = siteConfig.root;
+	const siteName = (siteConfig.shortName || siteConfig.userName);
+	const nginxConfig = siteConfig.nginx;
+	const nginxTemplates = await _loadNginxTemplates(roots, siteConfig);
 
-  return _loadNginxTemplates(roots).then(nginxTemplates=>{
-    return ((nginxConfig && nginxConfig.template && nginxTemplates[nginxConfig.template]) ?
-      _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig) :
-      siteConfig
-    );
-  });
+	if (nginxConfig && nginxConfig.template && nginxTemplates[nginxConfig.template]) {
+		await _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig)
+	}
+	return siteConfig;
 }
 
 module.exports = {
-  launchNginx
+	launchNginx
 };
