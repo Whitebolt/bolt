@@ -7,7 +7,6 @@
 const Promise = require('bluebird');
 const freeport = Promise.promisify(require('find-free-port'));
 const path = require('path');
-const realpath = Promise.promisify(require('fs').realpath);
 
 const packageData = _getPackage(boltRootDir);
 const packageConfig = packageData.config || {};
@@ -89,7 +88,7 @@ async function _parseConfig(config) {
 
 async function getRoots(...configs) {
 	return Promise.all(_concatPropertyArray(configs, 'root').map(
-		root=>realpath(path.normalize(root)).then(root=>root+'/',err=>undefined)
+		root=>bolt.fs.realpath(path.normalize(root)).then(root=>root+'/',err=>undefined)
 	)).filter(root=>root);
 }
 
@@ -302,6 +301,14 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
 	return bolt.get(mergePackageProperties(roots, _configProp, _merger), _configProp) || {};
 }
 
+async function _setSslCerts(config) {
+	['key','csr','crt'].map(async (type)=>{
+		const id = bolt.camelCase(`ssl-server-${type}`);
+		const path = `${boltRootDir}/server.${type}`;
+		if (!config[id] && await bolt.fileExists(path)) config[id] = `${boltRootDir}/server.${type}`;
+	});
+}
+
 /**
  * Load global config for app.
  *
@@ -311,13 +318,11 @@ function mergePackageConfigs(roots, merger=_configMerger, configProp='config') {
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 async function loadConfig(name, profile) {
-	const config = await _parseConfig(
-		await require.try(true, getConfigLoadPaths('settings/apps/'+name+'.json'))
-	);
-
+	const config = await _parseConfig(await require.try(true, getConfigLoadPaths(`settings/apps/${name}.json`)));
 	if (!profile) profile = (config.development ? 'development' : 'production');
+	const profileConfig = await require.try(true, getConfigLoadPaths(`settings/profiles/${profile}.json`));
+	await _setSslCerts(config);
 
-	const profileConfig = await require.try(true, getConfigLoadPaths('settings/profiles/'+profile+'.json'));
 	if (profileConfig) {
 		delete profileConfig.name;
 		bolt.mergeWith(config, profileConfig, _configMerger);
@@ -334,5 +339,10 @@ async function loadConfig(name, profile) {
 }
 
 module.exports = {
-	loadConfig, getKeyedEnvVars, mergePackageConfigs, mergePackageProperties, getConfigLoadPaths, getPackage
+	loadConfig,
+	getKeyedEnvVars,
+	mergePackageConfigs,
+	mergePackageProperties,
+	getConfigLoadPaths,
+	getPackage
 };

@@ -70,8 +70,8 @@ function init(app) {
     setTo: 'PHP 7.2.0'
   });
 
-  let framegardMiddleware = frameguard({
-    action: 'deny'
+  let framegardMiddleware = frameguard({ // @todo Add options for this.
+    action: 'sameorigin'
   });
 
   app.enable('trust proxy');

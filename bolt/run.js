@@ -8,7 +8,69 @@ const util = require('util');
 const chalk = require('chalk');
 const figlet =  util.promisify(require('figlet'));
 const {upgrade} = require('@simpo/websocket-express');
+const exec = util.promisify(require('child_process').exec);
 
+async function _getHttpsOptions(app) {
+	return {
+		key: bolt.fs.readFile(app.config.sslServerKey),
+		cert: bolt.fs.readFile(app.config.sslServerCrt),
+		requestCert: false,
+		rejectUnauthorized: false
+	};
+}
+
+async function _createServer(app, config=app.config) {
+	let server;
+
+	if (config.development && !config.production && config.sslServerCrt && config.sslServerKey) {
+		try {
+			return require('https').createServer(await _getHttpsOptions(app), app);
+		} catch(err) {}
+	}
+	return require('http').createServer(app);
+}
+
+async function _doRootTasksAndDowngrade(config) {
+	await bolt.makeDirectory(config.runDirectory);
+	const pidController = new bolt.Pid_Controller(config.runDirectory, config.name, config);
+	await pidController.create();
+	await exec(`chown -R ${config.nginx.user}:${config.nginx.group} ${config.runDirectory}`);
+	process.setgid(config.gid);
+	process.setuid(config.uid);
+}
+
+function _deleteSecretConfigProps(app) {
+	bolt.makeArray(app.config.boltConfigPropsDeleteWhenLive).forEach(prop=>{
+		if (app.config[prop]) delete app.config[prop];
+	});
+	bolt.deepFreeze(app.config);
+}
+
+async function _createWelcome(app) {
+	let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName.split('/').pop())).match(/[A-Z][a-z]+/g).join(' ');
+	let welcome = await figlet(`${serverName} `);
+	let version = await figlet(`v${app.config.version}`);
+	let wLineLength = 0;
+	let vLineLength = 0;
+
+	welcome = welcome.toString().split('\n').map(line=>{
+		if (wLineLength < line.length) wLineLength = line.length;
+		return chalk.blue.bold(line);
+	});
+	version = version.toString().split('\n').map(line=>{
+		if (vLineLength < line.length) vLineLength = line.length;
+		return chalk.green.bold(line);
+	});
+
+	let welcomeMessage = '';
+	for(let n=0; ((n<welcome.length) || (n<version.length)); n++) {
+		welcomeMessage += ((n < welcome.length) ? welcome[n] : ''.padStart(wLineLength)) +
+			((n < version.length) ? version[n] : ''.padStart(vLineLength)) +
+			'\n';
+	}
+
+	return welcomeMessage;
+}
 
 /**
  * Run the given express app, binding to correct port.
@@ -18,63 +80,22 @@ const {upgrade} = require('@simpo/websocket-express');
  * @returns {Promise}       Promise resolved when app has launched fully.
  */
 function _runApp(app) {
-	if (app.config.uid && app.config.gid && !app.config.development) { // downgrade from route just before going live.
-		process.setgid(app.config.gid);
-		process.setuid(app.config.uid);
-	}
-
 	return new Promise(async (resolve)=>{
-		let server;
+		const server = await _createServer(app);
 
-		if (app.config.development && !app.config.production) {
-			try {
-				const fs = require('fs');
-				let options = {
-					key: fs.readFileSync(boltRootDir + '/server.key'),
-					cert: fs.readFileSync(boltRootDir + '/server.crt'),
-					requestCert: false,
-					rejectUnauthorized: false
-				};
-				server = require('https').createServer(options, app);
-			} catch(err) {}
-		}
-		if (!server) server = require('http').createServer(app);
-
-		const pidController = new bolt.Pid_Controller('/tmp/run/bolt/pids', app.config.name);
-		await pidController.create();
-
-		server.listen(app.config.port, async ()=>{
-			bolt.emit('appListening', app.config.port);
-			let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName.split('/').pop())).match(/[A-Z][a-z]+/g).join(' ');
-			let welcome = await figlet(`${serverName} `);
-			let version = await figlet(`v${app.config.version}`);
-			let wLineLength = 0;
-			let vLineLength = 0;
-
-			welcome = welcome.toString().split('\n').map(line=>{
-				if (wLineLength < line.length) wLineLength = line.length;
-				return chalk.blue.bold(line);
-			});
-			version = version.toString().split('\n').map(line=>{
-				if (vLineLength < line.length) vLineLength = line.length;
-				return chalk.green.bold(line);
-			});
-
-			let welcomeMessage = '';
-			for(let n=0; ((n<welcome.length) || (n<version.length)); n++) {
-				welcomeMessage += ((n < welcome.length) ? welcome[n] : ''.padStart(wLineLength)) +
-					((n < version.length) ? version[n] : ''.padStart(vLineLength)) +
-					'\n';
+		server.listen(app.config.sock || app.config.port, async ()=>{
+			if (app.config.uid && app.config.gid && !app.config.development) {
+				await _doRootTasksAndDowngrade(app.config);
 			}
 
-			console.log(welcomeMessage);
+			_deleteSecretConfigProps(app);
+			bolt.emit('appListening', app.config.port);
+			console.log(await _createWelcome(app));
 			bolt.emit('appRunning', app.config.name, process.hrtime(global.startTime));
 			resolve(app);
 		});
 
 		upgrade(server, app);
-
-
 	});
 }
 

@@ -79,7 +79,8 @@ async function start(args) {
 
 		console.log('\x1bc'); // Clear the console
 
-		if (!siteConfig.development) {
+		if (!siteConfig.development && siteConfig.production) {
+			siteConfig.sock = `${siteConfig.runDirectory}/${siteConfig.name}-${process.pid}.sock`;
 			await bolt.addUser(siteConfig);
 			await bolt.launchNginx(siteConfig);
 			const app = await bolt.pm2LaunchApp(siteConfig);

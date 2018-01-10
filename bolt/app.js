@@ -5,9 +5,6 @@
  */
 
 const Promise = require('bluebird');
-const fs = require('fs');
-const open = Promise.promisify(fs.open);
-const write = Promise.promisify(fs.write);
 const ejs = require('@simpo/ejs');
 const path = require('path');
 
@@ -117,8 +114,8 @@ function _initConsoleLogging(level, listener) {
  */
 function _initAccessLogging(logPath) {
 	if (logPath) {
-		bolt.makeDirectory(path.dirname(logPath)).then(()=>open(logPath, 'a').then(fd=>{
-			bolt.subscribe('/logging/access', (options, message)=>write(fd, message));
+		bolt.makeDirectory(path.dirname(logPath)).then(()=>bolt.fs.open(logPath, 'a').then(fd=>{
+			bolt.subscribe('/logging/access', (options, message)=>bolt.fs.write(fd, message));
 		}));
 	}
 }
@@ -270,7 +267,6 @@ async function loadApplication(configPath) {
 class BoltApplication extends express {
 	constructor(config) {
 		super();
-
 		Object.defineProperties(this, {
 			config: {enumerable: true, configurable: false, value: config, writable: false},
 			routers: {enumerable: true, configurable: false, value: {}, writable: false},
