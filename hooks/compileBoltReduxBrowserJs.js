@@ -11,8 +11,6 @@ module.exports = function(){
 	// @annotation key loadAllComponents
 	// @annotation when after
 
-	if (!bolt[filesId]) return;
-
 	function loadReduxExport(type, files) {
 		const exportEventType = `exportRedux${bolt.peakCase(type)}ToBrowser`;
 		let reduxBoltContent = '';
@@ -45,6 +43,7 @@ module.exports = function(){
 	}
 
 	return async app=>{
+		if (!bolt[filesId]) return;
 		const name = 'ReduxBolt';
 		let reduxBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		reduxBoltContent += reduxType.map(type=>{

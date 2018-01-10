@@ -10,35 +10,70 @@ const figlet =  util.promisify(require('figlet'));
 const {upgrade} = require('@simpo/websocket-express');
 const exec = util.promisify(require('child_process').exec);
 
-async function _getHttpsOptions(app) {
+/**
+ * Create the options needed for https.
+ *
+ * @private
+ * @async
+ * @param {Object} config		The bolt config.
+ * @returns {Object}			Node server instance options.
+ */
+async function _getHttpsOptions(config) {
 	return {
-		key: bolt.fs.readFile(app.config.sslServerKey),
-		cert: bolt.fs.readFile(app.config.sslServerCrt),
+		key: await bolt.fs.readFile(config.sslServerKey),
+		cert: await bolt.fs.readFile(config.sslServerCrt),
 		requestCert: false,
 		rejectUnauthorized: false
 	};
 }
 
+/**
+ * Create a new server instance
+ *
+ * @private
+ * @param {BoltApplication} app		The bolt application to create server for.
+ * @param {Object} config			The bolt config.
+ * @returns {Object}				The new server instance.
+ */
 async function _createServer(app, config=app.config) {
-	let server;
-
 	if (config.development && !config.production && config.sslServerCrt && config.sslServerKey) {
 		try {
-			return require('https').createServer(await _getHttpsOptions(app), app);
-		} catch(err) {}
+			return require('https').createServer(await _getHttpsOptions(app.config), app);
+		} catch(error) {}
 	}
 	return require('http').createServer(app);
 }
 
+/**
+ * Do various root tasks (when initially ran as root). Tasks include, pid creastion, giving nginx access to sock files
+ * and downgrading the user to the site user.
+ *
+ * @note This could have been a hook but this seems more secure.
+ * @todo Pids and Socks not deleted on close as no-longer have access.  A fixd is needed.
+ *
+ * @private
+ * @async
+ * @param {Object} config		The application config.
+ */
 async function _doRootTasksAndDowngrade(config) {
 	await bolt.makeDirectory(config.runDirectory);
 	const pidController = new bolt.Pid_Controller(config.runDirectory, config.name, config);
 	await pidController.create();
 	await exec(`chown -R ${config.nginx.user}:${config.nginx.group} ${config.runDirectory}`);
+	await exec(`setfacl -RLm "u:${config.uid}:rw" ${pidController.pidFile}`);
+	await exec(`setfacl -RLm "u:${config.uid}:rw" ${config.sock}`);
 	process.setgid(config.gid);
 	process.setuid(config.uid);
 }
 
+/**
+ * Delete properties we do not want to be available to hackers.  Deep freeze the config to stop people changing it.
+ *
+ * @todo These need a rethink, perhaps config is only needed on load but not after?
+ *
+ * @private
+ * @param {BoltApplication} app		The bolt application to delete config properties on.
+ */
 function _deleteSecretConfigProps(app) {
 	bolt.makeArray(app.config.boltConfigPropsDeleteWhenLive).forEach(prop=>{
 		if (app.config[prop]) delete app.config[prop];
@@ -46,10 +81,18 @@ function _deleteSecretConfigProps(app) {
 	bolt.deepFreeze(app.config);
 }
 
-async function _createWelcome(app) {
-	let serverName = bolt.upperFirst(bolt.camelCase(app.config.serverName.split('/').pop())).match(/[A-Z][a-z]+/g).join(' ');
+/**
+ * Create the welcome banner displayed in the console.
+ *
+ * @private
+ * @async
+ * @param {Object} config	The application configuration.
+ * @returns {string}		The welcome message to display.
+ */
+async function _createWelcome(config) {
+	let serverName = bolt.upperFirst(bolt.camelCase(config.serverName.split('/').pop())).match(/[A-Z][a-z]+/g).join(' ');
 	let welcome = await figlet(`${serverName} `);
-	let version = await figlet(`v${app.config.version}`);
+	let version = await figlet(`v${config.version}`);
 	let wLineLength = 0;
 	let vLineLength = 0;
 
@@ -76,22 +119,20 @@ async function _createWelcome(app) {
  * Run the given express app, binding to correct port.
  *
  * @private
- * @param {Object} app      Express application object.
- * @returns {Promise}       Promise resolved when app has launched fully.
+ * @param {Object} app						Express application object.
+ * @returns {Promise.<BoltApplication>}		Promise resolved when app has launched fully.
  */
 function _runApp(app) {
+	const config = app.config;
 	return new Promise(async (resolve)=>{
 		const server = await _createServer(app);
 
-		server.listen(app.config.sock || app.config.port, async ()=>{
-			if (app.config.uid && app.config.gid && !app.config.development) {
-				await _doRootTasksAndDowngrade(app.config);
-			}
-
+		server.listen(config.sock || config.port, async ()=>{
+			if (config.uid && config.gid && !config.development) await _doRootTasksAndDowngrade(config);
 			_deleteSecretConfigProps(app);
-			bolt.emit('appListening', app.config.port);
-			console.log(await _createWelcome(app));
-			bolt.emit('appRunning', app.config.name, process.hrtime(global.startTime));
+			bolt.emit('appListening', config.sock || config.port);
+			console.log(await _createWelcome(config));
+			bolt.emit('appRunning', config.name, process.hrtime(global.startTime));
 			resolve(app);
 		});
 
