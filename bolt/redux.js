@@ -13,7 +13,12 @@ function importer({root, type, onload, extensions='.jsx', basedir=__dirname, par
 		onload: (filename, exports)=>{
 			Object.keys(exports).forEach(exportName=>{
 				if (exportName === 'default') return undefined;
-				bolt.ReduxBolt[type][exportName] = exports[exportName];
+				if (type === 'types') {
+					bolt.ReduxBolt[type][exportName] = Symbol(exportName);
+					bolt.ReduxBolt[type][bolt.ReduxBolt[type][exportName]] = exportName;
+				} else {
+					bolt.ReduxBolt[type][exportName] = exports[exportName];
+				}
 			});
 
 			bolt[boltKey] = bolt[boltKey] || {};
@@ -43,6 +48,16 @@ function loadRedux(app, roots=app.config.root) {
 	return bolt.emitThrough(()=>_loadRedux(roots, app), fireEvent, app).then(() => app);
 }
 
+function fireReduxAction(redux, doc, ...actions) {
+	let state;
+	bolt.flatten(actions).forEach(actionName=>{
+		const actionMethod = bolt.camelCase(actionName);
+		const action = redux.actionCreators[actionMethod](doc);
+		state = redux.reducers.createReducer(state, action);
+	});
+	return state;
+}
+
 module.exports = {
-	loadRedux
+	loadRedux, fireReduxAction
 };
