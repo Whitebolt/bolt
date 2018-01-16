@@ -43,6 +43,13 @@ function attributes(...attrs) {
 	return exportedAttrs;
 }
 
+function elementContains(container, element) {
+	for (; (element && (element !== document)); element=element.parentNode) {
+		if (element === container) return true;
+	}
+	return false;
+}
+
 module.exports = {
-	classNames, attributes
+	classNames, attributes, elementContains
 };

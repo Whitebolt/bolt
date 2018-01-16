@@ -4,15 +4,16 @@ const util = require('util');
 const path = require('path');
 const exec = util.promisify(require('child_process').exec);
 
+process.on('uncaughtException', error=>{
+	console.error('uncaughtException', error);
+	//return controller.remove.bind(controller, true);
+});
+
 function exitHandler(controller) {
 	process.on('exit', controller.remove.bind(controller, true));
 	process.on('SIGINT', controller.remove.bind(controller, true));
 	process.on('SIGUSR1', controller.remove.bind(controller, true));
 	process.on('SIGUSR2', controller.remove.bind(controller, true));
-	process.on('uncaughtException', error=>{
-		console.error(error);
-		return controller.remove.bind(controller, true);
-	});
 }
 
 class Pid_Controller {
