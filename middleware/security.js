@@ -71,7 +71,7 @@ function init(app) {
   });
 
   let framegardMiddleware = frameguard({
-    action: 'deny'
+    action: 'sameorigin'
   });
 
   app.enable('trust proxy');
