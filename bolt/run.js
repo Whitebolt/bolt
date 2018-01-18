@@ -59,9 +59,10 @@ async function _doRootTasks1(config) {
 	await bolt.makeDirectory(config.runDirectory);
 	const pidController = new bolt.Pid_Controller(config.runDirectory, config.name, config);
 	await pidController.create();
+	return pidController;
 }
 
-async function _doRootTasks2(config) {
+async function _doRootTasks2(config, pidController) {
 	await exec(`chown -R ${config.nginx.user}:${config.nginx.group} ${config.runDirectory}`);
 	await exec(`setfacl -RLm "u:${config.uid}:rw" ${pidController.pidFile}`);
 	await exec(`setfacl -RLm "u:${config.uid}:rw" ${config.sock}`);
@@ -131,10 +132,14 @@ function _runApp(app) {
 
 	return new Promise(async (resolve)=>{
 		const server = await _createServer(app);
-		if (root) await _doRootTasks1(config);
+		let pidController;
+		if (root) pidController = await _doRootTasks1(config);
 
 		server.listen(config.sock || config.port, async ()=>{
-			if (root) await _doRootTasks2(config);
+			if (root) {
+				await _doRootTasks2(config, pidController);
+				pidController = undefined;
+			}
 			_deleteSecretConfigProps(app);
 			bolt.emit('appListening', config.sock || config.port);
 			console.log(await _createWelcome(config));
