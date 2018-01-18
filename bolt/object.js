@@ -116,6 +116,10 @@ function pickDeep(obj, properties) {
   return _obj;
 }
 
+function pickHas(obj, properties) {
+  return bolt.pickBy(bolt.pick(obj, properties), value=>(value !== undefined));
+}
+
 function cloneAndMerge(toClone, toMergeIn, picks) {
   return Object.assign({}, toClone, pickDeep(toMergeIn, picks))
 }
@@ -125,5 +129,5 @@ function toKeyValueArray(obj) {
 }
 
 module.exports = {
-  addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge
+  addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge, pickHas
 };

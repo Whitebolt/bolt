@@ -20,7 +20,7 @@ function init(app) {
     secret: app.config.secret,
     cookie: {
       secure: true,
-      maxAge: 60 * 60 * 1000,
+      maxAge: app.sessionLength || 60 * 60 * 1000,
       httpOnly: true
     },
     store,

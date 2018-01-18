@@ -1,21 +1,33 @@
 'use strict';
 
+const boltKey = '__redux';
+
 function importer({root, type, onload, extensions='.jsx', basedir=__dirname, parent=__filename}) {
+
 	const importPaths = bolt.makeArray(root).map(root=>`${root}/${type}/`);
 	return require.import(importPaths, {
 		extensions,
 		basedir,
 		parent,
+		retry: true,
 		onload: (filename, exports)=>{
 			Object.keys(exports).forEach(exportName=>{
 				if (exportName === 'default') return undefined;
-				bolt.ReduxBolt[type][exportName] = exports[exportName];
+				if (type === 'types') {
+					bolt.ReduxBolt[type][exportName] = Symbol(exportName);
+					bolt.ReduxBolt[type][bolt.ReduxBolt[type][exportName]] = exportName;
+				} else {
+					bolt.ReduxBolt[type][exportName] = exports[exportName];
+				}
 			});
 
-			bolt.__redux = bolt.__redux || {};
-			if (!(type in bolt)) bolt.__redux[type] = new Set();
-			bolt.__redux[type].add(filename);
+			bolt[boltKey] = bolt[boltKey] || {};
+			if (!(type in bolt[boltKey])) bolt[boltKey][type] = new Set();
+			bolt[boltKey][type].add(filename);
 			if (onload) onload(filename, exports);
+		},
+		onerror: error=>{
+			throw error;
 		}
 	});
 }
@@ -36,6 +48,16 @@ function loadRedux(app, roots=app.config.root) {
 	return bolt.emitThrough(()=>_loadRedux(roots, app), fireEvent, app).then(() => app);
 }
 
+function fireReduxAction(redux, doc, ...actions) {
+	let state;
+	bolt.flatten(actions).forEach(actionName=>{
+		const actionMethod = bolt.camelCase(actionName);
+		const action = redux.actionCreators[actionMethod](doc);
+		state = redux.reducers.createReducer(state, action);
+	});
+	return state;
+}
+
 module.exports = {
-	loadRedux
+	loadRedux, fireReduxAction
 };

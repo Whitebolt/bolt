@@ -1,33 +1,34 @@
 'use strict';
 
-const fs = require('fs');
 const util = require('util');
 const path = require('path');
-const write = util.promisify(fs.writeFile);
-const remove = util.promisify(fs.unlink);
+const exec = util.promisify(require('child_process').exec);
+
+process.on('uncaughtException', error=>{
+	console.error('uncaughtException', error);
+	//return controller.remove.bind(controller, true);
+});
 
 function exitHandler(controller) {
 	process.on('exit', controller.remove.bind(controller, true));
 	process.on('SIGINT', controller.remove.bind(controller, true));
 	process.on('SIGUSR1', controller.remove.bind(controller, true));
 	process.on('SIGUSR2', controller.remove.bind(controller, true));
-	process.on('uncaughtException', error=>{
-		console.error(error);
-		return controller.remove.bind(controller, true);
-	});
 }
 
 class Pid_Controller {
-	constructor(path, name) {
+	constructor(path, name, user={}) {
 		this.id = process.pid;
 		this.name = `${this.id}-${name}`;
 		this.pidFile = `${path}/${this.name}.pid`;
+		this.uid = user.uid;
+		this.gid = user.gid;
 	}
 
 	async create() {
 		try {
 			await bolt.makeDirectory(path.dirname(this.pidFile));
-			await write(this.pidFile, new Buffer(`${this.id}\n`), {flag: 'wx'});
+			await bolt.fs.writeFile(this.pidFile, new Buffer(`${this.id}\n`), {flag: 'wx'});
 			bolt.emit('createdPidFile', this.pidFile);
 		} catch(error) {
 			console.log(`Failed to create pid file ${this.pidFile}.`);
@@ -38,7 +39,7 @@ class Pid_Controller {
 
 	async remove(exit=false) {
 		try {
-			await remove(this.pidFile);
+			await bolt.fs.unlink(this.pidFile);
 		} catch(error) {
 			console.warn(`Failed to remove pidfile: ${this.pidFile}.`);
 		}

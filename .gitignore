@@ -3,6 +3,9 @@ node_modules/
 Thumbs.db
 server.json
 docs/
+.npm/
+.node-gyp/
+log/
 
 #Allow localhost testing
 server.crt

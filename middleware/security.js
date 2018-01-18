@@ -10,36 +10,36 @@ const xssFilter = require('x-xss-protection');
 const express_enforces_ssl = require('express-enforces-ssl');
 
 function _getConnectSrc(app, domains) {
-  const connectSrc = [].concat(app.config.domains).map(domain=>'https://'+domain);
-  if (app.config.development) connectSrc.unshift('https://localhost:' + app.config.port);
-  return connectSrc.concat(connectSrc.map(domain=>domain.replace('https://','wss://')));
+	const connectSrc = [].concat(app.config.domains).map(domain=>'https://'+domain);
+	if (app.config.development) connectSrc.unshift('https://localhost:' + app.config.port);
+	return connectSrc.concat(connectSrc.map(domain=>domain.replace('https://','wss://')));
 }
 function _mergeConfigDirectives(app, directives) {
-  Object.keys(app.config.csp || {}).forEach(directive=>{
-    if (bolt.isArray(app.config.csp[directive])) {
-      directives[directive] = bolt.uniq((directives[directive] || []).concat(app.config.csp[directive]));
-    }
-  });
+	Object.keys(app.config.csp || {}).forEach(directive=>{
+		if (bolt.isArray(app.config.csp[directive])) {
+			directives[directive] = bolt.uniq((directives[directive] || []).concat(app.config.csp[directive]));
+		}
+	});
 
-  return directives;
+	return directives;
 }
 
 function _getDirectives(app) {
-  const domains = ["'self'", 'data:'];
+	const domains = ["'self'", 'data:'];
 
-  return _mergeConfigDirectives(app, {
-    defaultSrc: domains,
-    scriptSrc: domains,
-    connectSrc: _getConnectSrc(app, domains),
-    frameSrc: domains,
-    styleSrc: domains,
-    fontSrc: domains,
-    imgSrc: domains,
-    reportUri: '/report-csp-violation',
-    objectSrc: ["'none'"],
-    baseUri: domains,
-    upgradeInsecureRequests: true
-  });
+	return _mergeConfigDirectives(app, {
+		defaultSrc: domains,
+		scriptSrc: domains,
+		connectSrc: _getConnectSrc(app, domains),
+		frameSrc: domains,
+		styleSrc: domains,
+		fontSrc: domains,
+		imgSrc: domains,
+		reportUri: '/report-csp-violation',
+		objectSrc: ["'none'"],
+		baseUri: domains,
+		upgradeInsecureRequests: true
+	});
 }
 
 /**
@@ -49,43 +49,47 @@ function _getDirectives(app) {
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-  // @annotation priority 4
+	// @annotation priority 4
 
-  let cspMiddleware = csp({
-    directives: _getDirectives(app),
-    loose: false,
-    reportOnly: false,
-    setAllHeaders: false,
-    disableAndroid: false,
-    browserSniff: true
-  });
+	let cspMiddleware = csp({
+		directives: _getDirectives(app),
+		loose: false,
+		reportOnly: false,
+		setAllHeaders: false,
+		disableAndroid: false,
+		browserSniff: true
+	});
 
-  let hstsMiddleware = hsts({
-    maxAge: 19 * 7 *24 * 60 * 60,
-    includeSubDomains: true,
-    preload: true
-  });
+	let hstsMiddleware = hsts({
+		maxAge: 19 * 7 *24 * 60 * 60,
+		includeSubDomains: true,
+		preload: true
+	});
 
-  let hidePoweredByMiddleware = hidePoweredBy({
-    setTo: 'PHP 7.2.0'
-  });
+	let hidePoweredByMiddleware = hidePoweredBy({
+		setTo: app.config.poweredBy || 'Powered by Bolt - https://whitebolt.net/software-development/'
+	});
 
-  let framegardMiddleware = frameguard({
-    action: 'sameorigin'
-  });
 
-  app.enable('trust proxy');
+	let frameguardConfig = app.config.frameGuard || 'sameorigin';
+	if ((frameguardConfig === 'sameorigin') && (frameguardConfig === 'deny')) frameguardConfig = {
+		action: 'allow-from',
+		domain: frameguardConfig
+	};
+	let framegardMiddleware = frameguard(frameguardConfig);
 
-  app.use(
-    cspMiddleware,
-    hidePoweredByMiddleware,
-    //express_enforces_ssl(),
-    hstsMiddleware,
-    ienoopen(),
-    nosniff(),
-    framegardMiddleware,
-    xssFilter()
-  );
+	app.enable('trust proxy');
+
+	app.use(
+		cspMiddleware,
+		hidePoweredByMiddleware,
+		//express_enforces_ssl(),
+		hstsMiddleware,
+		ienoopen(),
+		nosniff(),
+		framegardMiddleware,
+		xssFilter()
+	);
 }
 
 module.exports = init;

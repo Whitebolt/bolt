@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.1.1",
+  "version": "1.2.2",
   "keywords": [
     "Server",
     "React",
@@ -130,8 +130,11 @@
       "start": 3000,
       "end": 8000
     },
+    "runDirectory":"/var/run/bolt",
     "logLevel": 4,
     "nginx": {
+      "user": "www-data",
+      "group": "www-data",
       "sitesAvailable": "/etc/nginx/sites-available/",
       "sitesEnabled": "/etc/nginx/sites-enabled/"
     },
@@ -157,7 +160,38 @@
       "sessionStore",
       "sessionStoreDb",
       "questions",
-      "errors"
+      "errors",
+      "sslServerCrt",
+      "sslServerKey",
+      "uid",
+      "gid",
+      "homeDir",
+      "sock",
+      "runDirectory",
+      "nginx",
+      "boltConfigPropsDeleteWhenLive",
+      "sessionLength",
+      "poweredBy",
+      "sessionLength"
+    ],
+    "boltConfigPropsDeleteWhenLive": [
+      "sessionStore",
+      "sessionStoreDb",
+      "questions",
+      "errors",
+      "sslServerCrt",
+      "sslServerKey",
+      "uid",
+      "gid",
+      "homeDir",
+      "sock",
+      "secret",
+      "nginx",
+      "runDirectory",
+      "boltConfigPropsDeleteWhenLive",
+      "sessionLength",
+      "poweredBy",
+      "sessionLength"
     ],
     "boltEnvPrefix": "BOLT",
     "appLaunchExcludes": [

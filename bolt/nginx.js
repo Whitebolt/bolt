@@ -4,14 +4,8 @@
  * @module bolt/bolt
  */
 
-const fs = require('fs');
 const path = require('path');
 const util = require('util');
-const writeFile = util.promisify(fs.writeFile);
-const readFile = util.promisify(fs.readFile);
-const symLink = util.promisify(fs.symlink);
-const unlink = util.promisify(fs.unlink);
-const rename = util.promisify(fs.rename);
 const Nginx = require('nginx-o');
 
 /**
@@ -23,13 +17,27 @@ const Nginx = require('nginx-o');
  * @returns {Promise}             Promise resolving gto the templates.
  */
 async function _loadNginxTemplates(roots, siteConfig) {
-	const config = Object.assign({boltRootDir}, siteConfig);
+	const config = addSslBlock(Object.assign({boltRootDir}, siteConfig));
 	const nginxDirs = await bolt.directoriesInDirectory(roots, 'nginx');
 	const templateFileNames = await bolt.filesInDirectory(nginxDirs, ['conf']);
 	return Object.assign(...await Promise.all(templateFileNames.map(async (templateFileName)=>{
-		const template = bolt.runTemplate(await readFile(templateFileName), config);
+		const template = bolt.runTemplate(await bolt.fs.readFile(templateFileName), config);
 		return {[path.basename(templateFileName, '.conf')]: template};
 	})));
+}
+
+function addSslBlock(config) {
+	if (config.sslServerKey && config.sslServerCrt) {
+		config.sslBlock = `
+			ssl_certificate ${config.sslServerCrt};
+			ssl_certificate_key ${config.sslServerKey};
+			ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+			ssl_prefer_server_ciphers off;
+		`;
+	} else {
+		config.sslBlock = '';
+	}
+	return config;
 }
 
 /**
@@ -56,16 +64,16 @@ function getNginx() {
  * @returns {Promise}     Promise resolving when the operation is complete.
  */
 function _symlinker(from, to) {
-	let tempSymLinker = ()=>symLink(from, to+'_TEMP');
+	let tempSymLinker = ()=>bolt.fs.symlink(from, to+'_TEMP');
 
 	return tempSymLinker().then(
 		value=>value,
 		err=>{
-			if (err && err.code && (err.code.toUpperCase() === 'EEXIST')) return unlink(to+'_TEMP').then(tempSymLinker);
+			if (err && err.code && (err.code.toUpperCase() === 'EEXIST')) return bolt.fs.unlink(to+'_TEMP').then(tempSymLinker);
 			throw err;
 		}
 	).then(
-		()=>rename(to+'_TEMP', to)
+		()=>bolt.fs.rename(to+'_TEMP', to)
 	)
 }
 
@@ -83,7 +91,11 @@ async function _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig=si
 	const siteAvailable = nginxConfig.sitesAvailable + siteName;
 	const siteEnabled = nginxConfig.sitesEnabled + siteName;
 
-	await writeFile(siteAvailable, nginxTemplates[nginxConfig.template], {flags:'w', encoding:'utf-8'});
+	await bolt.fs.writeFile(
+		siteAvailable,
+		nginxTemplates[nginxConfig.template],
+		{flags:'w', encoding:'utf-8'}
+	);
 	await _symlinker(siteAvailable, siteEnabled);
 	await nginx.reload();
 }

@@ -4,12 +4,25 @@
  * @module bolt/bolt
  */
 
-const Promise = require('bluebird');
-const fs = require('fs');
+const Bluebird = require('bluebird');
+const util = require('util');
+const _fs = require('fs');
 const path = require('path');
-const lstat = Promise.promisify(fs.lstat);
-const mkdir = Promise.promisify(fs.mkdir);
+const fs = {};
+const exec = util.promisify(require('child_process').exec);
 
+
+const xIsSync = /Sync$/;
+
+bolt.forOwn(_fs, (method, methodName)=>{
+	if (bolt.isFunction(method) && !xIsSync.test(methodName) && !_startsWithUpperCase(methodName)) {
+		fs[methodName] = util.promisify(method);
+	}
+});
+
+function _startsWithUpperCase(txt) {
+	return (txt[0] === txt[0].toUpperCase());
+}
 
 /**
  * Get the root directory full path from the process arguments.  The root is
@@ -24,8 +37,13 @@ function getRoot() {
 	return path.dirname(process.argv[1]);
 }
 
-function fileExists(filePath) {
-	return lstat(filePath).then(stat=>!!stat,err=>false);
+async function fileExists(filePath) {
+	try {
+		const stat = await fs.lstat(filePath);
+		return !!stat;
+	} catch(error) {
+		return false;
+	}
 }
 
 /**
@@ -67,15 +85,16 @@ function getCallerFileName() {
  * @public
  * @param {Array|string} dirPath    Path(s) to search.
  * @param {string} dirNameToFind    Name of directories to return.
- * @returns {Promise}               The found directories.
+ * @returns {Bluebird}               The found directories.
  */
-function directoriesInDirectory(dirPath, dirNameToFind) {
-	return ((Array.isArray(dirPath)) ?
-			_directoriesInDirectories(dirPath) :
-			_directoriesInDirectory(dirPath)
-	).filter(dirPath => {
+async function directoriesInDirectory(dirPath, dirNameToFind) {
+	const dirs = await ((Array.isArray(dirPath)) ?
+		_directoriesInDirectories(dirPath) : _directoriesInDirectory(dirPath)
+	);
+
+	return dirs.filter(dirPath => {
 		return (dirNameToFind && dirNameToFind.length) ?
-			dirNameToFind.indexOf(path.basename(dirPath)) !== -1 :
+		dirNameToFind.indexOf(path.basename(dirPath)) !== -1 :
 			true;
 	});
 }
@@ -86,12 +105,11 @@ function directoriesInDirectory(dirPath, dirNameToFind) {
  *
  * @private
  * @param {Array|string} dirPaths   Path(s) to search.
- * @returns {Promise}               Found directories.
+ * @returns {Bluebird}               Found directories.
  */
-function _directoriesInDirectories(dirPaths) {
-	return Promise.all(
-		dirPaths.map(dirPath => directoriesInDirectory(dirPath))
-	).then(dirPaths => bolt.flattenDeep(dirPaths));
+async function _directoriesInDirectories(dirPaths) {
+	const dirs = await Promise.all(dirPaths.map(dirPath=>directoriesInDirectory(dirPath)));
+	return bolt.flattenDeep(dirs);
 }
 
 /**
@@ -102,17 +120,31 @@ function _directoriesInDirectories(dirPaths) {
  *
  * @private
  * @param {string} dirPath    Path to search.
- * @returns {Promise}         Found directories.
+ * @returns {Bluebird}         Found directories.
  */
-function _directoriesInDirectory(dirPath) {
-	const root = getCallerFileName();
-	dirPath = root?path.resolve(path.dirname(root), dirPath):dirPath;
+async function _directoriesInDirectory(dirPath) {
+	try {
+		const files = (await fs.readdir(dirPath)).map(_mapJoin(dirPath));
+		const dirs = files.filter(async (fileName)=>{
+			try {
+				const stat = await fs.lstat(fileName);
+				return stat.isDirectory();
+			} catch (errror) {
+				return false;
+			}
+		});
+		return dirs.map(_mapResolve(dirPath));
+	} catch(error) {
+		return [];
+	}
+}
 
-	return Promise.promisify(fs.readdir)(dirPath)
-		.then(file => file, err => [])
-		.map(filename => path.join(dirPath, filename))
-		.filter(fileName => lstat(fileName).then(stat => stat.isDirectory()))
-		.map(dirName => path.resolve(dirPath, dirName));
+function _mapJoin(dirPath) {
+	return filename => path.join(dirPath, filename);
+}
+
+function _mapResolve(dirPath) {
+	return filename=>path.resolve(dirPath, filename);
 }
 
 /**
@@ -123,22 +155,24 @@ function _directoriesInDirectory(dirPath) {
  * @public
  * @param {string|Array.<string>} dirPath      	Path(s) to search.
  * @param {string} [ext='js']   				Filter files based on this extension.
- * @returns {Promise}          				 	Promise resoving to found files.
+ * @returns {Bluebird}          				 	Bluebird resoving to found files.
  */
-function filesInDirectory(dirPath, ext = 'js') {
-	if (Array.isArray(dirPath)) {
-		return Promise.all(dirPath.map(dirPath=>filesInDirectory(dirPath, ext)))
-			.then(files=>bolt.flatten(files));
-	}
+async function filesInDirectory(dirPath, ext = 'js') {
+	if (!Array.isArray(dirPath)) _filesInDirectory(dirPath, ext);
+	const files = await Promise.all(dirPath.map(dirPath=>_filesInDirectory(dirPath, ext)))
+	return bolt.flattenDeep(files);
+}
 
-	const resolveTo = getCallerFileName();
-	dirPath = resolveTo?path.resolve(path.dirname(resolveTo), dirPath):dirPath;
+async function _filesInDirectory(dirPath, ext) {
 	let xExt = new RegExp('\.' + ext);
 
-	return Promise.promisify(fs.readdir)(dirPath)
-		.then(file => file, err => [])
-		.filter(fileName => xExt.test(fileName))
-		.map(fileName => path.resolve(dirPath, fileName))
+	try {
+		const files = await fs.readdir(dirPath);
+		return files.filter(fileName => xExt.test(fileName))
+			.map(_mapResolve(dirPath));
+	} catch(error) {
+		return [];
+	}
 }
 
 function isPathRelativeTo(testPath, isRelativeTo) {
@@ -147,21 +181,50 @@ function isPathRelativeTo(testPath, isRelativeTo) {
 }
 
 async function makeDirectory(dir) {
-	const sep = path.sep;
-	const initDir = path.isAbsolute(dir) ? sep : '';
-	await dir.split(sep).reduce(async (parentDir, childDir)=>{
-		const curDir = path.resolve(await parentDir, childDir);
+	const ancestors = _getAncestors(dir)
+
+	await bolt.mapAsync(ancestors, async (dir)=>{
 		try {
-			if (!(await fileExists(curDir))) await mkdir(curDir);
+			if (!(await fileExists(dir))) await fs.mkdir(dir);
 		} catch(error) {
 			console.log(error);
 		}
-		return curDir;
-	}, initDir);
+	});
+}
+
+function _getAncestors(dir) {
+	const sep = path.sep;
+	const pathParts = dir.split(sep);
+	const ancestors = [];
+
+	for (let n=0; n<pathParts.length; n++) {
+		ancestors.push(`${ancestors[ancestors.length-1]||''}${sep}${pathParts[n]}`.replace('//','/'));
+	}
+
+	return ancestors;
+}
+
+async function grant(dir, uid, gid) {
+	const ancestors = _getAncestors(dir);
+	ancestors.shift();
+	await bolt.mapAsync(ancestors, async (dir)=>{
+		try {
+			console.log(`Granting ${uid}/${gid} to ${dir}`);
+			await exec(`setfacl -RLm "u:${uid}:rx,g:${gid}:rx" ${dir}`);
+		} catch(error) {
+			console.log(error);
+		}
+	});
 }
 
 module.exports = {
-	filesInDirectory, directoriesInDirectory,
-	getCallerFileName, getRoot,
-	fileExists, isPathRelativeTo, makeDirectory
+	directoriesInDirectory: (...params)=>Bluebird.resolve(directoriesInDirectory(...params)),
+	fileExists,
+	filesInDirectory: (...params)=>Bluebird.resolve(filesInDirectory(...params)),
+	fs,
+	getCallerFileName,
+	getRoot,
+	grant,
+	isPathRelativeTo,
+	makeDirectory
 };

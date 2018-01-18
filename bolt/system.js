@@ -8,8 +8,6 @@ const linuxUserAwait = require.try(true, '@simpo/linux-user');
 const util = require('util');
 const chown = util.promisify(require('chownr'));
 const exec = util.promisify(require('child_process').exec);
-const fs = require('fs');
-const stat = util.promisify(fs.stat);
 
 /**
  * Create a given user.
@@ -44,7 +42,7 @@ async function addUser(config) {
 	await Promise.all(bolt.makeArray(config.root).map(async (root)=>{
 		let publicDir = root + 'public';
 		try {
-			await stat(publicDir);
+			await bolt.fs.stat(publicDir);
 			await exec('setfacl -RLm "u:'+user.uid+':rwx,d:'+user.uid+':rwx,g:'+user.gid+':rwx" '+publicDir);
 		} catch (err) {}
 	}));
