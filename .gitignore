@@ -6,6 +6,7 @@ docs/
 .npm/
 .node-gyp/
 log/
+.config/
 
 #Allow localhost testing
 server.crt

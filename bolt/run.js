@@ -147,6 +147,8 @@ function _runApp(app) {
 			resolve(app);
 		});
 
+		server.keepAliveTimeout = 60000 * 2;
+
 		upgrade(server, app);
 	});
 }
