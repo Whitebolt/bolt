@@ -50,6 +50,10 @@ function elementContains(container, element) {
 	return false;
 }
 
+function getNodeClasses(node) {
+	return bolt.uniq(node.className.split(/\s+/).map(className=>className.trim()));
+}
+
 module.exports = {
-	classNames, attributes, elementContains
+	classNames, attributes, elementContains, getNodeClasses
 };
