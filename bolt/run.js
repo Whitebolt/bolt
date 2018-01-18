@@ -55,10 +55,13 @@ async function _createServer(app, config=app.config) {
  * @async
  * @param {Object} config		The application config.
  */
-async function _doRootTasksAndDowngrade(config) {
+async function _doRootTasks1(config) {
 	await bolt.makeDirectory(config.runDirectory);
 	const pidController = new bolt.Pid_Controller(config.runDirectory, config.name, config);
 	await pidController.create();
+}
+
+async function _doRootTasks2(config) {
 	await exec(`chown -R ${config.nginx.user}:${config.nginx.group} ${config.runDirectory}`);
 	await exec(`setfacl -RLm "u:${config.uid}:rw" ${pidController.pidFile}`);
 	await exec(`setfacl -RLm "u:${config.uid}:rw" ${config.sock}`);
@@ -124,11 +127,14 @@ async function _createWelcome(config) {
  */
 function _runApp(app) {
 	const config = app.config;
+	const root = (config.uid && config.gid && !config.development);
+
 	return new Promise(async (resolve)=>{
 		const server = await _createServer(app);
+		if (root) await _doRootTasks1(config);
 
 		server.listen(config.sock || config.port, async ()=>{
-			if (config.uid && config.gid && !config.development) await _doRootTasksAndDowngrade(config);
+			if (root) await _doRootTasks2(config);
 			_deleteSecretConfigProps(app);
 			bolt.emit('appListening', config.sock || config.port);
 			console.log(await _createWelcome(config));

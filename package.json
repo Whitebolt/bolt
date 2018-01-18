@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.2.2",
+  "version": "1.3.0",
   "keywords": [
     "Server",
     "React",
@@ -130,7 +130,7 @@
       "start": 3000,
       "end": 8000
     },
-    "runDirectory":"/var/run/bolt",
+    "runDirectory": "/var/run/bolt",
     "logLevel": 4,
     "nginx": {
       "user": "www-data",
