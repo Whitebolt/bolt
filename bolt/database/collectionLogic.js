@@ -3,7 +3,7 @@
 const rrulestr = require('@simpo/rrule').rrulestr;
 const dateParser = require('ical-date-parser');
 const BoltDatabaseQueryConfig = require('./BoltDatabaseQueryConfig');
-const {prioritySorter} = require('../array');
+const prioritySorter = bolt.prioritySorter;
 const _prioritySorter = prioritySorter({sortProperty:'_priority'});
 
 /**

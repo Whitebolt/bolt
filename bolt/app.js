@@ -248,6 +248,15 @@ function getApp(component) {
 async function loadApplication(configPath) {
 	await bolt.emitBefore('initialiseApp');
 	const app = await _loadApplication(configPath);
+	bolt.MODE = new Set();
+	if (app.config.debug) bolt.MODE.add("DEBUG");;
+	if (app.config.development) bolt.MODE.add("DEVELOPMENT");
+	if (app.config.production) bolt.MODE.add("PRODUCTION");
+	bolt.LOGLEVEL = app.config.logLevel;
+	bolt.VERSION = {
+		lodash:bolt.VERSION,
+		bolt:app.config.version
+	};
 	await bolt.emitAfter('initialiseApp', configPath, app);
 }
 

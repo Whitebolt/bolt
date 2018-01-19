@@ -9,7 +9,9 @@ const path = require('path');
 const fs = require('fs');
 global.__originalCwd = process.cwd();
 process.chdir(path.dirname(fs.realpathSync(__filename)));
-const bolt = {require:require('require-extra')};
+const requireX = require('require-extra');
+const bolt = requireX.sync("lodash").runInContext();
+bolt.require = require('require-extra');
 bolt.annotation =  new (bolt.require.sync('@simpo/object-annotations'))();
 const packageConfig = bolt.require.sync('./package.json').config || {};
 const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
@@ -68,10 +70,8 @@ async function appLauncher(config) {
 
 bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
 	if (bolt.isObject(exports)) {
-		Object.keys(exports).forEach(methodName=>{
-			if (bolt.isFunction(exports[methodName])) {
-				bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
-			}
+		bolt.functions(exports).forEach(methodName=>{
+			bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
 		});
 	}
 

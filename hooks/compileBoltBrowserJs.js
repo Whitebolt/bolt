@@ -28,11 +28,10 @@ module.exports = function() {
 			const exports = require(target);
 			if (bolt.annotation.get(exports, 'browser-export')) {
 				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
-				if (target === boltRootDir + '/lib/lodash') return {
-					target,
-					exportedNames:Object.keys(exports).filter(name=>bolt.isFunction(exports[name])),
-					namedExports:Object.keys(exports)
-				};
+				if (target === boltRootDir + '/lib/lodash') {
+					boltContent += `import lodash from "${target}";`;
+					return;
+				}
 
 				return {
 					target,
@@ -58,7 +57,20 @@ module.exports = function() {
 
 		const exportedNames = bolt.flatten(exported.map(exported=>exported.exportedNames)).sort();
 
-		boltContent += `export default {${exportedNames.join(',')}};`;
+		boltContent += `const bolt = lodash.runInContext();`;
+		exported.forEach(exports=>{
+			exports.exportedNames.forEach(exportedName=>{ // @todo Make this less verbose!
+				boltContent += `bolt["${exportedName}"] = ${exportedName};\n`;
+			});
+		});
+
+		boltContent += `bolt.MODE = new Set();\n`;
+		if (app.config.debug) boltContent += `bolt.MODE.add("DEBUG");`;
+		if (app.config.development) boltContent += `bolt.MODE.add("DEVELOPMENT");`;
+		if (app.config.production) boltContent += `bolt.MODE.add("PRODUCTION");`;
+		boltContent += `bolt.LOGLEVEL = ${app.config.logLevel}\n`;
+		boltContent += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.config.version}"}\n`;
+		boltContent += `export default bolt;`;
 
 		const compiled = await compileBolt(boltContent, exported, name);
 		setVirtualJsFile(name, compiled);
