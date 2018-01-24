@@ -46,7 +46,11 @@ async function appLauncher(config) {
 	if (!configDone) {
 		configDone = true;
 		if (!boltLoaded) {
+			bolt.forOwn(require.cache, (module, moduleId)=>{
+
+			});
 			await bolt.require.import('./bolt/', {
+				reload: true,
 				merge: true,
 				imports: bolt,
 				retry: true,
@@ -89,6 +93,7 @@ bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
 async function pm2Controller() {
 	let boltImportOptions = {
 		merge:true,
+		reload: true,
 		imports:bolt,
 		retry: true,
 		basedir:__dirname,
