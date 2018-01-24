@@ -148,8 +148,7 @@ function _runApp(app) {
 		});
 
 		server.keepAliveTimeout = 60000 * 2;
-
-		upgrade(server, app);
+		app.wss = upgrade(server, app);
 	});
 }
 
