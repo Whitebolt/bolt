@@ -26,7 +26,17 @@ module.exports = function() {
 
 		const exported = files.map(target=>{
 			const exports = require(target);
-			if (bolt.annotation.get(exports, 'browser-export')) {
+
+			let browserExport = bolt.annotation.get(exports, 'browser-export');
+			if (bolt.__moduleAnnotations.has(target)) {
+				bolt.__moduleAnnotations.get(target).forEach(exports=>{
+					browserExport = browserExport || bolt.annotation.get(exports, 'browser-export');
+				});
+				bolt.__moduleAnnotations.get(target).clear();
+				bolt.__moduleAnnotations.delete(target);
+			}
+
+			if (browserExport) {
 				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
 				if (target === boltRootDir + '/lib/lodash') {
 					boltContent += `import lodash from "${target}";`;
@@ -75,5 +85,7 @@ module.exports = function() {
 		const compiled = await compileBolt(boltContent, exported, name);
 		setVirtualJsFile(name, compiled);
 		clearCache(filesId);
+		bolt.__moduleAnnotations.clear();
+		delete bolt.__moduleAnnotations;
 	}
 };
