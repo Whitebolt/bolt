@@ -6,6 +6,7 @@
  */
 
 const dateFormat = require('dateformat');
+const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
 
 /**
  * Replace the last string within a string.
@@ -17,8 +18,8 @@ const dateFormat = require('dateformat');
  * @returns {string}          The original text with the last occurrence of 'search' replaced with 'replace'.
  */
 function replaceLast(txt, searcher, replacer) {
-  const n = txt.lastIndexOf(searcher);
-  return txt.slice(0, n) + txt.slice(n).replace(searcher, replacer);
+	const n = txt.lastIndexOf(searcher);
+	return txt.slice(0, n) + txt.slice(n).replace(searcher, replacer);
 }
 
 /**
@@ -32,11 +33,7 @@ function replaceLast(txt, searcher, replacer) {
  * @returns {string}            The random string.
  */
 function randomString(length=32) {
-  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
-  if (! length) length = Math.floor(Math.random() * chars.length);
-  let str = '';
-  for (let i = 0; i < length; i++) str += chars[Math.floor(Math.random() * chars.length)];
-  return str;
+	return (new Array(length)).fill(0).map(()=>chars[bolt.random(chars.length - 1)]).join('');
 }
 
 /**
@@ -49,10 +46,10 @@ function randomString(length=32) {
  * @returns {Array}           Split and trimmed array.
  */
 function splitAndTrim(value, splitter) {
-  return value.split(splitter)
-      .filter(value=>value)
-      .map(value=>value.trim())
-      .filter(value=>(value!==''));
+	return value.split(splitter)
+		.filter(value=>value)
+		.map(value=>value.trim())
+		.filter(value=>(value!==''));
 }
 
 /**
@@ -68,42 +65,42 @@ function splitAndTrim(value, splitter) {
  * @returns {string}            Replacement text.
  */
 function replaceSequence(txt, sequence) {
-  let _sequence = (sequence?sequence:txt);
+	let _sequence = (sequence?sequence:txt);
 
-  let _replaceSequence = txt=>{
-    let _txt = (bolt.isString(txt) ? txt : txt.toString());
-    _sequence.forEach(operation=>{
-      _txt = _txt.replace(operation[0], operation[1] || '');
-    });
-    return _txt;
-  };
+	let _replaceSequence = txt=>{
+		let _txt = (bolt.isString(txt) ? txt : txt.toString());
+		_sequence.forEach(operation=>{
+			_txt = _txt.replace(operation[0], operation[1] || '');
+		});
+		return _txt;
+	};
 
-  return (sequence?_replaceSequence(txt):_replaceSequence)
+	return (sequence?_replaceSequence(txt):_replaceSequence)
 }
 
 function runTemplate(strTxt, data) {
-  const params = Object.keys(data);
-  params.push('return `'+strTxt+'`;');
-  const template = new Function(...params);
-  return template(...bolt.values(data));
+	const params = Object.keys(data);
+	params.push('return `'+strTxt+'`;');
+	const template = new Function(...params);
+	return template(...bolt.values(data));
 }
 
 function lop(text, seperator='/') {
-  const parts = text.split(seperator);
-  parts.pop();
-  return parts.join(seperator)
+	const parts = text.split(seperator);
+	parts.pop();
+	return parts.join(seperator)
 }
 
 function lopGen(text, seperator='/') {
-  let _text = text;
-  return function*() {
-    while (_text.length) {
-      yield _text;
-      _text = lop(_text, seperator='/');
-    }
-  };
+	let _text = text;
+	return function*() {
+		while (_text.length) {
+			yield _text;
+			_text = lop(_text, seperator='/');
+		}
+	};
 }
 
 module.exports = {
-  replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen
+	replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen
 };
