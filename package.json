@@ -310,6 +310,23 @@
         "level": 2
       },
       {
+        "event": "sqlQueryResults",
+        "action": "database result",
+        "property": "<%= params[0] %>",
+        "propertyColour": "blue",
+        "description": "<%= params[1] %> rows",
+        "level": 2
+      },
+      {
+        "event": "sqlQueryNoResults",
+        "action": "database result",
+        "property": "<%= params[0] %>",
+        "propertyColour": "blue",
+        "typeColour": "yellow",
+        "description": "zero rows",
+        "level": 2
+      },
+      {
         "event": "exportBoltToBrowserGlobal",
         "action": "export",
         "property": "<%= params[0].target %>",
