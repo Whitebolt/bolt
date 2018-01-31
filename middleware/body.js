@@ -55,7 +55,10 @@ function init(app) {
 	// @annotation priority 3
 
 	const jsonParser = bodyParser.json();
-	const urlParser = bodyParser.urlencoded({extended:true});
+	const urlParser = bodyParser.urlencoded({
+		limit: app.config.uploadLimit || '1M',
+		extended:true
+	});
 	const textParser = bodyParser.text();
 	const rawParser = bodyParser.raw({
 		type: req=>(req.is('application/octet-stream') || req.is('binary/bmf')),
