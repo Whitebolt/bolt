@@ -56,7 +56,7 @@ function init(app) {
 
 	const jsonParser = bodyParser.json();
 	const urlParser = bodyParser.urlencoded({
-		limit: app.config.uploadLimit || '1M',
+		limit: app.config.uploadLimit || 102400,
 		extended:true
 	});
 	const textParser = bodyParser.text();
