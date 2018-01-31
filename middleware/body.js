@@ -62,7 +62,7 @@ function init(app) {
 	const textParser = bodyParser.text();
 	const rawParser = bodyParser.raw({
 		type: req=>(req.is('application/octet-stream') || req.is('binary/bmf')),
-		limit: app.config.uploadLimit || '1M'
+		limit: app.config.uploadLimit || 102400
 	});
 
 	function skip(req, res, next, parser) {
