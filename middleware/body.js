@@ -12,37 +12,37 @@ const bodyParser = require('body-parser');
  * @returns {boolean}                       Is it mulipart or not?
  */
 function _isMultipartRequest(req) {
-  const contentTypeHeader = req.headers['content-type'];
-  return (contentTypeHeader && (contentTypeHeader.indexOf('multipart') > -1));
+	const contentTypeHeader = req.headers['content-type'];
+	return (contentTypeHeader && (contentTypeHeader.indexOf('multipart') > -1));
 }
 
 function _isWebsocket(req) {
-  return !!req.websocket;
+	return !!req.websocket;
 }
 
 function bmfParser(req, res, next) {
-  if (req.is('binary/bmf')) {
-    const view = new Uint8Array(req.body, req.body.byteOffset, req.body.byteLength);
-    const message = new BMF(view);
+	if (req.is('binary/bmf')) {
+		const view = new Uint8Array(req.body, req.body.byteOffset, req.body.byteLength);
+		const message = new BMF(view);
 
-    let body = {};
+		let body = {};
 
-    message.headers.forEach((value, header)=>{
-      body[header] = value;
-    });
-    body.frames = [...message.frames].map(frameRaw=>{
-      let frame = {};
-      frameRaw.headers.forEach((value, header)=>{
-        frame[header] = value;
-      });
-      frame.body = frameRaw.parsedBody;
-      return frame;
-    });
+		message.headers.forEach((value, header)=>{
+			body[header] = value;
+		});
+		body.frames = [...message.frames].map(frameRaw=>{
+			let frame = {};
+			frameRaw.headers.forEach((value, header)=>{
+				frame[header] = value;
+			});
+			frame.body = frameRaw.parsedBody;
+			return frame;
+		});
 
-    req.body = body;
-  }
+		req.body = body;
+	}
 
-  next();
+	next();
 }
 
 /**
@@ -52,28 +52,31 @@ function bmfParser(req, res, next) {
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-  // @annotation priority 3
+	// @annotation priority 3
 
-  const jsonParser = bodyParser.json();
-  const urlParser = bodyParser.urlencoded({extended:true});
-  const textParser = bodyParser.text();
-  const rawParser = bodyParser.raw({type: req=>(req.is('application/octet-stream') || req.is('binary/bmf'))});
+	const jsonParser = bodyParser.json();
+	const urlParser = bodyParser.urlencoded({extended:true});
+	const textParser = bodyParser.text();
+	const rawParser = bodyParser.raw({
+		type: req=>(req.is('application/octet-stream') || req.is('binary/bmf')),
+		limit: app.config.uploadLimit || '1M'
+	});
 
-  function skip(req, res, next, parser) {
-    return ((_isMultipartRequest(req) || _isWebsocket(req)) ? next() : parser(req, res, next));
-  }
+	function skip(req, res, next, parser) {
+		return ((_isMultipartRequest(req) || _isWebsocket(req)) ? next() : parser(req, res, next));
+	}
 
-  function bmfParser(req, res, next) {
-    next();
-  }
+	function bmfParser(req, res, next) {
+		next();
+	}
 
-  app.use(
-    (req, res, next)=>skip(req, res, next, urlParser),
-    (req, res, next)=>skip(req, res, next, jsonParser),
-    (req, res, next)=>skip(req, res, next, textParser),
-    (req, res, next)=>skip(req, res, next, rawParser)/*,
-    (req, res, next)=>skip(req, res, next, bmfParser)*/
-  );
+	app.use(
+		(req, res, next)=>skip(req, res, next, urlParser),
+		(req, res, next)=>skip(req, res, next, jsonParser),
+		(req, res, next)=>skip(req, res, next, textParser),
+		(req, res, next)=>skip(req, res, next, rawParser)/*,
+		 (req, res, next)=>skip(req, res, next, bmfParser)*/
+	);
 }
 
 module.exports = init;
