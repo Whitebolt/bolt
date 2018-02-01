@@ -4,6 +4,8 @@ const Promise = require('bluebird');
 const proxy = require('express-http-proxy');
 const iconv = require('iconv-lite');
 
+const defaultUploadLimit = 1024*1024; // 1Mb
+
 /**
  * Test if content matches a type in a given array.
  *
@@ -13,8 +15,8 @@ const iconv = require('iconv-lite');
  * @returns {boolean}                 Is it a match?
  */
 function contentIsType(type, matchType) {
-  let matchTypes = bolt.makeArray(matchType);
-  return ((type.filter(_type=>(matchTypes.indexOf(_type) !== -1))).length > 0);
+	let matchTypes = bolt.makeArray(matchType);
+	return ((type.filter(_type=>(matchTypes.indexOf(_type) !== -1))).length > 0);
 }
 
 /**
@@ -26,12 +28,12 @@ function contentIsType(type, matchType) {
  * @returns {string}                          The encoding string.
  */
 function getEncodingOfType(type, defaultEncoding='utf-8') {
-  if (type.length <= 1) return defaultEncoding;
-  let encodings = type
-    .filter(type=>(type.indexOf('charset=') !== -1))
-    .map(encoding=>encoding.split('=').pop());
+	if (type.length <= 1) return defaultEncoding;
+	let encodings = type
+		.filter(type=>(type.indexOf('charset=') !== -1))
+		.map(encoding=>encoding.split('=').pop());
 
-  return (encodings.length ? encodings.shift() : defaultEncoding);
+	return (encodings.length ? encodings.shift() : defaultEncoding);
 }
 
 /**
@@ -42,7 +44,7 @@ function getEncodingOfType(type, defaultEncoding='utf-8') {
  * @returns {Array}                           Content typesarray.
  */
 function getTypesArray(res) {
-  return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
+	return (res.get('Content-Type') || '').split(';').map(type=>type.trim());
 }
 
 /**
@@ -54,9 +56,9 @@ function getTypesArray(res) {
  * @returns {Promise.<string>}                Parsed data.
  */
 function parseReturnedData(options, req) {
-  if (options.text.indexOf('<'+options.options.delimiter) === -1) return Promise.resolve(options.text);
-  let template = bolt.compileTemplate(options);
-  return Promise.resolve(template({}, req, {}));
+	if (options.text.indexOf('<'+options.options.delimiter) === -1) return Promise.resolve(options.text);
+	let template = bolt.compileTemplate(options);
+	return Promise.resolve(template({}, req, {}));
 }
 
 /**
@@ -67,12 +69,12 @@ function parseReturnedData(options, req) {
  * @returns {Object}          Promise resolving to options after content parsed (or not).
  */
 function _ejsIntercept(options) {
-  if (!contentIsType(options.type, options.proxyConfig.proxyParseForEjs)) return Promise.resolve(options);
+	if (!contentIsType(options.type, options.proxyConfig.proxyParseForEjs)) return Promise.resolve(options);
 
-  return parseReturnedData(options, options.req).then(text=>{
-    options.text = text;
-    return options;
-  });
+	return parseReturnedData(options, options.req).then(text=>{
+		options.text = text;
+		return options;
+	});
 }
 
 /**
@@ -84,40 +86,40 @@ function _ejsIntercept(options) {
  * @returns {Function}              The intercept function.
  */
 function _initIntercept(app, proxyConfig) {
-  return (rsp, data, req, res)=>{
-    let type = getTypesArray(res);
-    let interceptCount = 0;
+	return (rsp, data, req, res)=>{
+		let type = getTypesArray(res);
+		let interceptCount = 0;
 
-    let options = {
-      text:iconv.decode(data, getEncodingOfType(type)),
-      data,
-      sendText: true,
-      filename:req.path,
-      app,
-      options:{},
-      type,
-      proxyConfig,
-      rsp,
-      res,
-      req
-    };
+		let options = {
+			text:iconv.decode(data, getEncodingOfType(type)),
+			data,
+			sendText: true,
+			filename:req.path,
+			app,
+			options:{},
+			type,
+			proxyConfig,
+			rsp,
+			res,
+			req
+		};
 
-    if (proxyConfig.delimiter) options.options.delimiter = proxyConfig.delimiter;
+		if (proxyConfig.delimiter) options.options.delimiter = proxyConfig.delimiter;
 
-    function interceptCaller(interceptCount) {
-      return proxyConfig.intercepts[interceptCount](options).then(options=>{
-        interceptCount++;
-        if (interceptCount < proxyConfig.intercepts.length) return interceptCaller(interceptCount);
-        return options;
-      });
-    }
+		function interceptCaller(interceptCount) {
+			return proxyConfig.intercepts[interceptCount](options).then(options=>{
+				interceptCount++;
+				if (interceptCount < proxyConfig.intercepts.length) return interceptCaller(interceptCount);
+				return options;
+			});
+		}
 
-    if (proxyConfig.intercepts && proxyConfig.intercepts.length) {
-      return interceptCaller(interceptCount).then(options=>options.sendText?options.text:options.data);
-    }
+		if (proxyConfig.intercepts && proxyConfig.intercepts.length) {
+			return interceptCaller(interceptCount).then(options=>options.sendText?options.text:options.data);
+		}
 
-    return data;
-  };
+		return data;
+	};
 }
 
 /**
@@ -130,14 +132,14 @@ function _initIntercept(app, proxyConfig) {
  * @returns {Function}              The request path resolver function.
  */
 function _initSlugger(app, appProxyConfig, config) {
-  let _slugger = require.try(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
-    config.proxyReqPathResolver = slugger(appProxyConfig);
-    return config.proxyReqPathResolver;
-  });
+	let _slugger = require.try(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
+		config.proxyReqPathResolver = slugger(appProxyConfig);
+		return config.proxyReqPathResolver;
+	});
 
-  return (req)=>{
-    return _slugger.then(()=>config.proxyReqPathResolver(req));
-  }
+	return (req)=>{
+		return _slugger.then(()=>config.proxyReqPathResolver(req));
+	}
 }
 
 /**
@@ -150,10 +152,10 @@ function _initSlugger(app, appProxyConfig, config) {
  * @returns {Promise.<Object>}      Promise resolving to mutated config object.
  */
 function _initInterceptModule(app, appProxyConfig, config) {
-  return bolt.require.try(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
-    appProxyConfig.intercepts.push(intercept);
-    return config;
-  });
+	return bolt.require.try(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
+		appProxyConfig.intercepts.push(intercept);
+		return config;
+	});
 }
 
 /**
@@ -165,14 +167,14 @@ function _initInterceptModule(app, appProxyConfig, config) {
  * @returns {Function}              The decorate body function.
  */
 function _initBodyDecorateRequest(app, appProxyConfig) {
-  return (bodyContent, srcReq)=>{
-    if (bolt.isPlainObject(bodyContent)) {
-      return bolt.objectToQueryString(bodyContent, {
-        addEquals: appProxyConfig.addEqualsToEmptyQueryValues || false
-      });
-    }
-    return bodyContent;
-  };
+	return (bodyContent, srcReq)=>{
+		if (bolt.isPlainObject(bodyContent)) {
+			return bolt.objectToQueryString(bodyContent, {
+				addEquals: appProxyConfig.addEqualsToEmptyQueryValues || false
+			});
+		}
+		return bodyContent;
+	};
 }
 
 /**
@@ -184,10 +186,10 @@ function _initBodyDecorateRequest(app, appProxyConfig) {
  * @returns {Function}              Decorate request function.
  */
 function _initOptDecorateRequest(app, appProxyConfig) {
-  return (proxyReqOpts, srcReq)=>{
-    if (appProxyConfig.host) proxyReqOpts.headers.host = appProxyConfig.host;
-    return proxyReqOpts;
-  };
+	return (proxyReqOpts, srcReq)=>{
+		if (appProxyConfig.host) proxyReqOpts.headers.host = appProxyConfig.host;
+		return proxyReqOpts;
+	};
 }
 
 /**
@@ -198,21 +200,27 @@ function _initOptDecorateRequest(app, appProxyConfig) {
  * @returns {*}
  */
 function _proxyRouter(app, appProxyConfig) {
-  let config = {
-    reqAsBuffer: true,
-    reqBodyEncoding: null,
-    proxyReqOptDecorator: _initOptDecorateRequest(app, appProxyConfig),
-    proxyReqBodyDecorator: _initBodyDecorateRequest(app, appProxyConfig),
-    userResDecorator: _initIntercept(app, appProxyConfig)
-  };
+	const limit = (bolt.isObject(app.config.uploadLimit) ?
+		app.config.uploadLimit.proxy || defaultUploadLimit :
+		app.config.uploadLimit || defaultUploadLimit
+	);
 
-  appProxyConfig.intercepts = bolt.makeArray(appProxyConfig.intercepts || []);
+	let config = {
+		reqAsBuffer: true,
+		reqBodyEncoding: null,
+		proxyReqOptDecorator: _initOptDecorateRequest(app, appProxyConfig),
+		proxyReqBodyDecorator: _initBodyDecorateRequest(app, appProxyConfig),
+		userResDecorator: _initIntercept(app, appProxyConfig),
+		limit
+	};
 
-  if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
-  if (appProxyConfig.slugger) config.proxyReqPathResolver = _initSlugger(app, appProxyConfig, config);
-  if (appProxyConfig.intercept) _initInterceptModule(app, appProxyConfig, config);
+	appProxyConfig.intercepts = bolt.makeArray(appProxyConfig.intercepts || []);
 
-  return proxy(appProxyConfig.forwardPath, config);
+	if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
+	if (appProxyConfig.slugger) config.proxyReqPathResolver = _initSlugger(app, appProxyConfig, config);
+	if (appProxyConfig.intercept) _initInterceptModule(app, appProxyConfig, config);
+
+	return proxy(appProxyConfig.forwardPath, config);
 }
 
 /**
@@ -223,15 +231,15 @@ function _proxyRouter(app, appProxyConfig) {
  * @returns {Object}                The router object.
  */
 function proxyRouter(app) {
-  // @annotation priority -10
+	// @annotation priority -10
 
-  let routing = [(req, res, next)=>next()];
-  if (app.config.proxy && app.config.proxy.forwardPath) {
-    bolt.makeArray(app.config.proxy).forEach(proxyConfig=>{
-      if (proxyConfig.forwardPath) routing.push(_proxyRouter(app, proxyConfig));
-    });
-  }
-  return routing;
+	let routing = [(req, res, next)=>next()];
+	if (app.config.proxy && app.config.proxy.forwardPath) {
+		bolt.makeArray(app.config.proxy).forEach(proxyConfig=>{
+			if (proxyConfig.forwardPath) routing.push(_proxyRouter(app, proxyConfig));
+		});
+	}
+	return routing;
 }
 
 module.exports = proxyRouter;

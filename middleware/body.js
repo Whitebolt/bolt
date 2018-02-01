@@ -3,6 +3,14 @@
 const bodyParser = require('body-parser');
 //const BMF = require('binary-message-format/lib');
 
+const defaultUploadLimit = 1024*1024; // 1Mb
+const defaultUploadLimits = {
+	json: 1024*100, // 100k
+	text: 1024*100, // 100k
+	raw: defaultUploadLimit,
+	url: defaultUploadLimit
+};
+
 
 /**
  * Test if given request is multipart-mime.
@@ -15,7 +23,7 @@ function _isMultipartRequest(req) {
 	const contentTypeHeader = req.headers['content-type'];
 	return (contentTypeHeader && (contentTypeHeader.indexOf('multipart') > -1));
 }
-
+102400
 function _isWebsocket(req) {
 	return !!req.websocket;
 }
@@ -43,6 +51,16 @@ function bmfParser(req, res, next) {
 	}
 
 	next();
+}
+
+function getUploadLimit(app) {
+	const uploadLimit = app.config.uploadLimit || 102400;
+	if (bolt.isObject(uploadLimit)) return Object.assign({
+		json: defaultUploadLimit,
+		text: defaultUploadLimit,
+		raw: defaultUploadLimit,
+		url: defaultUploadLimit
+	}, defaultUploadLimits, uploadLimit);
 }
 
 /**
