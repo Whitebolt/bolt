@@ -23,7 +23,7 @@ function _isMultipartRequest(req) {
 	const contentTypeHeader = req.headers['content-type'];
 	return (contentTypeHeader && (contentTypeHeader.indexOf('multipart') > -1));
 }
-102400
+
 function _isWebsocket(req) {
 	return !!req.websocket;
 }
