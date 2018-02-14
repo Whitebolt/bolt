@@ -142,7 +142,11 @@ function _runApp(app) {
 			}
 			_deleteSecretConfigProps(app);
 			bolt.emit('appListening', config.sock || config.port);
+
 			console.log(await _createWelcome(config));
+			console.log('Modules:');
+			bolt.makeArray(app.config.modules).forEach((module, n)=>console.log(module.name, module.version));
+
 			bolt.emit('appRunning', config.name, process.hrtime(global.startTime));
 			resolve(app);
 		});
@@ -150,6 +154,19 @@ function _runApp(app) {
 		server.keepAliveTimeout = 60000 * 2;
 		app.wss = upgrade(server, app);
 	});
+}
+
+function _getAuthors(modules) {
+	const authors = {};
+	bolt.makeArray(modules).forEach(module=>{
+		console.log(module);
+		bolt.makeArray(module.contributors).forEach(contributor=>{
+			console.log(contributor);
+			if (contributor.email && contributor.name) authors[contributor.email] = authors.name;
+		});
+	});
+
+	return Object.keys(authors).map(email=>`${authors[email]}: <${email}>`);
 }
 
 /**

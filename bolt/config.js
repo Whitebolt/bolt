@@ -138,6 +138,7 @@ function _concatArrayUnique(ary1, ary2) {
 
 const _configMergeOverrides = {
 	boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
+	modules: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 	questions: (objValue, srcValue)=>[...bolt.makeArray(srcValue), ...bolt.makeArray(objValue)],
 
 	/**
@@ -162,9 +163,9 @@ const _configMergeOverrides = {
  * @returns {undefined|*} The new value after merging or undefined to use
  *                        default method.
  */
-function _configMerger(objValue, srcValue, key) {
+function _configMerger(objValue, srcValue, key, obj) {
 	return (_configMergeOverrides.hasOwnProperty(key) ?
-			_configMergeOverrides[key](objValue, srcValue) :
+			_configMergeOverrides[key](objValue, srcValue, obj) :
 			undefined
 	);
 }
@@ -183,6 +184,14 @@ function _getConfig(config) {
 	packageConfigs.push({template:'index', serverName: packageData.name});
 	packageConfigs.push(bolt.pick(packageData.config, _packageConfigs.boltConfigProperties || []));
 	packageConfigs.push(_packageConfigs);
+
+	const modules = [];
+	bolt.makeArray(config.root).forEach(root=>{
+		const {name, version} = bolt.pick(getPackage(root), ["name", "version"]);
+		if (name && version) modules.push({name, version});
+	});
+	packageConfigs.push({modules});
+
 	return bolt.mergeWith.apply(bolt, packageConfigs);
 }
 
