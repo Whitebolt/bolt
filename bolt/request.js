@@ -90,8 +90,8 @@ function queryStringToObject(queryString, splitter='&', defaultValue=undefined) 
 	let parts = queryString.split(splitter);
 	parts.forEach(part=>{
 		let _parts = part.split('=');
-		let key = _parts.shift();
-		obj[key] = ((_parts.length) ? _parts.join('=') : defaultValue);
+		let key = decodeURIComponent(_parts.shift());
+		obj[key] = decodeURIComponent((_parts.length) ? _parts.join('=') : defaultValue);
 	});
 	return obj;
 }
@@ -105,9 +105,7 @@ function queryStringToObject(queryString, splitter='&', defaultValue=undefined) 
  */
 function getUrlQueryObject(url) {
 	let parts = url.split('?');
-	if (parts.length > 1) {
-		return queryStringToObject(parts[1].split('#').shift());
-	}
+	if (parts.length > 1) return queryStringToObject(parts[1].split('#').shift());
 	return {};
 }
 
