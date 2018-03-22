@@ -103,8 +103,7 @@ function prioritySorter(a, b) {
 }
 
 /**
- * Find the first index in an array that matches supplied value.  Does a deep equivalence match so arrays and objects
- * can be compared.
+ * Find the first index in an array that matches supplied value.  Does a deep equivalence match so arrays and objects can be compared.
  *
  * @static
  * @public
