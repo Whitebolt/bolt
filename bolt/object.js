@@ -128,6 +128,10 @@ function toKeyValueArray(obj) {
 	return bolt.flatten(Object.keys(obj).map(key=>[key, obj[key]]));
 }
 
+function objectLength(obj) {
+  return Object.keys(obj).length;
+}
+
 module.exports = {
-  addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge, pickHas
+  addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge, pickHas, objectLength
 };
