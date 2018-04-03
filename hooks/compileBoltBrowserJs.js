@@ -24,55 +24,60 @@ module.exports = function() {
 			sourceMap:bolt.VirtualFile.AWAIT
 		});
 
-		const exported = files.map(target=>{
-			const exports = require(target);
+		const exported = bolt.chain(files)
+			.map(target=>{
+				const exports = require(target);
 
-			let browserExport = bolt.annotation.get(exports, 'browser-export');
-			if (bolt.__moduleAnnotations.has(target)) {
-				bolt.__moduleAnnotations.get(target).forEach(exports=>{
-					browserExport = browserExport || bolt.annotation.get(exports, 'browser-export');
+				let browserExport = bolt.annotation.get(exports, 'browser-export');
+				if (bolt.__moduleAnnotations.has(target)) {
+					bolt.__moduleAnnotations.get(target).forEach(exports=>{
+						browserExport = browserExport || bolt.annotation.get(exports, 'browser-export');
+					});
+					bolt.__moduleAnnotations.get(target).clear();
+					bolt.__moduleAnnotations.delete(target);
+				}
+
+				if (browserExport) {
+					bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
+					if (target === boltRootDir + '/lib/lodash') {
+						boltContent += `import lodash from "lodash";`;
+						return;
+					}
+
+					return {
+						target,
+						exportedNames:Object.keys(exports).filter(key=>{
+							if (!bolt.isFunction(exports[key])) return true;
+							return !((bolt.isFunction(exports[key])) && (bolt.annotation.get(exports[key], 'browser-export') === false));
+						}),
+						namedExports:Object.keys(exports)
+					}
+				}
+			})
+			.filter(name=>name)
+			.reverse()
+			.forEach(exported=>{
+				exported.exportedNames = bolt.chain(exported.exportedNames)
+					.map(name=>{
+						if (!exportedLookup.has(name)) {
+							exportedLookup.add(name);
+							return name;
+						}
+					})
+					.filter(name=>name)
+					.value();
+			})
+			.reverse()
+			.forEach(exported=>{
+				boltContent += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
+			})
+			.forEach((exports, n)=>{
+				if (n === 0) boltContent += `const bolt = lodash.runInContext();`;
+				exports.exportedNames.forEach(exportedName=>{ // @todo Make this less verbose!
+					boltContent += `bolt["${exportedName}"] = ${exportedName};\n`;
 				});
-				bolt.__moduleAnnotations.get(target).clear();
-				bolt.__moduleAnnotations.delete(target);
-			}
-
-			if (browserExport) {
-				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
-				if (target === boltRootDir + '/lib/lodash') {
-					boltContent += `import lodash from "lodash";`;
-					return;
-				}
-
-				return {
-					target,
-					exportedNames:Object.keys(exports).filter(key=>{
-						if (!bolt.isFunction(exports[key])) return true;
-						return !((bolt.isFunction(exports[key])) && (bolt.annotation.get(exports[key], 'browser-export') === false));
-					}),
-					namedExports:Object.keys(exports)
-				}
-			}
-		}).filter(name=>name).reverse().map(exported=>{
-			exported.exportedNames = exported.exportedNames.map(name=>{
-				if (!exportedLookup.has(name)) {
-					exportedLookup.add(name);
-					return name;
-				}
-			}).filter(name=>name);
-			return exported;
-		}).reverse().map(exported=>{
-			boltContent += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
-			return exported;
-		});
-
-		const exportedNames = bolt.flatten(exported.map(exported=>exported.exportedNames)).sort();
-
-		boltContent += `const bolt = lodash.runInContext();`;
-		exported.forEach(exports=>{
-			exports.exportedNames.forEach(exportedName=>{ // @todo Make this less verbose!
-				boltContent += `bolt["${exportedName}"] = ${exportedName};\n`;
-			});
-		});
+			})
+			.value();
 
 		boltContent += `bolt.MODE = new Set();\n`;
 		if (app.config.debug) boltContent += `bolt.MODE.add("DEBUG");`;

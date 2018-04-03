@@ -87,9 +87,10 @@ async function _parseConfig(config) {
 }
 
 async function getRoots(...configs) {
-	return Promise.all(_concatPropertyArray(configs, 'root').map(
-		root=>bolt.fs.realpath(path.normalize(root)).then(root=>root+'/',err=>undefined)
-	)).filter(root=>root);
+	return Promise.all(_concatPropertyArray(configs, 'root')
+		.map(root=>bolt.fs.realpath(path.normalize(root)).then(root=>root+'/',err=>undefined))
+		.value()
+	).filter(root=>root);
 }
 
 /**
@@ -101,7 +102,10 @@ async function getRoots(...configs) {
  * @returns {BoltConfig[]}          Merged array.
  */
 function _concatPropertyArray(objects, property) {
-	return bolt.uniq(bolt.flatten(objects.map(_property=>_property[property] || [])));
+	return bolt.chain(objects)
+		.map(_property=>_property[property] || [])
+		.flatten()
+		.uniq();
 }
 
 /**
@@ -285,7 +289,8 @@ function mergePackageProperties(roots, properties=[], merger=()=>{}) {
  */
 function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.env) {
 	let vars = {};
-	Object.keys(env)
+	bolt.chain(env)
+		.keys()
 		.filter(envKey=>envKey.toLowerCase().startsWith(key.toLowerCase()+'_'))
 		.forEach(envKey=>{
 			let varKey = bolt.camelCase(envKey.substr(key.length));

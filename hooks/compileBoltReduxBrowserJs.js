@@ -15,28 +15,31 @@ module.exports = function(){
 		const exportEventType = `exportRedux${bolt.peakCase(type)}ToBrowser`;
 		let reduxBoltContent = '';
 
-		const items = files.map(target=>{
-			const exports = require(target);
+		const items = bolt.chain(files)
+			.map(target=>{
+				const exports = require(target);
 
-			if (bolt.annotation.get(exports, 'browser-export') !== false) {
-				const name = `redux${bolt.randomString(10)}`;
+				if (bolt.annotation.get(exports, 'browser-export') !== false) {
+					const name = `redux${bolt.randomString(10)}`;
 
-				reduxBoltContent += ((type === 'types') ?
-					`import ${name} from "${target}";\n` : `import * as ${name} from "${target}";\n`
-				);
+					reduxBoltContent += ((type === 'types') ?
+						`import ${name} from "${target}";\n` : `import * as ${name} from "${target}";\n`
+					);
 
-				Object.keys(exports.default||exports).forEach(name=>bolt.emit(
-					exportEventType,
-					new bolt.ExportToBrowserReduxBoltEvent({exportEventType, target, sync:false, name})
-				));
-				if (type === 'types') reduxBoltContent += `Object.keys(${name}).forEach(type=>{
-					${name}[type] = Symbol(${name}[type]);
-					${name}[${name}[type]] = type;
-				});`;
+					Object.keys(exports.default||exports).forEach(name=>bolt.emit(
+						exportEventType,
+						new bolt.ExportToBrowserReduxBoltEvent({exportEventType, target, sync:false, name})
+					));
+					if (type === 'types') reduxBoltContent += `Object.keys(${name}).forEach(type=>{
+						${name}[type] = Symbol(${name}[type]);
+						${name}[${name}[type]] = type;
+					});`;
 
-				return name;
-			}
-		}).filter(name=>name);
+					return name;
+				}
+			})
+			.filter(name=>name)
+			.value();
 
 		reduxBoltContent += `const ${type} = Object.assign({}, ...[${items.join(',')}]);`;
 		return reduxBoltContent;
@@ -57,12 +60,14 @@ module.exports = function(){
 			sourceMap:bolt.VirtualFile.AWAIT
 		});
 
-		const extras = Object.keys(bolt.ReduxBolt)
+		const extras = bolt.chain(bolt.ReduxBolt)
+			.keys()
 			.filter(prop=>(reduxType.indexOf(prop) === -1))
 			.map(prop=>{
 				reduxBoltContent += `const ${prop} = ${bolt.ReduxBolt[prop].toString()};`;
 				return prop;
-			});
+			})
+			.value();
 
 		reduxBoltContent += `export default {${[...reduxType, ...extras].join(',')}};`;
 

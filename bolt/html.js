@@ -5,6 +5,8 @@
  * @module bolt/bolt
  */
 
+const xSpaces = /\s+/;
+
 function classNames(...classes) {
 	return bolt.uniq(bolt.flattenDeep(bolt.mapReduce(bolt.flattenDeep(classes), className=>{
 		if (!className) return;
@@ -20,25 +22,27 @@ function attributes(...attrs) {
 	const exportedAttrs = {};
 	let displayNext = true;
 
-	bolt.flatten(attrs).forEach(attrs=>{
-		if (!displayNext) {
-			displayNext = true;
-			return;
-		}
+	bolt.chain(attrs)
+		.flatten()
+		.forEach(attrs=>{
+			if (!displayNext) {
+				displayNext = true;
+				return;
+			}
 
-		if (bolt.isString(attrs)) {
-			exportedAttrs[attrs] = true;
-		} else if (bolt.isFunction(attrs)) {
-			Object.assign(exportedAttrs, attributes(attrs(exportedAttrs)));
-		} else if (bolt.isObject(attrs)) {
-			Object.keys(attrs).forEach(attr=>{
-				const value = attrs[attr];
-				exportedAttrs[attr] = value;
-			});
-		} else if (bolt.isBoolean(attrs)) {
-			displayNext = attrs;
-		}
-	});
+			if (bolt.isString(attrs)) {
+				exportedAttrs[attrs] = true;
+			} else if (bolt.isFunction(attrs)) {
+				Object.assign(exportedAttrs, attributes(attrs(exportedAttrs)));
+			} else if (bolt.isObject(attrs)) {
+				Object.keys(attrs).forEach(attr=>{
+					const value = attrs[attr];
+					exportedAttrs[attr] = value;
+				});
+			} else if (bolt.isBoolean(attrs)) {
+				displayNext = attrs;
+			}
+		});
 
 	return exportedAttrs;
 }
@@ -51,7 +55,10 @@ function elementContains(container, element) {
 }
 
 function getNodeClasses(node) {
-	return bolt.uniq(node.className.split(/\s+/).map(className=>className.trim()));
+	bolt.chain(node.className.split(xSpaces))
+		.map(className=>className.trim())
+		.uniq()
+		.value();
 }
 
 module.exports = {

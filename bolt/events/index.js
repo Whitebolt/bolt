@@ -6,9 +6,12 @@ const util = require('util');
 const setImmediatePromise = util.promisify(setImmediate);
 
 function splitter(item) {
-	return bolt.flattenDeep(bolt.makeArray(item).map(item=>item.split(',')))
+	return bolt.chain(bolt.makeArray(item))
+		.map(item=>item.split(','))
+		.flattenDeep()
 		.map(item=>item.trim())
-		.filter(item=>(item !== ''));
+		.filter(item=>(item !== ''))
+		.value();
 }
 
 // Not used anymore.  We need to fire async events at once then wait, this is better.

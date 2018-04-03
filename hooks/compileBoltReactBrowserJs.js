@@ -22,19 +22,22 @@ module.exports = function(){
 			sourceMap:bolt.VirtualFile.AWAIT
 		});
 
-		const names = files.map(target=>{
-			const exports = require(target);
+		const names = bolt.chain(files)
+			.map(target=>{
+				const exports = require(target);
 
-			if (bolt.annotation.get(exports, 'browser-export') !== false) {
-				const name = exports.default.name;
-				reactBoltContent += `import ${name} from "${target}";\n`;
-				bolt.emit(
-					exportEventType,
-					new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync:false, name})
-				);
-				return name;
-			}
-		}).filter(name=>name);
+				if (bolt.annotation.get(exports, 'browser-export') !== false) {
+					const name = exports.default.name;
+					reactBoltContent += `import ${name} from "${target}";\n`;
+					bolt.emit(
+						exportEventType,
+						new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync:false, name})
+					);
+					return name;
+				}
+			})
+			.filter(name=>name)
+			.value();
 
 		reactBoltContent += `export default {${names.join(',')}}`;
 

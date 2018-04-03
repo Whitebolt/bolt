@@ -20,8 +20,7 @@ let getParameters;
 function parseParameters(func) {
 	getParameters = getParameters || bolt.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
 	const defaults = new Map();
-	const params = getParameters(func)
-		.split(',')
+	const params = bolt.chain(getParameters(func).split(','))
 		.map(param=>param.trim())
 		.map(param=>{
 			const [paramName, defaultValue] = param.split('=').map(item=>item.trim());
@@ -47,7 +46,8 @@ function parseParameters(func) {
 				}
 			}
 			return paramName;
-		});
+		})
+		.value();
 	params.defaults = defaults;
 	return params;
 }

@@ -130,13 +130,26 @@ function toObjectMap(ary, iteree, context) {
 function mapReduce(ary, iteree, context=null) {
 	const _iteree = iteree.bind(context);
 	if (bolt.isArray(ary)) {
-		return ary.map(_iteree).filter(value=>(value !== undefined));
+		return bolt.chain(ary)
+			.map(_iteree)
+			.filter(value=>(value !== undefined))
+			.value();
 	} else if (ary instanceof Set) {
-		return [...ary].map(_iteree).filter(value=>(value !== undefined));
+		return bolt.chain([...ary])
+			.map(_iteree)
+			.filter(value=>(value !== undefined))
+			.value();
 	} else if (ary instanceof Map) {
-		return [...ary.keys()].map(key=>_iteree(ary.get(key), key, ary)).filter(value=>(value !== undefined));
+		return bolt.chain([...ary.keys()])
+			.map(key=>_iteree(ary.get(key), key, ary))
+			.filter(value=>(value !== undefined))
+			.value();
 	} else if (bolt.isObject(ary)) {
-		return Object.keys(ary).map(key=>_iteree(ary[key], key, ary)).filter(value=>(value !== undefined));
+		return bolt.chain(ary)
+			.keys()
+			.map(key=>_iteree(ary[key], key, ary))
+			.filter(value=>(value !== undefined))
+			.value();
 	}
 	throw 'mapReduce can only work on arrays, maps, objects and sets.'
 }

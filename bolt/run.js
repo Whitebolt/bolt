@@ -166,7 +166,10 @@ function _getAuthors(modules) {
 		});
 	});
 
-	return Object.keys(authors).map(email=>`${authors[email]}: <${email}>`);
+	return bolt.chain(authors)
+		.keys()
+		.map(email=>`${authors[email]}: <${email}>`)
+		.value();
 }
 
 /**

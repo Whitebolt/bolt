@@ -456,9 +456,10 @@ async function loadEjsDirectory(roots, dirName, options={}, eventName) {
 }
 
 function _getDirectoryPaths(roots, dirName) {
-	return bolt.flattenDeep(bolt.makeArray(roots).map(
-		root=>bolt.makeArray(dirName).map(dir=>`${root}/${dir}/`.replace(/\/+/g, '/'))
-	));
+	return bolt.chain(bolt.makeArray(roots))
+		.map(root=>bolt.makeArray(dirName).map(dir=>`${root}/${dir}/`.replace(/\/+/g, '/')))
+		.flattenDeep()
+		.value();
 }
 
 function getControllerMethodProperty(method, property) {

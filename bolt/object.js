@@ -125,7 +125,11 @@ function cloneAndMerge(toClone, toMergeIn, picks) {
 }
 
 function toKeyValueArray(obj) {
-	return bolt.flatten(Object.keys(obj).map(key=>[key, obj[key]]));
+	return bolt.chain(obj)
+		.keys()
+		.map(key=>[key, obj[key]])
+		.flatten()
+		.value();
 }
 
 function objectLength(obj) {

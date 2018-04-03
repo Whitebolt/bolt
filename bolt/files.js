@@ -168,8 +168,10 @@ async function _filesInDirectory(dirPath, ext) {
 
 	try {
 		const files = await fs.readdir(dirPath);
-		return files.filter(fileName => xExt.test(fileName))
-			.map(_mapResolve(dirPath));
+		return bolt.chain(files)
+			.filter(fileName => xExt.test(fileName))
+			.map(_mapResolve(dirPath))
+			.value();
 	} catch(error) {
 		return [];
 	}

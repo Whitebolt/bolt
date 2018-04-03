@@ -28,7 +28,7 @@ function _getControllerCascade(controller, returnArray=false) {
 		cascade = _getNamedControllerCascade(component, bolt.annotation.get(controller, 'name'));
 		_memory.set(controller, 'cascade', cascade);
 	}
-	return ((returnArray===true) ? Array.from(cascade) : cascade);
+	return bolt.chain((returnArray===true) ? Array.from(cascade) : cascade);
 }
 
 /**
@@ -62,16 +62,16 @@ function get(component, extraParams) {
 	 */
 	return (controller, name)=>{
 		if (name === '$parent') return createComponentScope(controller);
+		const _cascade = _getControllerCascade(controller, true);
 		if (name === '$me') {
 			let callee = xStackFindProxy.exec((new Error).stack);
-			let cascade = _getControllerCascade(controller, true)
+			let cascade = _cascade
 				.map(controller=>controller[callee[1]])
 				.filter(method=>method);
-			if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade);
+			if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade.value());
 		}
 		if (controller.hasOwnProperty(name)) return getBoundProperty(controller[name]);
-		let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
-		if (found) {
+		if (_cascade.find(controller=>controller.hasOwnProperty(name))) {
 			let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
 			if ((visibility === 'public') || (visibility === 'private') || (visibility === 'protected')) return getBoundProperty(found[name]);
 		}
