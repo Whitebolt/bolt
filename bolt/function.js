@@ -1,15 +1,14 @@
 'use strict';
 // @annotation browser-export
 
-const string = require('./string');
-
 const xQuoted = /^(["'])(.*)\1$/;
 const xObject = /^\{.*\}$/;
 const xArray = /^\[.*\]$/;
 const xPreFunctionParams = /\)[\s\S]*/;
 const xPostFunctionParams = /^.*?\(/;
-const getParameters = string.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
 const paramDefaultMatchers = new Map([['null',null],['undefined',undefined],['true',true],['false',false]]);
+
+let getParameters;
 
 /**
  * Parse the source of a function returning an array of parameter names.
@@ -19,6 +18,7 @@ const paramDefaultMatchers = new Map([['null',null],['undefined',undefined],['tr
  * @returns {Array.<string>}           Array of parameter names.
  */
 function parseParameters(func) {
+	getParameters = getParameters || bolt.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
 	const defaults = new Map();
 	const params = getParameters(func)
 		.split(',')

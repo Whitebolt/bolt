@@ -39,7 +39,7 @@ module.exports = function() {
 			if (browserExport) {
 				bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
 				if (target === boltRootDir + '/lib/lodash') {
-					boltContent += `import lodash from "${target}";`;
+					boltContent += `import lodash from "lodash";`;
 					return;
 				}
 
