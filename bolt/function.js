@@ -17,7 +17,7 @@ let getParameters;
  * @param {Function|String} func       Function or function source to parse.
  * @returns {Array.<string>}           Array of parameter names.
  */
-function parseParameters(func) {
+function parseParameters(func, evaluate=true) {
 	getParameters = getParameters || bolt.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
 	const defaults = new Map();
 	const params = bolt.chain(getParameters(func).split(','))
@@ -46,10 +46,12 @@ function parseParameters(func) {
 				}
 			}
 			return paramName;
-		})
-		.value();
-	params.defaults = defaults;
-	return params;
+		});
+
+	if (!evaluate) return [params, defaults];
+	const _params = params.value();
+	_params.defaults = defaults;
+	return _params;
 }
 
 function runSeries(async, series, ...params) {
