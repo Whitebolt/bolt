@@ -68,10 +68,12 @@ function get(component, extraParams) {
 			let cascade = _cascade
 				.map(controller=>controller[callee[1]])
 				.filter(method=>method);
-			if (cascade.find(method=>(bolt.annotation.get(method, 'filePath') === callee[2]))) return new Set(cascade.value());
+			if (cascade.find(method=>(bolt.annotation.get(method, 'filePath').value() === callee[2]))) return new Set(cascade.value());
 		}
 		if (controller.hasOwnProperty(name)) return getBoundProperty(controller[name]);
-		if (_cascade.find(controller=>controller.hasOwnProperty(name))) {
+
+		let found = _cascade.find(controller=>controller.hasOwnProperty(name)).value();
+		if (found) {
 			let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
 			if ((visibility === 'public') || (visibility === 'private') || (visibility === 'protected')) return getBoundProperty(found[name]);
 		}
@@ -87,7 +89,7 @@ function get(component, extraParams) {
  * @returns {boolean}             Does the controller have the given property/method?
  */
 function has(controller, name) {
-	let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name));
+	let found = _getControllerCascade(controller, true).find(controller=>controller.hasOwnProperty(name)).value();
 	return (found || controller.hasOwnProperty(name));
 }
 
@@ -118,7 +120,7 @@ function setComponent() {
 function ownKeys(controller) {
 	let casscade = _getControllerCascade(controller);
 	let keys = new Set();
-	casscade.forEach(controller=>Object.keys(controller=>keys.add(key)));
+	casscade.forEach(controller=>Object.keys(controller=>keys.add(key))).value();
 	Object.keys(controller).forEach(key=>keys.add(key));
 	return Array.from(keys);
 }

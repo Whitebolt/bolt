@@ -8,14 +8,25 @@
 const xSpaces = /\s+/;
 
 function classNames(...classes) {
-	return bolt.uniq(bolt.flattenDeep(bolt.mapReduce(bolt.flattenDeep(classes), className=>{
-		if (!className) return;
-		if (bolt.isFunction(className)) return classNames(className());
-		if (bolt.isString(className)) return className.split(' ');
-		if (bolt.isObject(className)) return bolt.mapReduce(className, (value, className)=>{
-			if (value) return className;
-		});
-	})).map(className=>className.trim())).join(' ');
+	return (bolt.chain(classes)
+		.flattenDeep()
+		.map(className=>{
+			if (!className) return;
+			if (bolt.isFunction(className)) return classNames(className());
+			if (bolt.isString(className)) return className.split(' ');
+			if (bolt.isObject(className)) return bolt.chain(className)
+				.map(className, (value, className)=>{
+					if (value) return className;
+				})
+				.filter(value=>!!value)
+				.value();
+		})
+		.filter(value=>!!value)
+		.flattenDeep()
+		.uniq()
+		.map(className=>className.trim())
+		.value()
+	).join(' ');
 }
 
 function attributes(...attrs) {
@@ -42,7 +53,8 @@ function attributes(...attrs) {
 			} else if (bolt.isBoolean(attrs)) {
 				displayNext = attrs;
 			}
-		});
+		})
+		.value();
 
 	return exportedAttrs;
 }

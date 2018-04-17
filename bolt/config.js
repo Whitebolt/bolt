@@ -295,7 +295,8 @@ function getKeyedEnvVars(key=packageConfig.boltEnvPrefix || 'BOLT', env=process.
 		.forEach(envKey=>{
 			let varKey = bolt.camelCase(envKey.substr(key.length));
 			vars[varKey] = _parseEnvValue(env[envKey]);
-		});
+		})
+		.value();
 
 	return vars;
 }

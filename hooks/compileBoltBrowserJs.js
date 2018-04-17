@@ -10,6 +10,9 @@ module.exports = function() {
 	// @annotation key loadAllComponents
 	// @annotation when after
 
+	// @todo Lodash is being corrupted - somewhere/somehow runInContext() is failing. Needs fixing asap.
+	require.delete("lodash");
+
 	return async (app)=>{
 		if (!bolt[filesId]) return;
 		let boltContent = '';
