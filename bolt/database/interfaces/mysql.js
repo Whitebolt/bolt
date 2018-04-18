@@ -1,7 +1,6 @@
 'use strict';
 
-const Promise = require('bluebird');
-const mysql = require('mysql-promise');
+const mysql = require('mysql2/promise');
 const queryBuilder = require('mongo-sql');
 const {quoteObject} = require('mongo-sql/lib/utils');
 
@@ -108,23 +107,19 @@ function _logQuery(sql, values) {
  * @param {BoltConfigDb} config        The database config object.
  * @returns {Promise.<external:DB>}    The  mysql database instance object.
  */
-function loadMysql(config) {
-	let db = mysql(config.database);
-	db.configure(_getDbConfig(config));
+async function loadMysql(config) {
+	let db = await mysql.createConnection(_getDbConfig(config));
 	db._originalDb = db;
 	let query = _query.bind(db, db, db.query);
 
 	bolt.emit('SQLConnected', config.database);
 
-	return Promise.resolve(new Proxy(db, {
+	return new Proxy(db, {
 		get: (target, property, receiver)=>{
 			if (property === 'query') return query;
 			return Reflect.get(target, property, receiver);
 		}
-	}));
-
-
-	return Promise.resolve(db);
+	});
 }
 
 loadMysql.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {

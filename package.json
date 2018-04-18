@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.5.0",
+  "version": "1.6.0",
   "keywords": [
     "Server",
     "React",
@@ -40,7 +40,7 @@
     "@babel/runtime": "^7.0.0-beta.36",
     "@simpo/binary-message-format": "^1.0.0",
     "@simpo/ejs": "^2.5.6",
-    "@simpo/express-mysql-session": "^1.2.2",
+    "@simpo/express-mysql-session": "^1.2.4",
     "@simpo/linux-user": "^0.1.0",
     "@simpo/map-watch": "^1.0.1",
     "@simpo/object-annotations": "^1.0.2",
@@ -81,7 +81,6 @@
     "mongodb": "^3.0.6",
     "morgan": "^1.9.0",
     "mysql2": "^1.5.3",
-    "mysql-promise": "^4.1.0",
     "nginx-o": "^0.1.1",
     "nodemailer": "^4.4.0",
     "passport": "^0.4.0",

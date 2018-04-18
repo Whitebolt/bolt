@@ -68,6 +68,7 @@ function objectToQueryString(obj, splitter='&', defaultValue=undefined, addEqual
 	}
 
 	Object.keys(obj).forEach(key=>{
+		if (bolt.isNull(key) || bolt.isUndefined(key)) return;
 		let value = ((obj[key] !== '') ? obj[key] : defaultValue);
 		queryString.push(encodeURIComponent(key) + ((value !== undefined) ? '='+encodeURIComponent(value) : (addEquals?'=':'')));
 	});
