@@ -80,7 +80,7 @@
     "mongo-sql": "^5.0.0",
     "mongodb": "^3.0.6",
     "morgan": "^1.9.0",
-    "mysql": "^2.15.0",
+    "mysql2": "^1.5.3",
     "mysql-promise": "^4.1.0",
     "nginx-o": "^0.1.1",
     "nodemailer": "^4.4.0",
