@@ -108,9 +108,9 @@ function _logQuery(sql, values) {
  * @returns {Promise.<external:DB>}    The  mysql database instance object.
  */
 async function loadMysql(config) {
-	let db = await mysql.createConnection(_getDbConfig(config));
+	const db = await mysql.createPool(_getDbConfig(config));
+	const query = _query.bind(db, db, db.execute);
 	db._originalDb = db;
-	let query = _query.bind(db, db, db.query);
 
 	bolt.emit('SQLConnected', config.database);
 
