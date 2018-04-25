@@ -108,18 +108,26 @@ function _logQuery(sql, values) {
  * @returns {Promise.<external:DB>}    The  mysql database instance object.
  */
 async function loadMysql(config) {
-	const db = await mysql.createPool(_getDbConfig(config));
-	const query = _query.bind(db, db, db.execute);
-	db._originalDb = db;
+	const pool = await mysql.createPool(_getDbConfig(config));
+	const query = _query.bind(pool, pool, pool.execute);
+	const series = _series.bind(pool, query);
+	pool._originalDb = pool;
+	pool.series = series;
 
 	bolt.emit('SQLConnected', config.database);
 
-	return new Proxy(db, {
+	return new Proxy(pool, {
 		get: (target, property, receiver)=>{
 			if (property === 'query') return query;
+			if (property === 'execute') return query;
+			if (property === 'series') return series;
 			return Reflect.get(target, property, receiver);
 		}
 	});
+}
+
+async function _series(query, ...queries)  {
+	return (await Promise.all(queries.map(queryDef=>query(queryDef)))).map(results=>results[0]);
 }
 
 loadMysql.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
