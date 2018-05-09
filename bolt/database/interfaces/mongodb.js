@@ -51,8 +51,8 @@ function loadMongo(config) {
 		// @todo At some point we need to get rid of bluebird as now using async/await.
 		promiseLibrary: require('bluebird')
 	}).then(client=>{
-		bolt.emit('mongoConnected', config.database);
-		return client.db(config.database);
+		const db = client.db(config.database);
+		return bolt.emitThrough(()=>{}, 'mongoConnected', db).then(()=>db);
 	});
 
 }
