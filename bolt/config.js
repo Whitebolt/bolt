@@ -144,6 +144,9 @@ const _configMergeOverrides = {
 	boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 	modules: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 	questions: (objValue, srcValue)=>[...bolt.makeArray(srcValue), ...bolt.makeArray(objValue)],
+	nodeModulesServe: (objValue, srcValue, key, object, source)=>{
+		return {...objValue, [source.__packagePath]:srcValue};
+	},
 
 	/**
 	 * Merge eventConsoleLogging arrays together avoid duplicates and merging of
@@ -167,9 +170,9 @@ const _configMergeOverrides = {
  * @returns {undefined|*} The new value after merging or undefined to use
  *                        default method.
  */
-function _configMerger(objValue, srcValue, key, obj) {
+function _configMerger(objValue, srcValue, key, object, source, stack) {
 	return (_configMergeOverrides.hasOwnProperty(key) ?
-			_configMergeOverrides[key](objValue, srcValue, obj) :
+			_configMergeOverrides[key](objValue, srcValue, key, object, source, stack) :
 			undefined
 	);
 }
@@ -258,6 +261,7 @@ function getPackage(dirPath=boltRootDir) {
 function _getPackage(dirPath=boltRootDir) {
 	const data = getPackage(dirPath);
 	if (Object.keys(data).length && data.hasOwnProperty('name')) data[bolt.camelCase(data.name)+'Path'] = dirPath;
+	bolt.set(data, 'config.__packagePath', dirPath);
 	return data;
 }
 
@@ -271,8 +275,8 @@ function _getPackage(dirPath=boltRootDir) {
  * @returns {Object}                            Merged object with selected properties.
  */
 function mergePackageProperties(roots, properties=[], merger=()=>{}) {
-	const packageConfigs = bolt.makeArray(roots).map(root=>
-		bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
+	const packageConfigs = bolt.makeArray(roots).map(
+		root=>bolt.pickDeep(_getPackage(root), bolt.makeArray(properties))
 	);
 	packageConfigs.unshift({});
 	if (bolt.isFunction(merger)) packageConfigs.push(_configMerger);

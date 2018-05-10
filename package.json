@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.6.2",
+  "version": "1.7.0",
   "keywords": [
     "Server",
     "React",
@@ -142,6 +142,7 @@
     "serverConfigPath": "/etc/bolt",
     "serverConfigFile": "server.json",
     "boltConfigProperties": [
+      "nodeModulesServe",
       "port",
       "portRange",
       "root",
@@ -178,6 +179,7 @@
       "modules"
     ],
     "boltConfigPropsDeleteWhenLive": [
+      "nodeModulesServe",
       "sessionStore",
       "sessionStoreDb",
       "questions",
