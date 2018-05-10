@@ -183,7 +183,7 @@ function viewOnload(filename, compiled, views) {
  * @returns {Object}                  The template object.
  */
 function _getTemplate(app, control) {
-	return app.templates[control.template];
+	return (bolt.isString(control.template) ? app.templates[control.template] : control.template);
 }
 
 /**
