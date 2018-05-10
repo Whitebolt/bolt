@@ -56,7 +56,7 @@ const templateFunctions = {
 		let view = _getViewFromPath(viewName, this.__componentName, req);
 		if (view) {
 			bolt.emit("firingView", view.path, bolt.getPathFromRequest(req));
-			return view.compiled(doc, req, parent);
+			return view.compiled(...[doc || {}, req || {}, parent || {}]);
 		} else {
 			return 'Could not find view: ' + viewName;
 		}
