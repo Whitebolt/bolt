@@ -12,7 +12,7 @@ const defaultOptions = {
  * @param {BoltApplication} app   The bolt application instance.
  */
 function init(app) {
-	// @annotation priority
+	// @annotation priority 10
 
 	/**
 	 * @todo check if /public exists first
@@ -20,15 +20,20 @@ function init(app) {
 	bolt.get(app, 'config.root', []).forEach(rootDir=>{
 		app.use(serve(`${rootDir}/public/`, {...defaultOptions}));
 		app.use(serve(`${rootDir}/upload/`, {...defaultOptions}));
-
-		const moduleServe = bolt.get(app, `config.nodeModulesServe[${rootDir}]`, false);
-		if (moduleServe.modules) bolt.makeArray(moduleServe.modules).forEach(moduleName=>{
-			app.use(
-				`${moduleServe.path || '/lib'}/${moduleName}`,
-				serve(`${rootDir}node_modules/${moduleName}`, {...defaultOptions})
-			);
-		});
 	});
+
+	bolt.chain(bolt.get(app, `config.nodeModulesServe`, {}))
+		.keys()
+		.forEach(rootDir=>{
+			const moduleServe = app.config.nodeModulesServe[rootDir];
+			if (moduleServe.modules) bolt.makeArray(moduleServe.modules).forEach(moduleName=>{
+				app.use(
+					`${moduleServe.path || '/lib'}/${moduleName}`,
+					serve(`${rootDir}node_modules/${moduleName}`, {...defaultOptions})
+				);
+			});
+		})
+		.value()
 }
 
 module.exports = init;

@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.7.0",
+  "version": "1.7.1",
   "keywords": [
     "Server",
     "React",
@@ -176,7 +176,9 @@
       "poweredBy",
       "sessionLength",
       "uploadLimit",
-      "modules"
+      "modules",
+      "lib",
+      "css"
     ],
     "boltConfigPropsDeleteWhenLive": [
       "nodeModulesServe",
