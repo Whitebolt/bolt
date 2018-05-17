@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.7.2",
+  "version": "1.8.0",
   "keywords": [
     "Server",
     "React",
@@ -66,8 +66,9 @@
     "figlet": "^1.2.0",
     "find-free-port": "^1.1.0",
     "global-modules": "^1.0.0",
+    "gulp-ignore": "^2.0.2",
     "gulp-sourcemaps": "^2.6.3",
-    "gulp-uglify": "^3.0.0",
+    "gulp-uglify-es": "^1.0.1",
     "helmet": "^3.9.0",
     "ical-date-parser": "^4.0.0",
     "iconv-lite": "^0.4.21",
