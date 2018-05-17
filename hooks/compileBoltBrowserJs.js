@@ -83,8 +83,15 @@ module.exports = function() {
 			.value();
 
 		boltContent += `bolt.MODE = new Set();\n`;
+		boltContent += `window.process = window.process || {};\n`;
+		boltContent += `window.process.env = window.process.env = {};\n`;
+		if (app.config.development) {
+			boltContent += `bolt.MODE.add("DEVELOPMENT");`;
+			boltContent += `window.process.env.NODE_ENV = 'development';`;
+		} else {
+			boltContent += `window.process.env.NODE_ENV = 'production';`;
+		}
 		if (app.config.debug) boltContent += `bolt.MODE.add("DEBUG");`;
-		if (app.config.development) boltContent += `bolt.MODE.add("DEVELOPMENT");`;
 		if (app.config.production) boltContent += `bolt.MODE.add("PRODUCTION");`;
 		boltContent += `bolt.LOGLEVEL = ${app.config.logLevel}\n`;
 		boltContent += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.config.version}"}\n`;
