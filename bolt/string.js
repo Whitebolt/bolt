@@ -7,6 +7,7 @@
 
 const dateFormat = require('dateformat');
 const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+const xSubstitutions = /\$\{(.*?)\}/g;
 
 /**
  * Replace the last string within a string.
@@ -102,6 +103,17 @@ function lopGen(text, seperator='/') {
 	};
 }
 
+function substituteCSP(txt, obj={}) {
+	if (bolt.isObject(txt)) return JSON.parse(substituteCSP(JSON.stringify(txt), obj));
+
+	let match;
+	while (match = xSubstitutions.exec(txt)) {
+		if (match[1] in obj) txt = txt.replace(match[0], obj[match[1]]);
+	}
+	return txt;
+}
+
+
 module.exports = {
-	replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen
+	replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen, substituteCSP
 };

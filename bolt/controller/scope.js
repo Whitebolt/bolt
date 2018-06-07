@@ -8,7 +8,7 @@ const {Memory} = require('@simpo/map-watch');
 
 const _memory = new Memory();
 const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;
-const errorFactory = new bolt.ErrorFactory('controllerContext');
+const controllerContextError = (new bolt.ErrorFactory('ControllerContext')).error;
 
 
 /**
@@ -77,7 +77,7 @@ function get(component, extraParams) {
 			let visibility = bolt.annotation.get(bolt.annotation.get(found[name], 'controllerMethod'), 'visibility') || 'public';
 			if ((visibility === 'public') || (visibility === 'private') || (visibility === 'protected')) return getBoundProperty(found[name]);
 		}
-		if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noProperty', {name});
+		if (!bolt.isSymbol(name) && (name !== "inspect")) throw controllerContextError('NoProperty', {name});
 	};
 }
 
@@ -99,7 +99,7 @@ function has(controller, name) {
  * @throws RangeError
  */
 function set() {
-	throw errorFactory.error('afterInitProperty', {});
+	throw controllerContextError('AfterInitProperty', {});
 }
 
 /**
@@ -108,7 +108,7 @@ function set() {
  * @throws RangeError
  */
 function setComponent() {
-	throw errorFactory.error('afterInitController', {});
+	throw controllerContextError('AfterInitController', {});
 }
 
 /**
@@ -196,7 +196,7 @@ function getPrototypeOf() {
  * @throws SyntaxError
  */
 function apply() {
-	throw errorFactory.error('ccontrollerAsFunction', {});
+	throw controllerContextError('ControllerAsFunction', {});
 }
 
 /**
@@ -205,7 +205,7 @@ function apply() {
  * @throws SyntaxError
  */
 function applyComponent() {
-	throw errorFactory.error('componentrAsFunction', {});
+	throw controllerContextError('ComponentrAsFunction', {});
 }
 
 /**
@@ -226,7 +226,7 @@ function componentGet(controllers, name) {
 		}
 	} else {
 		if (controllers.hasOwnProperty(name)) return createControllerScope(controllers[name]);
-		if (!bolt.isSymbol(name) && (name !== "inspect")) throw errorFactory.error('noController', {name});
+		if (!bolt.isSymbol(name) && (name !== "inspect")) throw controllerContextError('NoController', {name});
 	}
 }
 

@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.8.1",
+  "version": "1.9.0",
   "keywords": [
     "Server",
     "React",
@@ -467,29 +467,43 @@
     },
     "errors": {
       "controllerContext": {
-        "noProperty": {
+        "NoProperty": {
           "type": "reference",
           "message": "Property/Method ${name} does not exist for given controller."
         },
-        "afterInitProperty": {
+        "AfterInitProperty": {
           "type": "range",
           "message": "Cannot set properties or methods on controllers after initialisation."
         },
-        "afterInitController": {
+        "AfterInitController": {
           "type": "range",
           "message": "Cannot set new controllers after initialisation."
         },
-        "controllerAsFunction": {
+        "ControllerAsFunction": {
           "type": "syntax",
           "message": "Cannot run controller as if it is a function."
         },
-        "componentAsFunction": {
+        "ComponentAsFunction": {
           "type": "syntax",
           "message": "Cannot run component as if it is a function."
         },
-        "noController": {
+        "NoController": {
           "type": "range",
-          "message": "Controller ${name} does not exist on given component"
+          "message": "Controller ${name} does not exist on given component."
+        }
+      },
+      "ErrorFactory": {
+        "IncorrectDomain": {
+          "type": "syntax",
+          "message": "Error domain ${domain} does not exist."
+        },
+        "IncorrectId": {
+          "type": "syntax",
+          "message": "Error id ${id} does not exist in domain: ${domain}."
+        },
+        "IncorrectType": {
+          "type": "syntax",
+          "message": "Error type ${errorType} does not exist for domain: ${domain}."
         }
       }
     }
