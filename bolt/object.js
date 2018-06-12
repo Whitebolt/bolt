@@ -19,14 +19,14 @@
  *                                          for chaining.
  */
 function addDefaultObjects(obj, properties, defaultIsArray=false) {
-  (
-    bolt.isString(properties) ?
-      bolt.splitAndTrim(properties, ',') :
-      properties
-  ).forEach(prop=>{
-    obj[prop] = obj[prop] || (defaultIsArray?[]:{});
-  });
-  return obj;
+	(
+		bolt.isString(properties) ?
+			bolt.splitAndTrim(properties, ',') :
+			properties
+	).forEach(prop=>{
+		obj[prop] = obj[prop] || (defaultIsArray?[]:{});
+	});
+	return obj;
 }
 
 /**
@@ -36,11 +36,11 @@ function addDefaultObjects(obj, properties, defaultIsArray=false) {
  * @returns {Object}        Frozen object.
  */
 function deepFreeze(obj) {
-  Object.getOwnPropertyNames(obj).forEach(name=>{
-    let prop = obj[name];
-    if ((typeof prop == 'object') && (prop !== null)) deepFreeze(prop);
-  });
-  return Object.freeze(obj);
+	Object.getOwnPropertyNames(obj).forEach(name=>{
+		let prop = obj[name];
+		if ((typeof prop == 'object') && (prop !== null)) deepFreeze(prop);
+	});
+	return Object.freeze(obj);
 }
 
 /**
@@ -54,51 +54,51 @@ function deepFreeze(obj) {
  * @returns {Object}                    The parsed object.
  */
 function parseTemplatedJson(jsonString) {
-  let _jsonString = (bolt.isString(jsonString)?JSON.parse(jsonString):jsonString);
-  let configText = (bolt.isString(jsonString)?jsonString:JSON.stringify(jsonString));
-  let configTextOld = '';
-  let template = bolt.template(configText);
-  while (configText !== configTextOld) {
-    _jsonString = JSON.parse(template(_jsonString));
-    configTextOld = configText;
-    configText = JSON.stringify(_jsonString);
-    template = bolt.template(configText);
-  }
+	let _jsonString = (bolt.isString(jsonString)?JSON.parse(jsonString):jsonString);
+	let configText = (bolt.isString(jsonString)?jsonString:JSON.stringify(jsonString));
+	let configTextOld = '';
+	let template = bolt.template(configText);
+	while (configText !== configTextOld) {
+		_jsonString = JSON.parse(template(_jsonString));
+		configTextOld = configText;
+		configText = JSON.stringify(_jsonString);
+		template = bolt.template(configText);
+	}
 
-  return _jsonString;
+	return _jsonString;
 }
 
 function _forEachKeys(obj, iteree) {
-  if (Array.isArray(obj)) {
-    obj.forEach((value, key)=>iteree(key))
-  } else {
-    Object.keys(obj).forEach(key=>iteree(key));
-  }
+	if (Array.isArray(obj)) {
+		obj.forEach((value, key)=>iteree(key))
+	} else {
+		Object.keys(obj).forEach(key=>iteree(key));
+	}
 }
 
 function _substitute(txt, obj={}) {
-  try {
-    return (new Function(...[
-      ...Object.keys(obj),
-      'return `' + txt + '`;'
-    ]))(...Object.keys(obj).map(key=>obj[key]));
-  } catch (error) {
-    return txt;
-  }
+	try {
+		return (new Function(...[
+			...Object.keys(obj),
+			'return `' + txt + '`;'
+		]))(...Object.keys(obj).map(key=>obj[key]));
+	} catch (error) {
+		return txt;
+	}
 }
 
 function substituteInObject(obj, originalObj) {
-  const _obj = (bolt.isString(obj)?JSON.parse(obj):obj);
-  const _originalObj = originalObj || _obj;
-  const matcher = JSON.stringify(_obj);
+	const _obj = (bolt.isString(obj)?JSON.parse(obj):obj);
+	const _originalObj = originalObj || _obj;
+	const matcher = JSON.stringify(_obj);
 
-  _forEachKeys(_obj, key=>{
-    if (bolt.isNull(_obj[key] || bolt.isUndefined(_obj[key]))) return _obj[key];
-    if (bolt.isObject(_obj[key]) || Array.isArray(_obj[key])) _obj[key] = substituteInObject(_obj[key], _originalObj);
-    if (bolt.isString(_obj[key]) && (_obj[key].indexOf('${') !== -1)) _obj[key] = _substitute(_obj[key], originalObj);
-  });
+	_forEachKeys(_obj, key=>{
+		if (bolt.isNull(_obj[key] || bolt.isUndefined(_obj[key]))) return _obj[key];
+		if (bolt.isObject(_obj[key]) || Array.isArray(_obj[key])) _obj[key] = substituteInObject(_obj[key], _originalObj);
+		if (bolt.isString(_obj[key]) && (_obj[key].indexOf('${') !== -1)) _obj[key] = _substitute(_obj[key], originalObj);
+	});
 
-  return ((JSON.stringify(_obj) !== matcher) ? substituteInObject(_obj, _originalObj) : _obj);
+	return ((JSON.stringify(_obj) !== matcher) ? substituteInObject(_obj, _originalObj) : _obj);
 }
 
 /**
@@ -109,19 +109,19 @@ function substituteInObject(obj, originalObj) {
  * @returns {Object}            Object with picked properties.
  */
 function pickDeep(obj, properties) {
-  let _obj = {};
-  bolt.makeArray(properties).forEach(property=> {
-    if (bolt.has(obj, property)) bolt.set(_obj, property, bolt.get(obj, property))
-  });
-  return _obj;
+	let _obj = {};
+	bolt.makeArray(properties).forEach(property=> {
+		if (bolt.has(obj, property)) bolt.set(_obj, property, bolt.get(obj, property))
+	});
+	return _obj;
 }
 
 function pickHas(obj, properties) {
-  return bolt.pickBy(bolt.pick(obj, properties), value=>(value !== undefined));
+	return bolt.pickBy(bolt.pick(obj, properties), value=>(value !== undefined));
 }
 
 function cloneAndMerge(toClone, toMergeIn, picks) {
-  return Object.assign({}, toClone, pickDeep(toMergeIn, picks))
+	return Object.assign({}, toClone, pickDeep(toMergeIn, picks))
 }
 
 function toKeyValueArray(obj) {
@@ -133,9 +133,37 @@ function toKeyValueArray(obj) {
 }
 
 function objectLength(obj) {
-  return Object.keys(obj).length;
+	return Object.keys(obj).length;
+}
+
+function objectToArgsArray(obj, parent='', args=[]) {
+	function processItem(value, propName) {
+		if (bolt.isNumber(value) || bolt.isString(value)) {
+			args.push(`--${propName}=${value}`);
+		} else if (bolt.isNull(value)) {
+			args.push(`--${propName}=null`);
+		} else if (bolt.isUndefined(value)) {
+			args.push(`--${propName}=undefined`);
+		} else if (bolt.isObject(value) || bolt.isArray(value)) {
+			objectToArgsArray(value, propName, args);
+		}
+	}
+
+	const iterator = (Array.isArray(obj)?'forEach':'forOwn');
+
+	bolt.chain(obj)
+		[iterator]((value, propName)=>{
+		const _propName = ((parent === '') ?
+				propName :
+				`${parent}.${propName}`
+		);
+		return processItem(value, _propName);
+	})
+		.value();
+
+	return args;
 }
 
 module.exports = {
-  addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge, pickHas, objectLength
+	addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge, pickHas, objectLength, objectToArgsArray
 };

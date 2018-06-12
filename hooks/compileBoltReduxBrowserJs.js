@@ -1,6 +1,6 @@
 'use strict';
 
-const {compileReact, setVirtualJsFile, clearCache, logExportSequence} = bolt.requireLib('build');
+const {clearCache} = bolt.requireLib('build');
 const reduxType = ['types', 'actionCreators', 'reducers'];
 const filesId = '__redux';
 
@@ -51,14 +51,8 @@ module.exports = function(){
 		let reduxBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		reduxBoltContent += reduxType.map(type=>{
 			const files = [...bolt[filesId][type]];
-			if (app.config.development || app.config.debug) logExportSequence(type+name, files);
 			return loadReduxExport(type, files);
 		}).join('\n') + '\n';
-
-		setVirtualJsFile(name, {
-			file:bolt.VirtualFile.AWAIT,
-			sourceMap:bolt.VirtualFile.AWAIT
-		});
 
 		const extras = bolt.chain(bolt.ReduxBolt)
 			.keys()
@@ -71,8 +65,11 @@ module.exports = function(){
 
 		reduxBoltContent += `export default {${[...reduxType, ...extras].join(',')}};`;
 
-		const compiled = await compileReact(reduxBoltContent, name);
-		setVirtualJsFile(name, compiled);
+		bolt.runGulp('redux', app, [
+			`--outputName=${name}`,
+			`--contents=${reduxBoltContent}`,
+			`--boltRootDir=${boltRootDir}`
+		]);
 		clearCache(filesId);
 	};
 };

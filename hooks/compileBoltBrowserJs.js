@@ -1,6 +1,6 @@
 'use strict';
 
-const {compileBolt, setVirtualJsFile, clearCache, logExportSequence} = bolt.requireLib('build');
+const {clearCache} = bolt.requireLib('build');
 const filesId = '__modules';
 
 bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
@@ -18,14 +18,8 @@ module.exports = function() {
 		let boltContent = '';
 		const name = 'bolt';
 		const files = [...bolt[filesId]];
-		if (app.config.development || app.config.debug) await logExportSequence(name, files);
 		const exportedLookup = new Set();
 		const exportEventType = 'exportBoltToBrowserGlobal';
-
-		setVirtualJsFile(name, {
-			file:bolt.VirtualFile.AWAIT,
-			sourceMap:bolt.VirtualFile.AWAIT
-		});
 
 		const exported = bolt.chain(files)
 			.map(target=>{
@@ -97,8 +91,11 @@ module.exports = function() {
 		boltContent += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.config.version}"}\n`;
 		boltContent += `export default bolt;`;
 
-		const compiled = await compileBolt(boltContent, exported, name);
-		setVirtualJsFile(name, compiled);
+		bolt.runGulp('bolt', app, [
+			`--outputName=${name}`,
+			`--contents=${boltContent}`,
+			`--boltRootDir=${boltRootDir}`
+		]);
 		clearCache(filesId);
 		bolt.__moduleAnnotations.clear();
 		delete bolt.__moduleAnnotations;

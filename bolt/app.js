@@ -43,8 +43,9 @@ function _registerLogEvent(config) {
 		const channel = '/logging';
 
 		let promises = [
-			description(params),
-			config.property ? property(params) : Promise.resolve(params[0])
+			description(params).then(txt=>bolt.entityDecode(txt)),
+			(config.property ? property(params) : Promise.resolve(params[0]))
+				.then(txt=>bolt.entityDecode(txt))
 		];
 
 		Promise.all(promises).spread((description, property) => {

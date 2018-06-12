@@ -5,6 +5,8 @@
  * @module bolt/bolt
  */
 
+const entityParser = require('html-entities').Html5Entities;
+
 const xSpaces = /\s+/;
 
 function classNames(...classes) {
@@ -74,5 +76,7 @@ function getNodeClasses(node) {
 }
 
 module.exports = {
-	classNames, attributes, elementContains, getNodeClasses
+	classNames, attributes, elementContains, getNodeClasses,
+	entityEncode: entityParser.encode,
+	entityDecode: entityParser.decode
 };

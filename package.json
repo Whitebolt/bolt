@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "1.9.0",
+  "version": "1.10.0",
   "keywords": [
     "Server",
     "React",
@@ -47,10 +47,10 @@
     "@simpo/rrule": "^2.2.0",
     "@simpo/websocket-express": "^1.0.2",
     "babel-plugin-syntax-async-functions": "^7.0.0-beta.0",
+    "babel-plugin-syntax-decorators": "^6.13.0",
     "babel-plugin-transform-async-generator-functions": "^7.0.0-beta.3",
     "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-decorators": "^6.24.1",
-    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-decorators-legacy": "^1.3.5",
     "bcrypt": "^2.0.0",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
@@ -67,9 +67,11 @@
     "find-free-port": "^1.1.0",
     "global-modules": "^1.0.0",
     "gulp-ignore": "^2.0.2",
+    "gulp-rename": "^1.3.0",
     "gulp-sourcemaps": "^2.6.3",
     "gulp-uglify-es": "^1.0.1",
     "helmet": "^3.9.0",
+    "html-entities": "^1.2.1",
     "ical-date-parser": "^4.0.0",
     "iconv-lite": "^0.4.21",
     "inquirer": "^5.2.0",
@@ -293,6 +295,24 @@
         "description": "firing view <%= params[0] %> for",
         "property": "<%= params[1] %>",
         "level": 4
+      },
+      {
+        "event": "gulpLog",
+        "action": "gulp",
+        "description": "<%= params[0] %>",
+        "property": "<%= params[1] %>",
+        "typeColour": "yellow",
+        "propertyColour": "magenta",
+        "level": 3
+      },
+      {
+        "event": "gulpLogGulpfileInfo",
+        "action": "gulp",
+        "description": "<%= params[0] %>",
+        "property": "<%= params[1] %>",
+        "typeColour": "yellow",
+        "propertyColour": "magenta",
+        "level": 2
       },
       {
         "event": "firingTemplate",

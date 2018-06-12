@@ -7,7 +7,6 @@ const ienoopen = require('ienoopen');
 const nosniff = require('dont-sniff-mimetype');
 const frameguard = require('frameguard');
 const xssFilter = require('x-xss-protection');
-const express_enforces_ssl = require('express-enforces-ssl');
 
 function _getConnectSrc(app, domains) {
 	const connectSrc = [].concat(app.config.domains).map(domain=>'https://'+domain);

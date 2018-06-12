@@ -26,7 +26,7 @@ module.exports = function() {
 			event.config.content = babel.transform(event.config.content, {
 				plugins: [
 					'@babel/plugin-syntax-jsx',
-					'transform-decorators-legacy',
+					['@babel/plugin-proposal-decorators', {legacy:true}],
 					'transform-class-properties',
 					'@babel/plugin-proposal-object-rest-spread',
 					'@babel/transform-react-jsx'

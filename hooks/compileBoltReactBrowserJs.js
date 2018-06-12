@@ -1,9 +1,11 @@
 'use strict';
 
-const {compileReact, setVirtualJsFile, clearCache, logExportSequence} = bolt.requireLib('build');
+const {clearCache} = bolt.requireLib('build');
+
 const filesId = '__react';
 
 bolt.ExportToBrowserReactBoltEvent = class ExportToBrowserReactBoltEvent extends bolt.Event {};
+
 
 module.exports = function(){
 	// @annotation key loadAllComponents
@@ -13,14 +15,8 @@ module.exports = function(){
 		if (!bolt[filesId]) return;
 		const name = 'ReactBolt';
 		const files = [...bolt[filesId]];
-		if (app.config.development || app.config.debug) await logExportSequence(name, files);
 		let reactBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		const exportEventType = 'exportReactComponentToBrowser';
-
-		setVirtualJsFile(name, {
-			file:bolt.VirtualFile.AWAIT,
-			sourceMap:bolt.VirtualFile.AWAIT
-		});
 
 		const names = bolt.chain(files)
 			.map(target=>{
@@ -41,8 +37,11 @@ module.exports = function(){
 
 		reactBoltContent += `export default {${names.join(',')}}`;
 
-		const compiled = await compileReact(reactBoltContent, name);
-		setVirtualJsFile(name, compiled);
+		bolt.runGulp('react', app, [
+			`--outputName=${name}`,
+			`--contents=${reactBoltContent}`,
+			`--boltRootDir=${boltRootDir}`
+		]);
 		clearCache(filesId);
 	};
 };
