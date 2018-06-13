@@ -18,6 +18,7 @@ function init(app) {
 	 * @todo check if /public exists first
 	 */
 	bolt.get(app, 'config.root', []).forEach(rootDir=>{
+		app.use(serve(`${rootDir}/private/${app.config.name||'unknown'}`, {...defaultOptions}));
 		app.use(serve(`${rootDir}/public/`, {...defaultOptions}));
 		app.use(serve(`${rootDir}/upload/`, {...defaultOptions}));
 	});

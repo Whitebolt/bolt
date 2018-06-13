@@ -46,6 +46,7 @@ function initSettings() {
 		cmdArgvs,
 		cmdArgvSettings
 	);
+	global.settings.boltRootDir = global.settings.boltRootDir || global.settings.cwd;
 }
 
 function isFunction(func) {

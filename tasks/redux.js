@@ -10,13 +10,11 @@ function fn(
 ) {
 
 	const config = require(`${settings.boltRootDir}/package.json`).config;
-
 	const _rollupNodeResolve = rollupNodeResolve(Object.assign(
 		{},
 		config.browserExport.nodeResolve || {},
 		{extensions: ['.jsx'].concat(config.browserExport.nodeResolve).extensions}
 	));
-
 	const _rollupBabel = rollupBabel({
 		generatorOpts: config.browserExport.babel.generatorOpts,
 		runtimeHelpers: true,
@@ -30,10 +28,12 @@ function fn(
 
 		]
 	});
+	const dest = `${settings.boltRootDir}/private/${settings.name}/lib`;
 
 	rollupStream({
 		input: {
 			contents:settings.contents,
+			contentsPath:settings.contentsPath,
 			path:`${settings.boltRootDir}/${settings.outputName}.js`
 		},
 		format: 'iife',
@@ -50,14 +50,15 @@ function fn(
 		.pipe(vinylSourceStream(`${settings.outputName}.js`))
 		.pipe(vinylBuffer())
 		.pipe(sourcemaps.init({loadMaps: true}))
-		.pipe(gulpBoltBrowser({top:`window.${settings.outputName} = {DEBUG:true};`}))
+		.pipe(gulpBoltBrowser({}))
+		//top:`window.${settings.outputName} = {DEBUG:true};`
 		.pipe(sourcemaps.write('./'))
-		.pipe(gulp.dest(`${settings.boltRootDir}/public/lib`))
+		.pipe(gulp.dest(dest))
 		.pipe(ignore.exclude('*.map'))
 		.pipe(uglifyEs.default({}))
 		.pipe(rename(path=>{path.extname = '.min.js';}))
 		.pipe(sourcemaps.write('./'))
-		.pipe(gulp.dest(`${settings.boltRootDir}/public/lib`));
+		.pipe(gulp.dest(dest));
 }
 
 module.exports = fn;
