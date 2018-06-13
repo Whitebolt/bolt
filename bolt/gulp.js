@@ -59,7 +59,7 @@ function runGulp(taskName, {config}, args=[]) {
 		}
 	});
 
-	ls.stderr.on('data', data=>console.error('Gulp Error', data));
+	ls.stderr.on('data', data=>console.error('Gulp Error', data.toString()));
 
 	ls.on('close', code=>{
 		const timeTaken = process.hrtime(startTime);

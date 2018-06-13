@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 const gulpBoltBrowser = require('../lib/gulpBoltBrowser');
+const rollupReactBoltPlugin = require('../lib/rollupReactBoltPlugin');
 
 
 function fn(
@@ -22,9 +23,8 @@ function fn(
 			'@babel/plugin-syntax-jsx',
 			['@babel/plugin-proposal-decorators', {legacy:true}],
 			'transform-class-properties',
-			'@babel/plugin-proposal-object-rest-spread',
+			...(config.browserExport.babel.plugins || []),
 			'@babel/transform-react-jsx'
-
 		]
 	});
 	const dest = `${settings.boltRootDir}/private/${settings.name}/lib`;
@@ -36,27 +36,27 @@ function fn(
 			path:`${settings.boltRootDir}/${settings.outputName}.js`
 		},
 		format: 'iife',
-		name: `${settings.outputName}.js`,
+		name: `${settings.outputName}`,
 		sourcemap: true,
 		plugins: [
 			rollupMemoryPlugin(),
 			_rollupNodeResolve,
 			rollupPluginCommonjs(),
 			rollupPluginJson(),
+			rollupReactBoltPlugin(),
 			_rollupBabel
 		]
 	})
 		.pipe(vinylSourceStream(`${settings.outputName}.js`))
 		.pipe(vinylBuffer())
 		.pipe(sourcemaps.init({loadMaps: true}))
-		.pipe(gulpBoltBrowser({}))
-		//top:`window.${settings.outputName} = {DEBUG:true};`
-		.pipe(sourcemaps.write('./'))
+		.pipe(gulpBoltBrowser({top:`window.${settings.outputName} = {DEBUG:true};`}))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
 		.pipe(gulp.dest(dest))
 		.pipe(ignore.exclude('*.map'))
 		.pipe(uglifyEs.default({}))
 		.pipe(rename(path=>{path.extname = '.min.js';}))
-		.pipe(sourcemaps.write('./'))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
 		.pipe(gulp.dest(dest));
 }
 

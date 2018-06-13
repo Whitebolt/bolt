@@ -37,7 +37,7 @@ function fn(
 			path:`${settings.boltRootDir}/${settings.outputName}.js`
 		},
 		format: 'iife',
-		name: `${settings.outputName}.js`,
+		name: `${settings.outputName}`,
 		sourcemap: true,
 		plugins: [
 			rollupMemoryPlugin(),
@@ -52,12 +52,12 @@ function fn(
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulpBoltBrowser({}))
 		//top:`window.${settings.outputName} = {DEBUG:true};`
-		.pipe(sourcemaps.write('./'))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
 		.pipe(gulp.dest(dest))
 		.pipe(ignore.exclude('*.map'))
 		.pipe(uglifyEs.default({}))
 		.pipe(rename(path=>{path.extname = '.min.js';}))
-		.pipe(sourcemaps.write('./'))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
 		.pipe(gulp.dest(dest));
 }
 

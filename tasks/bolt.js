@@ -28,7 +28,7 @@ function fn(
 		external: ['text-encoding'],
 		globals: {'text-encoding':'window'},
 		format: 'iife',
-		name: `${settings.outputName}.js`,
+		name: `${settings.outputName}`,
 		sourcemap: true,
 		plugins: [rollupMemoryPlugin(), _rollupNodeResolve, rollupPluginCommonjs({}), _rollupBabel]
 	})
@@ -37,12 +37,12 @@ function fn(
 		.pipe(sourcemaps.init({loadMaps: true}))
 		//top:`window.${settings.outputName} = {DEBUG:true};`
 		.pipe(gulpBoltBrowser({}))
-		.pipe(sourcemaps.write('./'))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
 		.pipe(gulp.dest(dest))
 		.pipe(ignore.exclude('*.map'))
 		.pipe(uglifyEs.default({}))
 		.pipe(rename(path=>{path.extname = '.min.js';}))
-		.pipe(sourcemaps.write('./'))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
 		.pipe(gulp.dest(dest));
 }
 

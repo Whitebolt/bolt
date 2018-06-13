@@ -17,6 +17,7 @@ module.exports = function(){
 		const files = [...bolt[filesId]];
 		let reactBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		const exportEventType = 'exportReactComponentToBrowser';
+		const requireMap = [];
 
 		const names = bolt.chain(files)
 			.map(target=>{
@@ -29,6 +30,7 @@ module.exports = function(){
 						exportEventType,
 						new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync:false, name})
 					);
+					requireMap.push({name, target});
 					return name;
 				}
 			})
@@ -36,11 +38,11 @@ module.exports = function(){
 			.value();
 
 		reactBoltContent += `export default {${names.join(',')}}`;
-
 		bolt.runGulp('react', app, [
 			`--outputName=${name}`,
 			`--contents=${reactBoltContent}`,
-			`--boltRootDir=${boltRootDir}`
+			`--boltRootDir=${boltRootDir}`,
+			...bolt.objectToArgsArray(requireMap, 'settings.reactBoltMap')
 		]);
 		clearCache(filesId);
 	};
