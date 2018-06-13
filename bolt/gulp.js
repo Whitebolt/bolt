@@ -5,6 +5,7 @@ const child = require('child_process');
 const xParseGulpLog = /^\[(\d\d\:\d\d\:\d\d)\]\s+(.*)/;
 const xAnsi = /\x1b\[[0-9;]*[a-zA-Z]/g;
 const xGulpUsing = /^Using gulpfile /;
+const xGetGulpTaskNamePath = /^Found task \'(.*?)\' in (.*)/;
 const xGetGulpTaskName = /^Starting \'(.*?)\'/;
 const xNewLine = /\n/;
 
@@ -21,6 +22,7 @@ function runGulp(taskName, {config}, args=[]) {
 	);
 
 	let gulpTaskName = 'Unknown';
+	let gulpTaskPath = '';
 
 	let current = '';
 	ls.stdout.on('data',data=>{
@@ -35,12 +37,19 @@ function runGulp(taskName, {config}, args=[]) {
 					const [full, date, info] = data.match(xParseGulpLog) || [];
 					if (!!date && !!info) {
 						if (xGulpUsing.test(info))  return bolt.emit('gulpLogGulpfileInfo', 'load', info);
-						const [fullMatch, task] = info.toString().match(xGetGulpTaskName) || [];
-						if (!!task) {
-							gulpTaskName = task;
-							return bolt.emit('gulpLog', gulpTaskName, 'Starting task');
+						const [fullMatch, taskId, taskPath] = info.toString().match(xGetGulpTaskNamePath) || [];
+						if (!!taskId || !!taskPath) {
+							if (!!taskId) gulpTaskName = taskId;
+							if (!!taskPath) gulpTaskPath = taskPath;
+							return bolt.emit('gulpLog', gulpTaskName, `Starting task: ${gulpTaskPath}`);
 						} else {
-							return bolt.emit('gulpLog', gulpTaskName, info);
+							const [fullMatch, taskId] = info.toString().match(xGetGulpTaskName) || [];
+							if (!!taskId) {
+								gulpTaskName = taskId;
+								return;
+							} else {
+								return bolt.emit('gulpLog', gulpTaskName, info);
+							}
 						}
 					}
 					console.error('Gulp - Failed to parse message:', data);
@@ -54,7 +63,9 @@ function runGulp(taskName, {config}, args=[]) {
 
 	ls.on('close', code=>{
 		const timeTaken = process.hrtime(startTime);
-		bolt.emit('gulpLog', gulpTaskName, `Done in ${timeTaken[0]}.${timeTaken[1].toString().substr(0,3)}s - Exited with code ${code}`)
+		let message = `Done in ${timeTaken[0]}.${timeTaken[1].toString().substr(0,3)}s`;
+		if (code > 0) message += `Exited with code ${code}`;
+		bolt.emit('gulpLog', gulpTaskName, message)
 	});
 }
 

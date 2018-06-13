@@ -10,10 +10,11 @@ const getParameters = replaceSequence([[xPreFunctionParams],[xPostFunctionParams
 
 const fs = require('fs');
 const gulp = require('gulp');
+const path = require('path');
 
 
 initSettings();
-const tasks = createTasks(settings.gulpTasksDir || './tasks');
+const tasks = createTasks(path.resolve(process.cwd(), settings.gulpTasksDir || './tasks'));
 
 function processSettings(obj, parent, parentProp) {
 	let allNumbers = true;
@@ -144,7 +145,8 @@ function tree(root) {
 				structure[_files[i]] = tree(root + '/' + _files[i]);
 			} else if (stats.isFile() && xIsJsFile.test(_files[i])) {
 				try {
-					structure[_files[i]] = require(root + '/' + _files[i]);
+					const path = `${root}/${_files[i]}`;
+					structure[_files[i]] = Object.assign(require(path), {path});
 				} catch(err) {
 					console.log('Could not load task in: ' + _files[i]);
 					console.error(err);
@@ -345,6 +347,12 @@ function createTasks(root) {
 	return _createTasks(tree(root));
 }
 
+function getTimeNowString() {
+	const date = new Date();
+	const [hours, minutes, seconds] = [date.getHours(), date.getMinutes(), date.getSeconds()];
+	return `${(hours>9)?hours:`0${hours}`}:${(minutes>9)?minutes:`0${minutes}`}:${(seconds>9)?seconds:`0${seconds}`}`
+}
+
 /**
  * Create a gulp task for the given id.
  *
@@ -353,6 +361,7 @@ function createTasks(root) {
  */
 function createTask(taskId) {
 	return function (done) {
+		console.log(`[${getTimeNowString()}] Found task '${taskId}' in ${tasks[taskId].fn.path}`);
 		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, {gulp,done}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
