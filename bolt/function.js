@@ -8,6 +8,8 @@ const xPreFunctionParams = /\)[\s\S]*/;
 const xPostFunctionParams = /^.*?\(/;
 const paramDefaultMatchers = new Map([['null',null],['undefined',undefined],['true',true],['false',false]]);
 
+const paramCache = new WeakMap();
+
 let getParameters;
 
 /**
@@ -19,6 +21,8 @@ let getParameters;
  */
 function parseParameters(func, evaluate=true) {
 	getParameters = getParameters || bolt.replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
+	if (paramCache.has(func)) return paramCache.get(func);
+
 	const defaults = new Map();
 	const params = bolt.chain(getParameters(func).split(','))
 		.map(param=>param.trim())
@@ -51,6 +55,7 @@ function parseParameters(func, evaluate=true) {
 	if (!evaluate) return [params, defaults];
 	const _params = params.value();
 	_params.defaults = defaults;
+	paramCache.set(func, _params);
 	return _params;
 }
 
