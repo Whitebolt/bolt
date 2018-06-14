@@ -48,6 +48,10 @@ queryBuilder.conditionalHelpers.add('$eq', (...params)=>
  * @see {https://github.com/mysqljs/mysql/blob/master/lib/ConnectionConfig.js}
  */
 
+function zeroLead(value) {
+	return ((value.toString() < 10) ? "0"+value : value).toString();
+}
+
 /**
  * Convert given BoltConfigDb type into a mysql connection config object.
  *
@@ -56,12 +60,13 @@ queryBuilder.conditionalHelpers.add('$eq', (...params)=>
  * @returns {MysqlConnectionConfig}    The mysql connection config object.
  */
 function _getDbConfig(config) {
+
 	return {
 		host:config.server,
 		user:config.username,
 		password:config.password,
 		database:config.database,
-		timezone:'Z'
+		dateStrings: true
 	};
 }
 
