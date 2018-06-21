@@ -45,6 +45,9 @@ function _startApp(config) {
 async function appLauncher(config) {
 	if (!configDone) {
 		configDone = true;
+
+		requireX.set('roots', config.root);
+
 		if (!boltLoaded) {
 			await bolt.require.import('./bolt/', {
 				merge: true,
