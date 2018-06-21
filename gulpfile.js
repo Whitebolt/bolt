@@ -8,7 +8,6 @@ global.bolt = Object.assign(
 	require('./bolt/function'),
 	require('./bolt/string')
 );
-
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
@@ -85,10 +84,9 @@ function loadConfig(id='gulp', copyProps=[], defaultPropValues={}) {
  * @param {string} [filename='package.json']    Package source name.
  * @returns {Object}                            The package file.
  */
-function getPackageData(filename) {
-	filename = filename || '/package.json';
+function getPackageData(filename='/package.json') {
 	try {
-		return require(__dirname + filename);
+		return require(path.join(__dirname, filename));
 	} catch(err) {
 		return {};
 	}
@@ -101,44 +99,44 @@ function getPackageData(filename) {
  * @returns {Object}		The structure.
  */
 function tree(root) {
-	var structure = {};
+	const structure = {};
 
-	var _files = fs.readdirSync(root);
-	for(var i=0; i<_files.length; i++) {
-		if ((_files[i] !== '.') && (_files[i] !== '..')) {
-			var stats = fs.statSync(root + '/' + _files[i]);
+	bolt.chain(fs.readdirSync(root))
+		.filter(file=>((file !== '.') && (file !== '..')))
+		.forEach(file=>{
+			const filePath = path.join(root, file);
+			const stats = fs.statSync(filePath);
 			if (stats.isDirectory()) {
-				structure[_files[i]] = tree(root + '/' + _files[i]);
-			} else if (stats.isFile() && xIsJsFile.test(_files[i])) {
+				structure[file] = tree(filePath);
+			} else if (stats.isFile() && xIsJsFile.test(file)) {
 				try {
-					const path = `${root}/${_files[i]}`;
-					structure[_files[i]] = Object.assign(require(path), {path});
+					structure[file] = Object.assign(require(filePath), {path:filePath});
 				} catch(err) {
-					console.log('Could not load task in: ' + _files[i]);
+					console.log(`Could not load task in: ${filePath}`);
 					console.error(err);
 				}
 			}
-		}
-	}
+		})
+		.value();
 
 	return _parseTree(structure);
 }
 
 function _parseTree(tree) {
-	for (var id in tree) {
-		if (Array.isArray(tree[id])) tree[id] = {deps: tree[id]};
-		if (bolt.isFunction(tree[id])) {
-			tree[id] = {fn: tree[id]};
-			tree[id].deps = tree[id].fn.deps || [];
-		}
-		if (tree[id].watch) tree[id].fn = function (gulp) {
-			gulp.watch(tree[id].watch.source, tree[id].watch.tasks);
+	bolt.forOwn(tree, (item, id)=>{
+		if (Array.isArray(item)) tree[id] = {deps: item};
+		if (bolt.isFunction(item)) tree[id] = {
+			fn:item,
+			deps:item.deps || []
 		};
-		if (tree[id].deps || tree[id].fn) {
-			tree[id].fn = tree[id].fn || function (done) {done();};
-			tree[id].deps = tree[id].deps || [];
+		if (tree[id].watch) item.fn = function (gulp) {
+			gulp.watch(item.watch.source, item.watch.tasks);
+		};
+		if (item.deps || item.fn) {
+			item.fn = item.fn || function (done) {done();};
+			item.deps = item.deps || [];
 		}
-	}
+	});
 
 	return tree;
 }
@@ -151,7 +149,7 @@ function _parseTree(tree) {
  * @returns {string}			The full id.
  */
 function parentId(parent, id) {
-	return parent + id.replace(xIsJsFile, '');
+	return `${parent}${id.replace(xIsJsFile, '')}`;
 }
 
 function getInjection(func, inject) {
@@ -174,8 +172,8 @@ function getModule(paramName, inject) {
 
 	const moduleId = (
 		(inject.hasOwnProperty(paramName) && bolt.isString(inject[paramName])) ?
-			inject[paramName] :
-		'gulp-' + bolt.kebabCase(paramName)
+		inject[paramName] :
+		`gulp-${bolt.kebabCase(paramName)}`
 	);
 
 	try {
@@ -204,40 +202,33 @@ function getModule(paramName, inject) {
  * @param {Object} [tasks={}]		The task object.
  * @returns {Object}				The flat object, tasks.
  */
-function _createTasks(tree, parent, tasks) {
-	parent = parent || "";
-	tasks = tasks || {};
-
-	for (var id in tree) {
-		if (tree[id].deps || tree[id].fn || tree[id].watch) {
-			tasks[parentId(parent, id)] = tree[id];
-		} else {
-			_createTasks(tree[id], parentId(parent, id) + ':', tasks)
-		}
-	}
+function _createTasks(tree, parent='', tasks={}) {
+	bolt.forOwn(tree, (item, id)=>{
+		if (!item.deps && !item.fn && !item.watch) return _createTasks(item, `${parentId(parent, id)}:`, tasks);
+		tasks[parentId(parent, id)] = item;
+	});
 
 	return _parseDeps(tasks);
 }
 
 function _replaceGlobDeps(tasks, searcher, depId) {
-	var found = [];
-	var finder = new RegExp(searcher[depId].replace('*', '.*?'));
-	for(var id in tasks) {
-		if (finder.test(id)) found.push(id);
-	}
+	const finder = new RegExp(searcher[depId].replace('*', '.*?'));
+	const found = bolt.chain(tasks)
+		.keys()
+		.filter(id=>(finder.test(id)))
+		.value();
+
 	if (!found.length) return depId;
 	searcher.splice.apply(searcher, [depId, 1].concat(found));
 	return (depId-1);
 }
 
 function _parseDeps(tasks) {
-	for(var id in tasks) {
-		for(var depNo=0; depNo < tasks[id].deps.length; depNo++) {
-			if (tasks[id].deps[depNo].indexOf('*') !== -1) {
-				depNo = _replaceGlobDeps(tasks, tasks[id].deps, depNo);
-			}
+	bolt.forOwn(tasks, task=>{
+		for (let depNo=0; depNo < task.deps.length; depNo++) {
+			if (task.deps[depNo].indexOf('*') !== -1) depNo = _replaceGlobDeps(tasks, task.deps, depNo);
 		}
-	}
+	});
 
 	return tasks;
 }
@@ -267,7 +258,7 @@ function getTimeNowString() {
 function createTask(taskId) {
 	return function (done) {
 		console.log(`[${getTimeNowString()}] Found task '${taskId}' in ${tasks[taskId].fn.path}`);
-		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, {gulp,done}));
+		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, {gulp,done,bolt}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
 			if (stream.then) stream.then(done);
@@ -275,6 +266,6 @@ function createTask(taskId) {
 	};
 }
 
-for (var taskId in tasks) gulp.task(taskId, tasks[taskId].deps, createTask(taskId));
+bolt.forOwn(tasks, (task, id)=>gulp.task(id, task.deps, createTask(id)));
 
 if (!module.parent && (process.argv.length > 2)) gulp.start([process.argv[2]]);
