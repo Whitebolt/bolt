@@ -1,16 +1,21 @@
 #!/usr/bin/env node
 'use strict';
 
-const xIsJsFile = /\.js$/i;
-const xRollupPluginTest = /^rollup[A-Z0-9]/;
-const xPreFunctionParams = /\)[\s\S]*/;
-const xPostFunctionParams = /^.*?\(/;
-const xIsDigit = /^\d+$/;
-const getParameters = replaceSequence([[xPreFunctionParams],[xPostFunctionParams]]);
+global.bolt = Object.assign(
+	require('lodash').runInContext(),
+	require('./bolt/array'),
+	require('./bolt/object'),
+	require('./bolt/function'),
+	require('./bolt/string')
+);
 
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
+
+const xIsJsFile = /\.js$/i;
+const xRollupPluginTest = /^rollup[A-Z0-9]/;
+const xIsDigit = /^\d+$/;
 
 
 initSettings();
@@ -27,7 +32,7 @@ function processSettings(obj, parent, parentProp) {
 	} else {
 		Object.keys(obj).forEach(propName=>{
 			const value = obj[propName];
-			if (isObject(value)) processSettings(value, obj, propName);
+			if (bolt.isObject(value)) processSettings(value, obj, propName);
 		});
 	}
 }
@@ -49,11 +54,6 @@ function initSettings() {
 	global.settings.boltRootDir = global.settings.boltRootDir || global.settings.cwd;
 }
 
-function isFunction(func) {
-	var getType = {};
-	return func && getType.toString.call(func) === '[object Function]';
-}
-
 /**
  * Load config properties from package.json of module.
  *
@@ -66,12 +66,15 @@ function loadConfig(id='gulp', copyProps=[], defaultPropValues={}) {
 	const packageData = getPackageData();
 	const selectedPackageData = packageData[id] || {};
 
-	return substitute(Object.assign({
+	return bolt.substituteInObject(Object.assign(
+		...copyProps.map((prop, n)=>{
+			if (defaultPropValues.length > n) return {[prop]:defaultPropValues[n]};
+		}), {
 			cwd: __dirname,
 			nodeVersion: parseFloat(process.versions.node.split('.').slice(0, 2).join('.'))
 		},
 		selectedPackageData,
-		pick(packageData, copyProps.concat(selectedPackageData.copyProps || []), defaultPropValues),
+		bolt.pickDeep(packageData, copyProps.concat(selectedPackageData.copyProps || [])),
 		getPackageData(selectedPackageData.local || '/local.json')
 	));
 }
@@ -89,44 +92,6 @@ function getPackageData(filename) {
 	} catch(err) {
 		return {};
 	}
-}
-
-function substitute(obj) {
-	const result = (new Function(...[
-		...Object.keys(obj),
-		'return JSON.parse(`' + JSON.stringify(obj) + '`);'
-	]))(...Object.keys(obj).map(key=>obj[key]));
-
-	return ((JSON.stringify(result) !== JSON.stringify(obj)) ? substitute(result) : result);
-}
-
-/**
- * Pick the given properties from the given object, returning a new object.
- *
- * @param {Object} from             Object to take from.
- * @param {Array} [picks=[]]        Properties to pick.
- * @param {Object} [defaults={}]    Defaults to apply.
- * @returns {Object}
- */
-function pick(from, picks, defaults) {
-	picks = picks || [];
-	defaults = defaults || {};
-
-	const obj = {};
-	for (var n=0; n<picks.length; n++) {
-		const path = picks[n].replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '').split('.');
-		obj[path[path.length-1]] = getDeep(from, path) || defaults[picks[n]];
-	}
-
-	return obj;
-}
-
-function getDeep(obj, path) {
-	for (let i = 0, n = path.length; i < n; ++i) {
-		let key = path[i];
-		if (key in obj) obj = obj[key];
-	}
-	return obj;
 }
 
 /**
@@ -162,7 +127,7 @@ function tree(root) {
 function _parseTree(tree) {
 	for (var id in tree) {
 		if (Array.isArray(tree[id])) tree[id] = {deps: tree[id]};
-		if (isFunction(tree[id])) {
+		if (bolt.isFunction(tree[id])) {
 			tree[id] = {fn: tree[id]};
 			tree[id].deps = tree[id].fn.deps || [];
 		}
@@ -190,68 +155,7 @@ function parentId(parent, id) {
 }
 
 function getInjection(func, inject) {
-	return parseParameters(func).map(param=>getModule(param, inject));
-}
-
-/**
- * Parse the source of a function returning an array of parameter names.
- *
- * @public
- * @param {Function|String} func       Function or function source to parse.
- * @returns {Array.<string>}           Array of parameter names.
- */
-function parseParameters(func) {
-	return getParameters(func).split(',').map(param=>param.trim());
-}
-
-/**
- * Test if given value is a string.
- *
- * @param {*} value			Value to test.
- * @returns {boolean}		Is value a string?
- */
-function isString(value) {
-	return ((typeof value === 'string') || (value instanceof String));
-}
-
-function isObject(obj) {
-	return ((typeof obj === "object") && (obj !== null) && !Array.isArray(obj));
-}
-
-/**
- * Convert a camel case string into hythenated string.
- *
- * @param {string} value	Test to convet.
- * @returns {string}		Converted text.
- */
-function camelCaseToHythen(value) {
-	return value.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
-}
-
-/**
- * Perform a series of replacements on a string in sequence.
- *
- * @public
- * @param {string|*} [txt]      Text to do replacements on.  If it is not a string try to convert to string
- *                              via toString() method.
- * @param {Array} sequence      Replacement sequence as an array in format
- *                              [[<search-for>,<replacement>], [<search-for>,<replacement>]]. If replacement is not
- *                              present then replace with a blank string. If txt is not supplied then return a
- *                              replacer function that will accept text perform the given replacements.
- * @returns {string}            Replacement text.
- */
-function replaceSequence(txt, sequence) {
-	let _sequence = (sequence?sequence:txt);
-
-	let _replaceSequence = txt=>{
-		let _txt = (isString(txt) ? txt : txt.toString());
-		_sequence.forEach(operation=>{
-			_txt = _txt.replace(operation[0], operation[1] || '');
-		});
-		return _txt;
-	};
-
-	return (sequence?_replaceSequence(txt):_replaceSequence)
+	return bolt.parseParameters(func).map(param=>getModule(param, inject));
 }
 
 /**
@@ -266,12 +170,12 @@ function replaceSequence(txt, sequence) {
 function getModule(paramName, inject) {
 	if (Array.isArray(paramName)) return paramName.map(paramName=>getModule(paramName, inject));
 	if (paramName in (settings.injectionMapper || {})) paramName = (settings.injectionMapper || {})[paramName];
-	if (inject.hasOwnProperty(paramName) && !isString(inject[paramName])) return inject[paramName];
+	if (inject.hasOwnProperty(paramName) && !bolt.isString(inject[paramName])) return inject[paramName];
 
 	const moduleId = (
-		(inject.hasOwnProperty(paramName) && isString(inject[paramName])) ?
+		(inject.hasOwnProperty(paramName) && bolt.isString(inject[paramName])) ?
 			inject[paramName] :
-		'gulp-' + camelCaseToHythen(paramName)
+		'gulp-' + bolt.kebabCase(paramName)
 	);
 
 	try {
@@ -280,11 +184,11 @@ function getModule(paramName, inject) {
 		try {
 			if (xRollupPluginTest.test(paramName)) {
 				try {
-					const moduleId = camelCaseToHythen(paramName).replace('rollup-','rollup-plugin-');
+					const moduleId = bolt.kebabCase(paramName).replace('rollup-','rollup-plugin-');
 					return require(moduleId);
 				} catch(err) {}
 			}
-			return require(camelCaseToHythen(paramName));
+			return require(bolt.kebabCase(paramName));
 		} catch(err) {
 			console.error(err);
 			throw new RangeError(`Could not inject module for ${paramName}, did you forget to 'npm install' / 'yarn add' the given module.`)
