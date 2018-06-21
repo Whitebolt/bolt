@@ -52,19 +52,19 @@ function runGulp(taskName, {config}, args=[]) {
 							}
 						}
 					}
-					console.error('Gulp - Failed to parse message:', data);
+					console.error(data);
 				})
 				.value();
 
 		}
 	});
 
-	ls.stderr.on('data', data=>console.error('Gulp Error', data.toString()));
+	ls.stderr.on('data', data=>console.error('Gulp Error: ', data.toString()));
 
 	ls.on('close', code=>{
 		const timeTaken = process.hrtime(startTime);
 		let message = `Done in ${timeTaken[0]}.${timeTaken[1].toString().substr(0,3)}s`;
-		if (code > 0) message += `Exited with code ${code}`;
+		if (code > 0) message += ` Exited with code ${code}`;
 		bolt.emit('gulpLog', gulpTaskName, message)
 	});
 }

@@ -7,7 +7,7 @@ const rollupReactBoltPlugin = require('../lib/rollupReactBoltPlugin');
 
 function fn(
 	gulp, rollupStream, vinylSourceStream, vinylBuffer, sourcemaps, ignore, uglifyEs, rename,
-	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, rollupPluginJson
+	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, rollupPluginJson, settings
 ) {
 	const config = require(`${settings.boltRootDir}/package.json`).config;
 	const _rollupNodeResolve = rollupNodeResolve(Object.assign(
@@ -43,7 +43,7 @@ function fn(
 			_rollupNodeResolve,
 			rollupPluginCommonjs(),
 			rollupPluginJson(),
-			rollupReactBoltPlugin(),
+			rollupReactBoltPlugin(settings),
 			_rollupBabel
 		]
 	})

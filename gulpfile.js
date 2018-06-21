@@ -11,14 +11,15 @@ global.bolt = Object.assign(
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
+const chalk = require('chalk');
+const requireLike = require('require-like');
 
 const xIsJsFile = /\.js$/i;
 const xRollupPluginTest = /^rollup[A-Z0-9]/;
 const xIsDigit = /^\d+$/;
 
-
-initSettings();
-const tasks = createTasks(path.resolve(process.cwd(), settings.gulpTasksDir || './tasks'));
+const settings = initSettings();
+const tasks = createTasks(settings.root);
 
 function processSettings(obj, parent, parentProp) {
 	let allNumbers = true;
@@ -44,13 +45,18 @@ function initSettings() {
 		delete cmdArgvs.settings;
 	}
 
-	global.settings = Object.assign(
-		global.settings || {},
+	const settings = Object.assign(
+		global.settings || {}, {
+			cwd: process.cwd(),
+			nodeVersion: parseFloat(process.versions.node.split('.').slice(0, 2).join('.'))
+		},
 		loadConfig(),
 		cmdArgvs,
 		cmdArgvSettings
 	);
-	global.settings.boltRootDir = global.settings.boltRootDir || global.settings.cwd;
+	settings.boltRootDir = settings.boltRootDir || settings.cwd;
+
+	return settings;
 }
 
 /**
@@ -61,20 +67,17 @@ function initSettings() {
  * @param {Object} defaultPropValues    Default values to apply.
  * @returns {Object}                    The config.
  */
-function loadConfig(id='gulp', copyProps=[], defaultPropValues={}) {
-	const packageData = getPackageData();
+function loadConfig(cwd=process.cwd(), id='gulp', copyProps=[], defaultPropValues={}) {
+	const packageData = getPackageData(cwd);
 	const selectedPackageData = packageData[id] || {};
 
 	return bolt.substituteInObject(Object.assign(
 		...copyProps.map((prop, n)=>{
 			if (defaultPropValues.length > n) return {[prop]:defaultPropValues[n]};
-		}), {
-			cwd: __dirname,
-			nodeVersion: parseFloat(process.versions.node.split('.').slice(0, 2).join('.'))
-		},
+		}),
 		selectedPackageData,
 		bolt.pickDeep(packageData, copyProps.concat(selectedPackageData.copyProps || [])),
-		getPackageData(selectedPackageData.local || '/local.json')
+		getPackageData(cwd, selectedPackageData.local || '/local.json')
 	));
 }
 
@@ -84,9 +87,9 @@ function loadConfig(id='gulp', copyProps=[], defaultPropValues={}) {
  * @param {string} [filename='package.json']    Package source name.
  * @returns {Object}                            The package file.
  */
-function getPackageData(filename='/package.json') {
+function getPackageData(root=process.cwd(), filename='/package.json') {
 	try {
-		return require(path.join(__dirname, filename));
+		return require(path.join(root, filename));
 	} catch(err) {
 		return {};
 	}
@@ -98,19 +101,26 @@ function getPackageData(filename='/package.json') {
  * @param {string} root		The starting directory.
  * @returns {Object}		The structure.
  */
-function tree(root) {
-	const structure = {};
+function tree(root, cwd=root, structure={}) {
+	if (Array.isArray(root)) {
+		root.forEach(root=>tree(root, root, structure));
+		return _parseTree(structure);
+	}
 
-	bolt.chain(fs.readdirSync(root))
+	const tasksDir = path.join(root, ((root === cwd)?settings.gulpTasksDir || 'tasks':''));
+	let files = [];
+	try {files = fs.readdirSync(tasksDir);} catch(err) {}
+
+	bolt.chain(files)
 		.filter(file=>((file !== '.') && (file !== '..')))
 		.forEach(file=>{
-			const filePath = path.join(root, file);
+			const filePath = path.join(tasksDir, file);
 			const stats = fs.statSync(filePath);
 			if (stats.isDirectory()) {
-				structure[file] = tree(filePath);
+				structure[file] = tree(filePath, cwd);
 			} else if (stats.isFile() && xIsJsFile.test(file)) {
 				try {
-					structure[file] = Object.assign(require(filePath), {path:filePath});
+					structure[file] = Object.assign(require(filePath), {cwd, path:filePath});
 				} catch(err) {
 					console.log(`Could not load task in: ${filePath}`);
 					console.error(err);
@@ -129,8 +139,13 @@ function _parseTree(tree) {
 			fn:item,
 			deps:item.deps || []
 		};
-		if (tree[id].watch) item.fn = function (gulp) {
-			gulp.watch(item.watch.source, item.watch.tasks);
+		if (item.watch) item.fn = function (gulp) {
+			if (bolt.isFunction(item.watch)) {
+				const cwd = item.cwd || item.fn.cwd || process.cwd();
+				const _settings = Object.assign({}, settings, loadConfig(cwd));
+				tree[id].watch = item.watch(_settings);
+			}
+			gulp.watch(tree[id].watch.source, tree[id].watch.tasks);
 		};
 		if (item.deps || item.fn) {
 			item.fn = item.fn || function (done) {done();};
@@ -152,8 +167,8 @@ function parentId(parent, id) {
 	return `${parent}${id.replace(xIsJsFile, '')}`;
 }
 
-function getInjection(func, inject) {
-	return bolt.parseParameters(func).map(param=>getModule(param, inject));
+function getInjection(func, cwd=process.cwd(), inject={}) {
+	return bolt.parseParameters(func).map(param=>getModule(param, cwd, inject));
 }
 
 /**
@@ -165,9 +180,11 @@ function getInjection(func, inject) {
  * @param {Object} inject						Inject object to use.
  * @returns {*}									Module for given parameter name.
  */
-function getModule(paramName, inject) {
+function getModule(paramName, cwd=process.cwd(), inject={}) {
 	if (Array.isArray(paramName)) return paramName.map(paramName=>getModule(paramName, inject));
-	if (paramName in (settings.injectionMapper || {})) paramName = (settings.injectionMapper || {})[paramName];
+	if (paramName in (inject.settings.injectionMapper || {})) {
+		paramName = (inject.settings.injectionMapper || {})[paramName];
+	}
 	if (inject.hasOwnProperty(paramName) && !bolt.isString(inject[paramName])) return inject[paramName];
 
 	const moduleId = (
@@ -175,6 +192,7 @@ function getModule(paramName, inject) {
 		inject[paramName] :
 		`gulp-${bolt.kebabCase(paramName)}`
 	);
+	const require = requireLike(path.join(cwd, 'gulpfile.js'));
 
 	try {
 		return require(moduleId);
@@ -257,8 +275,10 @@ function getTimeNowString() {
  */
 function createTask(taskId) {
 	return function (done) {
-		console.log(`[${getTimeNowString()}] Found task '${taskId}' in ${tasks[taskId].fn.path}`);
-		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, {gulp,done,bolt}));
+		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(tasks[taskId].fn.path)}`);
+		const cwd = tasks[taskId].cwd || tasks[taskId].fn.cwd || process.cwd();
+		const _settings = Object.assign({}, settings, loadConfig(cwd));
+		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, cwd, {gulp,done,bolt,settings:_settings}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
 			if (stream.then) stream.then(done);

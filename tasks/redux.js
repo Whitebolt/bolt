@@ -6,7 +6,7 @@ const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 
 function fn(
 	gulp, rollupStream, vinylSourceStream, vinylBuffer, sourcemaps, ignore, uglifyEs, rename,
-	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, rollupPluginJson
+	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, rollupPluginJson, settings
 ) {
 
 	const config = require(`${settings.boltRootDir}/package.json`).config;

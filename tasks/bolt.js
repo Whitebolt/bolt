@@ -5,7 +5,7 @@ const gulpBoltBrowser = require('../lib/gulpBoltBrowser');
 
 function fn(
 	gulp, rollupStream, vinylSourceStream, vinylBuffer, sourcemaps, ignore, uglifyEs, rename,
-	rollupBabel, rollupNodeResolve, rollupPluginCommonjs
+	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, settings
 ) {
 
 	const config = require(`${settings.cwd}/package.json`).config;
