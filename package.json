@@ -336,6 +336,15 @@
         "level": 1
       },
       {
+        "event": "slowLoadedModule",
+        "action": "slow module",
+        "description": "<%= params[1] %>ms",
+        "level": 3,
+        "typeColour": "red",
+        "propertyColour": "yellow",
+        "descriptionColour": "white"
+      },
+      {
         "event": "appRunning",
         "action": "running",
         "description": "<%= params[1][0] %>.<%= params[1][1].toString().substr(0,3) %>s"
