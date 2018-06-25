@@ -277,7 +277,7 @@ function createTask(taskId) {
 	return function (done) {
 		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(tasks[taskId].fn.path)}`);
 		const cwd = tasks[taskId].cwd || tasks[taskId].fn.cwd || process.cwd();
-		const _settings = Object.assign({}, settings, loadConfig(cwd));
+		const _settings = Object.assign({}, settings, loadConfig(cwd), {cwd});
 		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, cwd, {gulp,done,bolt,settings:_settings}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
