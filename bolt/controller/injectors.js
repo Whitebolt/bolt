@@ -91,7 +91,11 @@ const injectors = Object.freeze({
 		return component.req.doc;
 	},
 	done: component=>{
-		return (value=true)=>{component.done = !!value}
+		return (status=200, message)=> {
+			component.done = !!status;
+			if (!bolt.isNaN(status)) component.status = status;
+			if (!!message) component.statusMessage = message;
+		}
 	},
 	app: component=>component.req.app,
 	path: component=>bolt.getPathFromRequest(component.req),
