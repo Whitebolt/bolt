@@ -69,14 +69,15 @@ function getType(obj) {
 }
 
 function _toFromId(value, action, errorMessage) {
-	if (bolt.isString(value)) return action(value);
-	if (loadMongo.isMongoId(value)) return action(value.toString());
-	if (!Array.isArray(value) && !(value instanceof Set)) throw new TypeError(errorMessage(value));
-	const values = bolt.chainArray(value)
+	const _value = ((bolt.isObject(value) && !!value._id) ? value._id : value);
+	if (bolt.isString(_value)) return action(_value);
+	if (loadMongo.isMongoId(_value)) return action(_value.toString());
+	if (!Array.isArray(_value) && !(_value instanceof Set)) throw new TypeError(errorMessage(_value));
+	const values = bolt.chainArray(_value)
 		.filter(item=>!!item)
 		.map(value=>_toFromId(value, action, errorMessage))
 		.value();
-	return (Array.isArray(value))?values:new Set(values);
+	return (Array.isArray(_value))?values:new Set(values);
 }
 
 loadMongo.mongoId = id=>new mongo.ObjectID(id);
