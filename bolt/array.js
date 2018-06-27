@@ -39,6 +39,17 @@ function makeArray(ary, convertFunction=_makeArrayConvertFunction) {
 	return (Array.isArray(ary) ? ary : convertFunction(ary));
 }
 
+function chainArray(ary, convertFunction=_makeArrayConvertFunction) {
+	return bolt.chain(makeArray(ary, convertFunction));
+}
+
+function makeArrays(obj, props, convertFunction=_makeArrayConvertFunction) {
+	makeArray(props).forEach(prop=>{
+		obj[prop] = makeArray(obj[prop], convertFunction);
+	});
+	return obj;
+}
+
 /**
  * Sort an array according to it item's priority property.
  *
@@ -155,5 +166,5 @@ function mapReduce(ary, iteree, context=null) {
 }
 
 module.exports = {
-	makeArray, prioritySorter, indexOfEquiv, toObjectMap, mapReduce
+	makeArray, makeArrays, chainArray, prioritySorter, indexOfEquiv, toObjectMap, mapReduce
 };

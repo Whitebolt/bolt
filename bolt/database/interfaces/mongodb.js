@@ -62,22 +62,39 @@ function loadMongo(config) {
  * @see {https://github.com/mongodb/js-bson/blob/1.0-branch/lib/bson/objectid.js}
  */
 
-/**
- * Get a mongo id for the given id value.
- *
- * @public
- * @param {*} id                   Value, which can be converted to a mongo-id.
- * @returns {external:ObjectId}    Mongo-id object.
- */
-function mongoId(id) {
-	return new mongo.ObjectID(id);
+
+function getType(obj) {
+	if (!bolt.isObject(obj)) return typeof obj;
+	return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase()
 }
 
-loadMongo.mongoId = mongoId;
+function _toFromId(value, action, errorMessage) {
+	if (bolt.isString(value)) return action(value);
+	if (loadMongo.isMongoId(value)) return action(value.toString());
+	if (!Array.isArray(value) && !(value instanceof Set)) throw new TypeError(errorMessage(value));
+	const values = bolt.chainArray(value)
+		.filter(item=>!!item)
+		.map(value=>_toFromId(value, action, errorMessage))
+		.value();
+	return (Array.isArray(value))?values:new Set(values);
+}
 
-loadMongo.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
+loadMongo.mongoId = id=>new mongo.ObjectID(id);
+loadMongo.toId = value=>_toFromId(
+	value,
+	value=>loadMongo.mongoId(value),
+	value=>`Cannot convert ${getType(value)}, to MongoId because it is not an Array, Set or string.`
+);
+loadMongo.fromId = value=>_toFromId(
+	value,
+	value=>value.toString(),
+	value=>`Cannot convert ${getType(value)}, from MongoId because it is not a MongoId`
+);
+loadMongo.sessionStore = (session, app, db=app.config.sessionStoreDb || 'main')=>{
 	const MongoStore = require('connect-mongo')(session);
 	return new MongoStore({db: app.dbs[db]});
 };
+
+loadMongo.isMongoId = id=>(id instanceof mongo.ObjectID);
 
 module.exports = loadMongo;
