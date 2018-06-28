@@ -29,11 +29,20 @@ function mapPromises(series, ...params) {
 }
 
 class BoltEventEmitter extends EventEmitter {
-	constructor(...params) {
-		super(...params);
+	constructor(options={}) {
+		super();
 
-		Private.set(this, 'before', new EventEmitter(...params));
-		Private.set(this, 'after', new EventEmitter(...params));
+		const {maxListeners=120} = options;
+
+		const before = new EventEmitter();
+		const after = new EventEmitter();
+
+		super.setMaxListeners(maxListeners);
+		before.setMaxListeners(maxListeners);
+		after.setMaxListeners(maxListeners);
+
+		Private.set(this, 'before', before);
+		Private.set(this, 'after', after);
 	}
 
 	async emit(eventName, ...params) {
