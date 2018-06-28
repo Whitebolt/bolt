@@ -6,6 +6,7 @@ const xParseGulpLog = /^\[(\d\d\:\d\d\:\d\d)\]\s+(.*)/;
 const xAnsi = /\x1b\[[0-9;]*[a-zA-Z]/g;
 const xGulpUsing = /^Using gulpfile /;
 const xGetGulpTaskNamePath = /^Found task \'(.*?)\' in (.*)/;
+const xGulpFinishedAfter = /^Finished \'.*?\' after .*$/;
 const xGetGulpTaskName = /^Starting \'(.*?)\'/;
 const xNewLine = /\n/;
 
@@ -35,6 +36,7 @@ function runGulp(taskName, {config}, args=[]) {
 				.filter(data=>(data !== ''))
 				.forEach(data=>{
 					const [full, date, info] = data.match(xParseGulpLog) || [];
+					if (xGulpFinishedAfter.test(info)) return;
 					if (!!date && !!info) {
 						if (xGulpUsing.test(info))  return bolt.emit('gulpLogGulpfileInfo', 'load', info);
 						const [fullMatch, taskId, taskPath] = info.toString().match(xGetGulpTaskNamePath) || [];
