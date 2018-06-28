@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "2.0.0",
+  "version": "2.0.1",
   "keywords": [
     "Server",
     "React",
@@ -109,6 +109,7 @@
     "rollup-stream": "^1.24.1",
     "serve-static": "^1.13.1",
     "shortcode-insert": "^1.0.2",
+    "source-list-map": "^2.0.0",
     "through2": "^2.0.3",
     "topic-subscribe": "^0.10.4",
     "vinyl-buffer": "^1.0.1",
