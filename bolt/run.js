@@ -141,7 +141,7 @@ function _runApp(app) {
 				pidController = undefined;
 			}
 			_deleteSecretConfigProps(app);
-			bolt.emit('appListening', config.sock || config.port);
+			bolt.emit('appListening', config.sock || config.port, config.domains);
 
 			console.log(await _createWelcome(config));
 			console.log('Modules:');
