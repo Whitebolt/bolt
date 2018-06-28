@@ -270,6 +270,7 @@
         "event": "mongoConnected",
         "action": "connect",
         "description": "MongoDb database",
+        "property": "<%= params[0].databaseName %>",
         "propertyColour": "cyan"
       },
       {
