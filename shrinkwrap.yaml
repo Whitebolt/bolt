@@ -15,14 +15,13 @@ dependencies:
   '@babel/preset-env': 7.0.0-beta.51
   '@babel/preset-react': 7.0.0-beta.51
   '@babel/runtime': 7.0.0-beta.51
-  '@simpo/binary-message-format': 1.0.0
   '@simpo/ejs': 2.5.6
   '@simpo/express-mysql-session': 1.2.4
   '@simpo/linux-user': 0.1.0
   '@simpo/map-watch': 1.0.1
   '@simpo/object-annotations': 1.0.2
   '@simpo/rrule': 2.2.0
-  '@simpo/websocket-express': 1.1.2
+  '@simpo/websocket-express': 1.2.0
   babel-plugin-syntax-async-functions: 7.0.0-beta.0
   babel-plugin-syntax-async-generators: 6.13.0
   babel-plugin-syntax-decorators: 6.13.0
@@ -900,12 +899,6 @@ packages:
       node: '>= 0.10'
     resolution:
       integrity: sha1-iQrnxdjId/bThIYCFazp1+yUW9o=
-  /@simpo/binary-message-format/1.0.0:
-    dependencies:
-      text-encoding: 0.6.4
-    dev: false
-    resolution:
-      integrity: sha512-Tx5VAbSH8I9aUabU/LDpfPjnqjcUgjjdnD5kMO3gMH7CBxAUiVq/1MdSlgkG/annSWRd+SfXjGOoQYQciEdZvQ==
   /@simpo/ejs/2.5.6:
     dev: false
     engines:
@@ -948,7 +941,7 @@ packages:
     dev: false
     resolution:
       integrity: sha512-3Tnqe//TW8V5BKJA0MC2QzJ1pQQa70yk361qBd1npYAhlXFmR8KFjkyfXe2+I8QzlA/qUY724Yo1BYxrEUWXPQ==
-  /@simpo/websocket-express/1.1.2:
+  /@simpo/websocket-express/1.2.0:
     dependencies:
       content-disposition: 0.5.2
       depd: 1.1.2
@@ -959,7 +952,7 @@ packages:
       ws: 5.2.1
     dev: false
     resolution:
-      integrity: sha512-fdW3tiYs1Oy+OdA3dZc+tsc4G1i3FGoGmf9dGtERHkghpWilpxdh0czV3kt4z8C7mbKy/NCDC/+0yJ11q75r4g==
+      integrity: sha512-8NHzuFYB81aO3WR/QtkYfVXDJ9MZzusNylFvg0HVIfC7mLPhSOcqamEhOJJqvdXG8+KNPiMJlID0nLWfgplo3w==
   /@types/core-js/0.9.46:
     dev: false
     optional: true
@@ -6295,10 +6288,6 @@ packages:
       node: '>=0.8.0'
     resolution:
       integrity: sha512-HbknfLRteizRcQWXTnpVK5rMleOEZh5g5y8sKzTm/W3pf4xrrdvajMSLMg2/45t0U8Hbk2+bcJ1IPXjO77kWtw==
-  /text-encoding/0.6.4:
-    dev: false
-    resolution:
-      integrity: sha1-45mpgiV6J22uQou5KEXLcb3CbRk=
   /through/2.3.8:
     dev: false
     resolution:
@@ -6968,14 +6957,13 @@ specifiers:
   '@babel/preset-env': 7.0.0-beta.51
   '@babel/preset-react': 7.0.0-beta.51
   '@babel/runtime': 7.0.0-beta.51
-  '@simpo/binary-message-format': ^1.0.0
   '@simpo/ejs': ^2.5.6
   '@simpo/express-mysql-session': ^1.2.4
   '@simpo/linux-user': ^0.1.0
   '@simpo/map-watch': ^1.0.1
   '@simpo/object-annotations': ^1.0.2
   '@simpo/rrule': ^2.2.0
-  '@simpo/websocket-express': ^1.1.2
+  '@simpo/websocket-express': ^1.2.0
   babel-plugin-syntax-async-functions: ^7.0.0-beta.0
   babel-plugin-syntax-async-generators: ^6.13.0
   babel-plugin-syntax-decorators: ^6.13.0

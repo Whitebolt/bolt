@@ -1,7 +1,6 @@
 'use strict';
 
 const bodyParser = require('body-parser');
-//const BMF = require('binary-message-format/lib');
 
 const defaultUploadLimit = 1024*1024; // 1Mb
 const defaultUploadLimits = {
@@ -26,31 +25,6 @@ function _isMultipartRequest(req) {
 
 function _isWebsocket(req) {
 	return !!req.websocket;
-}
-
-function bmfParser(req, res, next) {
-	if (req.is('binary/bmf')) {
-		const view = new Uint8Array(req.body, req.body.byteOffset, req.body.byteLength);
-		const message = new BMF(view);
-
-		let body = {};
-
-		message.headers.forEach((value, header)=>{
-			body[header] = value;
-		});
-		body.frames = [...message.frames].map(frameRaw=>{
-			let frame = {};
-			frameRaw.headers.forEach((value, header)=>{
-				frame[header] = value;
-			});
-			frame.body = frameRaw.parsedBody;
-			return frame;
-		});
-
-		req.body = body;
-	}
-
-	next();
 }
 
 function getUploadLimit(app) {
@@ -87,16 +61,11 @@ function init(app) {
 		return ((_isMultipartRequest(req) || _isWebsocket(req)) ? next() : parser(req, res, next));
 	}
 
-	function bmfParser(req, res, next) {
-		next();
-	}
-
 	app.use(
 		(req, res, next)=>skip(req, res, next, urlParser),
 		(req, res, next)=>skip(req, res, next, jsonParser),
 		(req, res, next)=>skip(req, res, next, textParser),
-		(req, res, next)=>skip(req, res, next, rawParser)/*,
-		 (req, res, next)=>skip(req, res, next, bmfParser)*/
+		(req, res, next)=>skip(req, res, next, rawParser)
 	);
 }
 

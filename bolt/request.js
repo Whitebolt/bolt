@@ -5,7 +5,6 @@
  * @module bolt/bolt
  */
 
-const BMF = require('@simpo/binary-message-format');
 const xEndSlash = /\/$/;
 
 /**
@@ -134,5 +133,5 @@ function addQueryObjectToUrl(url, ...objs) {
 
 module.exports = {
 	getPathFromRequest, getPathPartsFromRequest, objectToQueryString, queryStringToObject,
-	addQueryObjectToUrl, getUrlQueryObject, BMF
+	addQueryObjectToUrl, getUrlQueryObject
 };

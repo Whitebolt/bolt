@@ -670,12 +670,6 @@
     normalize-path "^2.0.1"
     through2 "^2.0.3"
 
-"@simpo/binary-message-format@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@simpo/binary-message-format/-/binary-message-format-1.0.0.tgz#a58a8a18e93fe5065debedd12bb52f78a7909923"
-  dependencies:
-    text-encoding "^0.6.4"
-
 "@simpo/ejs@^2.5.6":
   version "2.5.6"
   resolved "https://registry.yarnpkg.com/@simpo/ejs/-/ejs-2.5.6.tgz#c02097215e61cad7baf10c60116570c556fbcbd3"
@@ -716,9 +710,9 @@
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@simpo/rrule/-/rrule-2.2.0.tgz#789e17a4da93ff75c0ff1816e78f140d206f081a"
 
-"@simpo/websocket-express@^1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@simpo/websocket-express/-/websocket-express-1.1.2.tgz#c5eecd23f03076b0c50c8e2bc0e02cb7e29db914"
+"@simpo/websocket-express@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@simpo/websocket-express/-/websocket-express-1.2.0.tgz#15d3e692057a65e6585a3ef587843889a55c9e6f"
   dependencies:
     content-disposition "^0.5.2"
     depd "^1.1.2"
@@ -5522,10 +5516,6 @@ terser@^3.7.5:
   dependencies:
     commander "~2.14.1"
     source-map "~0.6.1"
-
-text-encoding@^0.6.4:
-  version "0.6.4"
-  resolved "https://registry.yarnpkg.com/text-encoding/-/text-encoding-0.6.4.tgz#e399a982257a276dae428bb92845cb71bdc26d19"
 
 through2-filter@^2.0.0:
   version "2.0.0"
