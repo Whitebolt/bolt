@@ -466,7 +466,7 @@
       {
         "event": "appListening",
         "action": "listen",
-        "description": "Bolt Server on",
+        "description": "Bolt Server on <%= params[0] %>",
         "propertyColour": "green"
       },
       {
