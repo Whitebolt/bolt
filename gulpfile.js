@@ -275,7 +275,7 @@ function getTimeNowString() {
  */
 function createTask(taskId) {
 	const task = tasks[taskId];
-	const deps = [...task.deps, function (done) {
+	const taskFunc = function (done) {
 		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(task.fn.path)}`);
 		const cwd = task.cwd || task.fn.cwd || process.cwd();
 		const _settings = Object.assign({}, settings, loadConfig(cwd), {cwd});
@@ -284,9 +284,11 @@ function createTask(taskId) {
 			if (stream.on) stream.on('end', done);
 			if (stream.then) stream.then(done);
 		}
-	}];
+	};
+	taskFunc.displayName = taskId;
+	const deps = [...task.deps, taskFunc];
 
-	return gulp.parallel(deps);
+	return gulp.series(deps);
 }
 
 bolt.forOwn(tasks, (task, id)=>gulp.task(id, createTask(id)));
