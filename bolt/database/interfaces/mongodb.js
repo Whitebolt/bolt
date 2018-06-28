@@ -13,7 +13,7 @@ function _createMongoUrl(config) {
 	config.server = config.server || 'localhost';
 	config.port = config.port || 27017;
 
-	return `mongodb://${_createMongoAuthenticationPart(config)}${config.server}:${config.port}/${config.database}${config.username ? '?authSource=' + config.adminDatabase : ''}`
+	return `mongodb://${_createMongoAuthenticationPart(config)}${config.server}:${config.port}/${config.database}`;
 }
 
 /**
@@ -24,13 +24,7 @@ function _createMongoUrl(config) {
  * @returns {string}                The authentication section of a database url.
  */
 function _createMongoAuthenticationPart(config) {
-	if (config.username) {
-		config.adminDatabase = config.adminDatabase || 'admin';
-		return encodeURIComponent(config.username)
-			+ (config.password ? ':' + encodeURIComponent(config.password) : '')
-			+ '@';
-	}
-
+	if (config.username) return config.username + (config.password ? ':' + config.password : '') + '@';
 	return '';
 }
 
@@ -46,15 +40,21 @@ function _createMongoAuthenticationPart(config) {
  * @param {BoltConfigDb} config        The database config object.
  * @returns {Promise.<external:Db>}    The  mongo database instance object.
  */
-function loadMongo(config) {
-	return mongo.MongoClient.connect(_createMongoUrl(config), {
-		// @todo At some point we need to get rid of bluebird as now using async/await.
-		promiseLibrary: require('bluebird')
-	}).then(client=>{
-		const db = client.db(config.database);
-		return bolt.emitThrough(()=>{}, 'mongoConnected', db).then(()=>db);
+async function loadMongo(config) {
+	const options = {
+		promiseLibrary: require('bluebird'), // @todo At some point we need to get rid of bluebird.
+		appname:'bolt',
+		useNewUrlParser:true,
+		...bolt.get(config, 'options', {})
+	};
+	if (!!config.username) Object.assign(options, {
+		authSource: bolt.get(config, 'options.authSource', 'admin')
 	});
 
+	const client = await mongo.MongoClient.connect(_createMongoUrl(config), options);
+	const db = client.db(config.database);
+	await bolt.emitThrough(()=>{}, 'mongoConnected', db);
+	return db;
 }
 
 /**
