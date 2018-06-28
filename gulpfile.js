@@ -274,18 +274,21 @@ function getTimeNowString() {
  * @returns {Function}			The gulp function.
  */
 function createTask(taskId) {
-	return function (done) {
-		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(tasks[taskId].fn.path)}`);
-		const cwd = tasks[taskId].cwd || tasks[taskId].fn.cwd || process.cwd();
+	const task = tasks[taskId];
+	const deps = [...task.deps, function (done) {
+		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(task.fn.path)}`);
+		const cwd = task.cwd || task.fn.cwd || process.cwd();
 		const _settings = Object.assign({}, settings, loadConfig(cwd), {cwd});
-		const stream = tasks[taskId].fn(...getInjection(tasks[taskId].fn, cwd, {gulp,done,bolt,settings:_settings}));
+		const stream = task.fn(...getInjection(task.fn, cwd, {gulp,done,bolt,settings:_settings}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
 			if (stream.then) stream.then(done);
 		}
-	};
+	}];
+
+	return gulp.parallel(deps);
 }
 
-bolt.forOwn(tasks, (task, id)=>gulp.task(id, task.deps, createTask(id)));
+bolt.forOwn(tasks, (task, id)=>gulp.task(id, createTask(id)));
 
 if (!module.parent && (process.argv.length > 2)) gulp.start([process.argv[2]]);
