@@ -3,6 +3,7 @@ const fs = require('fs');
 const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 const gulpBoltBrowser = require('../lib/gulpBoltBrowser');
 
+
 function fn(
 	gulp, rollupStream, vinylSourceStream, vinylBuffer, sourcemaps, ignore, uglifyEs, rename,
 	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, settings
@@ -19,7 +20,7 @@ function fn(
 	});
 	const dest = `${settings.boltRootDir}/private/${settings.name}/lib`;
 
-	rollupStream({
+	return rollupStream({
 		input: {
 			contents:settings.contents,
 			contentsPath:settings.contentsPath,

@@ -29,7 +29,7 @@ function fn(
 	});
 	const dest = `${settings.boltRootDir}/private/${settings.name}/lib`;
 
-	rollupStream({
+	return rollupStream({
 		input: {
 			contents:settings.contents,
 			contentsPath:settings.contentsPath,
