@@ -4,6 +4,8 @@ const util = require('util');
 const path = require('path');
 const exec = util.promisify(require('child_process').exec);
 
+
+process.on('warning', e => console.warn(e.stack));
 process.on('uncaughtException', error=>{
 	console.error('uncaughtException', error);
 	//return controller.remove.bind(controller, true);
