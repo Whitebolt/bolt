@@ -710,9 +710,9 @@
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@simpo/rrule/-/rrule-2.2.0.tgz#789e17a4da93ff75c0ff1816e78f140d206f081a"
 
-"@simpo/websocket-express@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@simpo/websocket-express/-/websocket-express-1.2.0.tgz#15d3e692057a65e6585a3ef587843889a55c9e6f"
+"@simpo/websocket-express@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@simpo/websocket-express/-/websocket-express-1.3.0.tgz#be42bf27bf0e73b091f4a88e23230777f54c69a4"
   dependencies:
     content-disposition "^0.5.2"
     depd "^1.1.2"

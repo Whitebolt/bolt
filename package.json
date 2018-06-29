@@ -45,7 +45,7 @@
     "@simpo/map-watch": "^1.0.1",
     "@simpo/object-annotations": "^1.0.2",
     "@simpo/rrule": "^2.2.0",
-    "@simpo/websocket-express": "^1.2.0",
+    "@simpo/websocket-express": "^1.3.0",
     "babel-plugin-syntax-async-functions": "^7.0.0-beta.0",
     "babel-plugin-syntax-async-generators": "^6.13.0",
     "babel-plugin-syntax-decorators": "^6.13.0",
