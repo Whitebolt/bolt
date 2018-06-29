@@ -160,6 +160,7 @@ function getMethods(app, req, filter) {
 	const cascading = new Map();
 	const pathGen = _getPaths(req);
 
+
 	for (let route of pathGen()) {
 		if (app.controllerRoutes.hasOwnProperty(route)) {
 			for (let n=0; n<app.controllerRoutes[route].length; n++) {
@@ -174,7 +175,7 @@ function getMethods(app, req, filter) {
 					add = cascading.get(methodPath);
 				}
 
-				if (filter) add = !!filter(method.method, bolt.annotation.get(method.method, 'controllerMethod'));
+				if (filter) add = !!filter(method.method, bolt.annotation.get(method.method, 'sourceMethod'));
 				let visibility = bolt.annotation.get(method.method, 'visibility') || 'public';
 				if (visibility !== 'public') add = false;
 

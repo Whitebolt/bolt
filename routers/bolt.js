@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 
 /**
  * Handle any errors.
@@ -9,8 +8,8 @@ const Promise = require('bluebird');
  * @param {Object} config   Route config object.
  */
 function handleMethodErrors(error, config) {
-  console.error(error);
-  config.next();
+	console.error(error);
+	config.next();
 }
 
 /**
@@ -20,25 +19,25 @@ function handleMethodErrors(error, config) {
  * @returns {Promise}           Promise resolving when data has been sent back to user.
  */
 async function callMethod(config) {
-  const method = Promise.method(config.methods.shift());
-  const {router} = config;
-  const {res} = router;
+	const method = bolt.makePromise(config.methods.shift());
+	const {router} = config;
+	const {res} = router;
 
-  try {
-    await method(router);
-  } catch (err) {
-    return handleMethodErrors(err, config)
-  }
+	try {
+		await method(router);
+	} catch (err) {
+		return handleMethodErrors(err, config)
+	}
 
-  if (router.redirect) {
-    let redirect = res.redirect(router.status || 302, router.redirect);
-    return ((redirect && redirect.end)?redirect.end():redirect);
-  }
+	if (router.redirect) {
+		let redirect = res.redirect(router.status || 302, router.redirect);
+		return ((redirect && redirect.end)?redirect.end():redirect);
+	}
 
-  if (router.done && !res.headersSent) return bolt.boltRouter.applyAndSend(router);
-  if (!config.methods.length || !!router.done || !!res.headersSent) return router;
+	if (router.done && !res.headersSent) return bolt.boltRouter.applyAndSend(router);
+	if (!config.methods.length || !!router.done || !!res.headersSent) return router;
 
-  return callMethod(config);
+	return callMethod(config);
 }
 
 /**
@@ -50,22 +49,15 @@ async function callMethod(config) {
  * @returns {Function}              Express router function.
  */
 function _httpRouter(app) {
-  return (req, res, next)=>{
-    let methods = bolt.boltRouter.getMethods(app, req);
-    let router = bolt.boltRouter.createRouterObject(req, res);
+	return (req, res, next)=>{
+		let methods = bolt.boltRouter.getMethods(app, req);
+		let router = bolt.boltRouter.createRouterObject(req, res);
 
-    if (methods.length) {
-      callMethod({methods, router, next}).then(router=>{
-        if (router && router.res) {
-          if (!router.res.headersSent) {
-            next();
-          }
-        }
-      });
-    } else {
-      next();
-    }
-  };
+		if (!methods.length) return next();
+		callMethod({methods, router, next}).then(router=>{
+			if (router && router.res && !router.res.headersSent) next();
+		});
+	};
 }
 
 /**
@@ -78,9 +70,9 @@ function _httpRouter(app) {
  * @returns {Function}              Express router function.
  */
 function boltRouter(app) {
-  // @annotation priority 0
+	// @annotation priority 0
 
-  return _httpRouter(app);
+	return _httpRouter(app);
 }
 
 module.exports = boltRouter;

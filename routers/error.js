@@ -9,8 +9,8 @@ const Promise = require('bluebird');
  * @param {Object} config   Route config object.
  */
 function handleMethodErrors(error, config) {
-  console.error(error);
-  config.next();
+	console.error(error);
+	config.next();
 }
 
 /**
@@ -19,28 +19,31 @@ function handleMethodErrors(error, config) {
  * @param {Object} config       Router config object.
  * @returns {Promise}           Promise resolving when data has been sent back to user.
  */
-function callMethod(config) {
-  let method = Promise.method(config.methods.shift());
+async function callMethod(config) {
+	const method = bolt.makePromise(config.methods.shift());
+	const {router} = config;
+	const {res} = router;
 
-  return method(config.router).then(router=>{
-    if (config.router.done && !config.router.res.headersSent) {
-      return bolt.boltRouter.applyAndSend(router);
-    } else if (config.methods.length && !config.router.done && !config.router.res.headersSent) {
-      return callMethod(config);
-    } else {
-      return config.router;
-    }
-  }, error=>handleMethodErrors(error, config));
+	try {
+		await method(router);
+	} catch (err) {
+		return handleMethodErrors(err, config)
+	}
+
+	if (router.done && !res.headersSent) return bolt.boltRouter.applyAndSend(router);
+	if (!config.methods.length || !!router.done || !!res.headersSent) return router;
+
+	return callMethod(config);
 }
 
 function getErrorReqObject(req, res) {
-  const path = '/error/' + res.statusCode;
-  return new Proxy(req, {
-    get(target, property) {
-      if (property === 'path') return path;
-      return target[property];
-    }
-  });
+	const path = '/error/' + res.statusCode;
+	return new Proxy(req, {
+		get(target, property) {
+			if (property === 'path') return path;
+			return target[property];
+		}
+	});
 }
 
 /**
@@ -52,28 +55,23 @@ function getErrorReqObject(req, res) {
  * @returns {Function}              Express router function.
  */
 function _httpRouter(app) {
-  return (_req, res, next)=>{
-    if (res.statusCode >= 400) {
-      let req = getErrorReqObject(_req, res);
-      let methods = bolt.boltRouter.getMethods(app, req, method=>!!bolt.annotation.get(method, 'accept-errors'));
-      let router = bolt.boltRouter.createRouterObject(req, res);
-      let config = {methods, router, req, res, next};
+	return (_req, res, next)=> {
+		if (_req.statusCode < 400) return next();
 
-      router.res.statusMessage = router.res.body;
+		const req = getErrorReqObject(_req, res);
+		const methods = bolt.boltRouter.getMethods(
+			app, req, method=>!!bolt.annotation.get(method, 'accept-errors')
+		);
+		const router = bolt.boltRouter.createRouterObject(req, res);
+		router.res.statusMessage = router.res.body;
 
-      if (methods.length) {
-        callMethod(config).then(router=>{
-          if (router && router.res && !router.res.headersSent) next();
-        });
-      } else {
-        bolt.boltRouter.applyAndSend(router);
-        next();
-      }
-    } else {
-      next();
-    }
-  };
+		if (!methods.length) next();
+		callMethod({methods, router, next}).then(router=> {
+			if (router && router.res && !router.res.headersSent) next();
+		});
+	};
 }
+
 
 /**
  * The bolt router. This will fire return a router function that fires components, controllers and methods according
@@ -85,9 +83,9 @@ function _httpRouter(app) {
  * @returns {Function}              Express router function.
  */
 function errorRouter(app) {
-  // @annotation priority 9999999
+	// @annotation priority 9999999
 
-  return _httpRouter(app);
+	return _httpRouter(app);
 }
 
 module.exports = errorRouter;

@@ -28,7 +28,7 @@ const _annotationParsers = [
   },
   value=>{
     // @annotation key accept-errors
-    return bolt.toBool(value);
+    return (((value === '')||(value === undefined))?true:bolt.toBool(value));
   },
   value=>{
     // @annotation key required-fields
