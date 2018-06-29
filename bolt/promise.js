@@ -16,6 +16,16 @@ async function mapAsync(ary, iteree) {
 	return mapped;
 }
 
+function makePromise(func) {
+	return async (...params)=>{
+		try {
+			return func(...params);
+		} catch(err) {
+			return Promise.reject(err);
+		}
+	};
+}
+
 module.exports = {
-	mapAsync
+	mapAsync, makePromise
 };
