@@ -45,7 +45,7 @@ module.exports = function(){
 		return reduxBoltContent;
 	}
 
-	return async app=>{
+	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
 		const name = 'ReduxBolt';
 		let reduxBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
@@ -71,5 +71,5 @@ module.exports = function(){
 			`--boltRootDir=${boltRootDir}`
 		]);
 		clearCache(filesId);
-	};
+	});
 };

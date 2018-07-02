@@ -1,6 +1,8 @@
 'use strict';
 
 const child = require('child_process');
+const write = require('util').promisify(require('fs').writeFile);
+const path = require('path');
 
 const xParseGulpLog = /^\[(\d\d\:\d\d\:\d\d)\]\s+(.*)/;
 const xAnsi = /\x1b\[[0-9;]*[a-zA-Z]/g;
@@ -71,6 +73,33 @@ function runGulp(taskName, {config}, args=[]) {
 	});
 }
 
+function getRollupBundleCache({cacheDir, id}) {
+	try {
+		return require(path.join(cacheDir, `${id}.json`));
+	} catch(err) {
+		console.log('ERROR', id);
+	}
+}
+
+async function saveRollupBundleCache({bundle, cacheDir, id, waiting, done}) {
+	try {
+		await bolt.makeDirectory(cacheDir);
+		await write(
+			path.join(cacheDir, `${id}.json`),
+			JSON.stringify(bundle)
+		);
+	} catch(err) {
+		console.error(err);
+	}
+	waiting.current--;
+	if (waiting.current <= 0) done();
+}
+
+function waitCurrentEnd({done, waiting}) {
+	waiting.current--;
+	if (waiting.current <= 0) done();
+}
+
 module.exports = {
-	runGulp
+	runGulp, getRollupBundleCache, saveRollupBundleCache, waitCurrentEnd
 };

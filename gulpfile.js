@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-global.bolt = Object.assign(
-	require('lodash').runInContext(),
-	require('./bolt/array'),
-	require('./bolt/object'),
-	require('./bolt/function'),
-	require('./bolt/string')
-);
+boltLoad(['array', 'object', 'function', 'string', 'promise', 'gulp', 'files']);
+
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
@@ -20,6 +15,12 @@ const xIsDigit = /^\d+$/;
 
 const settings = initSettings();
 const tasks = createTasks(settings.root);
+
+
+function boltLoad(modules) {
+	global.bolt = require('lodash').runInContext();
+	modules.forEach(id=>Object.assign(global.bolt, require(`./bolt/${id}`)))
+}
 
 function processSettings(obj, parent, parentProp) {
 	let allNumbers = true;

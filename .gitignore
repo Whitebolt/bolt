@@ -8,6 +8,7 @@ docs/
 log/
 .config/
 private/
+cache/
 
 #Allow localhost testing
 server.crt

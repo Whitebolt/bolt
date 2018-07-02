@@ -173,6 +173,8 @@ async function _boltLoader(app) {
 		});
 	}));
 
+	bolt.emit('extraBoltModulesLoaded');
+
 	return app;
 }
 

@@ -12,24 +12,21 @@
  * @returns {Array.<Function>}             Array of unregister functions for these hooks.
  */
 function _loadHooks(roots) {
-  return bolt.directoriesInDirectory(roots, ['hooks'])
-    .map(dirPath => require.import(dirPath, {
-      onload: hookPath=>bolt.emit('loadedHook', hookPath)
-    }))
-    .each(hooks =>
-      Object.keys(hooks).forEach(_key=>{
-        const loader = hooks[_key];
-        bolt.annotation.from(loader);
-        let key = bolt.annotation.get(loader, 'key');
-        let when = bolt.annotation.get(loader, 'when') || 'on';
-        if (key && ((when === 'after') || (when === 'before') || (when === 'on'))) {
-          bolt.makeArray(loader()).forEach(hook=>{
-            bolt.annotation.from(hook);
-            return bolt[when](key, hook);
-          })
-        }
-      })
-    );
+    return bolt.directoriesInDirectory(roots, ['hooks'])
+        .map(dirPath => require.import(dirPath, {
+            onload: hookPath=>bolt.emit('loadedHook', hookPath)
+        }))
+        .each(hooks =>
+            Object.keys(hooks).forEach(_key=>{
+                const loader = hooks[_key];
+                bolt.annotation.from(loader);
+                let key = bolt.annotation.get(loader, 'key');
+                let when = bolt.annotation.get(loader, 'when') || 'on';
+                if (key && ((when === 'after') || (when === 'before') || (when === 'on'))) {
+                    bolt.makeArray(loader()).forEach(hook=>bolt[when](key, hook));
+                }
+            })
+        );
 }
 
 /**
@@ -42,10 +39,10 @@ function _loadHooks(roots) {
  *                                                    and firing of related events.
  */
 function loadHooks(app, roots=app.config.root) {
-  let fireEvent = 'loadHooks' + (!app.parent?',loadRootHooks':'');
-  return bolt.emitThrough(()=>_loadHooks(roots, app), fireEvent, app).then(() => app);
+    let fireEvent = 'loadHooks' + (!app.parent?',loadRootHooks':'');
+    return bolt.emitThrough(()=>_loadHooks(roots, app), fireEvent, app).then(()=> app);
 }
 
 module.exports = {
-  loadHooks
+    loadHooks
 };

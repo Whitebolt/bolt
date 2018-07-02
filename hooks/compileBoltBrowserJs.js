@@ -6,14 +6,12 @@ const filesId = '__modules';
 bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
 
 
-module.exports = function() {
-	// @annotation key loadAllComponents
+module.exports = function(app) {
+	// @annotation key loadRootHooks
 	// @annotation when after
 
-	// @todo Lodash is being corrupted - somewhere/somehow runInContext() is failing. Needs fixing asap.
-	require.delete("lodash");
 
-	return async (app)=>{
+	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
 		let boltContent = '';
 		const name = 'bolt';
@@ -100,5 +98,5 @@ module.exports = function() {
 		clearCache(filesId);
 		bolt.__moduleAnnotations.clear();
 		delete bolt.__moduleAnnotations;
-	}
+	});
 };

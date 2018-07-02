@@ -11,7 +11,7 @@ module.exports = function(){
 	// @annotation key loadAllComponents
 	// @annotation when after
 
-	return async app=>{
+	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
 		const name = 'ReactBolt';
 		const files = [...bolt[filesId]];
@@ -45,5 +45,5 @@ module.exports = function(){
 			...bolt.objectToArgsArray(requireMap, 'settings.reactBoltMap')
 		]);
 		clearCache(filesId);
-	};
+	});
 };
