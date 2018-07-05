@@ -16,7 +16,14 @@ const _isFilePromise = util.promisify(_isFile);
 const _isDirectoryPromise = util.promisify(_isDirectory);
 if (!bolt.stores) throw new Error('Stores need to load first!');
 const {statDir, statFile} = bolt.stores;
+const readDirCache = getStore('readDirCache');
+const lStatCache = getStore('lStatCache');
+const statCache = getStore('statCache');
 
+function getStore(storeId) {
+	if ('getStore' in require) return require.getStore(storeId) || new Map();
+	return new Map();
+}
 
 const xIsSync = /Sync$/;
 
@@ -27,18 +34,18 @@ bolt.forOwn(_fs, (method, methodName)=>{
 });
 
 fs.readdir = async function readDir(dir) {
-	if (require.cacheHas('readDirCache', dir)) {
-		const results = require.cacheGet('readDirCache', dir);
+	if (readDirCache.has(dir)) {
+		const results = readDirCache.get(dir);
 		if (!results[0]) return results[1];
 		return Promise.reject(results[0]);
 	}
 
 	try {
 		const files = await _readDir(dir);
-		require.cacheSet('readDirCache', dir, [null, files]);
+		readDirCache.set(dir, [null, files]);
 		return files;
 	} catch(err) {
-		require.cacheSet('readDirCache', dir, [err, undefined]);
+		readDirCache.set(dir, [err, undefined]);
 		return Promise.reject(err);
 	}
 };
@@ -50,9 +57,9 @@ fs.lstat = function lstat(file, cb) {
 
 function __lstat(file, cb) {
 	_fs.lstat(file, (err, stat)=>{
-		require.cacheSet('lStatCache', file, [err, stat]);
+		lStatCache.set(file, [err, stat]);
 		if (!err) {
-			if (!stat.isSymbolicLink()) require.cacheSet('statCache', file, [null, stat]);
+			if (!stat.isSymbolicLink()) statCache.set(file, [null, stat]);
 			return cb(null, stat);
 		}
 		return cb(err, null);
@@ -60,15 +67,15 @@ function __lstat(file, cb) {
 }
 
 function _lstat(file, cb) {
-	if (require.cacheHas('lStatCache', file)) return cb(...require.cacheGet('lStatCache', file));
+	if (lStatCache.has(file)) return cb(...lStatCache.get(file));
 	const parent = path.dirname(file);
 	if (parent !== file) return isDirectory(parent, (err, isDir)=>{
 		if (!!err) {
-			require.cacheSet('lStatCache', file, [err, null]);
+			lStatCache.set(file, [err, null]);
 			return cb(err, null);
 		} else if (!isDir) {
 			const _err = new Error('No parent directory');
-			require.cacheSet('lStatCache', file, [err, null]);
+			lStatCache.set(file, [err, null]);
 			return cb(err, null);
 		}
 		return __lstat(file, cb);
@@ -91,7 +98,7 @@ function __isDirectory(dir, cb) {
 	fs.lstat(dir, function(err, stat) {
 		if (!err) {
 			statDir.set(dir, [null, stat.isDirectory()]);
-			if (!stat.isSymbolicLink()) require.cacheSet('statCache', dir, [null, stat]);
+			if (!stat.isSymbolicLink()) statCache.set(dir, [null, stat]);
 			return statAction(null, statDir.get(dir)[1], cb);
 		}
 		statDir.set(dir, [err, null]);
@@ -133,7 +140,7 @@ function __isFile(file, cb) {
 	fs.lstat(file, function(err, stat) {
 		if (!err) {
 			statFile.set(file, [null, stat.isFile() || stat.isFIFO()]);
-			if (!stat.isSymbolicLink()) require.cacheSet('statCache', file, [null, stat]);
+			if (!stat.isSymbolicLink()) statCache.set(file, [null, stat]);
 			return statAction(null, statFile.get(file)[1], cb);
 		}
 		statFile.set(file, [err, null]);
