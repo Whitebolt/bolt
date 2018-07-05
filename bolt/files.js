@@ -15,15 +15,8 @@ const _lstatPromise = util.promisify(_lstat);
 const _isFilePromise = util.promisify(_isFile);
 const _isDirectoryPromise = util.promisify(_isDirectory);
 if (!bolt.stores) throw new Error('Stores need to load first!');
-const {statDir, statFile} = bolt.stores;
-const readDirCache = getStore('readDirCache');
-const lStatCache = getStore('lStatCache');
-const statCache = getStore('statCache');
+const {statDir, statFile, readDirCache, lStatCache, statCache} = bolt.stores;
 
-function getStore(storeId) {
-	if ('getStore' in require) return require.getStore(storeId) || new Map();
-	return new Map();
-}
 
 const xIsSync = /Sync$/;
 
