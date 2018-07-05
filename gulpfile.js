@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-boltLoad(['array', 'object', 'function', 'string', 'promise', 'gulp', 'files']);
+boltLoad(['stores', 'array', 'object', 'function', 'string', 'promise', 'gulp', 'files']);
 
 const fs = require('fs');
 const gulp = require('gulp');
@@ -280,7 +280,7 @@ function createTask(taskId) {
 		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(task.fn.path)}`);
 		const cwd = task.cwd || task.fn.cwd || process.cwd();
 		const _settings = Object.assign({}, settings, loadConfig(cwd), {cwd});
-		const stream = task.fn(...getInjection(task.fn, cwd, {gulp,done,bolt,settings:_settings}));
+		const stream = task.fn(...getInjection(task.fn, cwd, {gulp,done,bolt,settings:_settings,rollupVinylAdaptor:require('@simpo/rollup-vinyl-adaptor')}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
 			if (stream.then) stream.then(done);

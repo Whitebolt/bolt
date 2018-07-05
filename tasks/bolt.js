@@ -3,59 +3,66 @@ const fs = require('fs');
 const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 const gulpBoltBrowser = require('../lib/gulpBoltBrowser');
 
-const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
-const cspReplace = 'window';
 const cacheId = 'gulpBolt';
 
 
 function fn(
-	gulp, rollupStream, vinylSourceStream, vinylBuffer, sourcemaps, ignore, uglifyEs, rename,
-	rollupBabel, rollupNodeResolve, rollupPluginCommonjs, settings, replaceWithSourcemaps,
-	regexpSourcemaps, done
+	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
+	rollupPluginCommonjs, settings, done, rollupPluginSourcemaps, rollup
 ) {
+	const webPath = 'lib';
 	const waiting = {current:2};
-	const config = require(`${settings.cwd}/package.json`).config;
-	const _rollupNodeResolve = rollupNodeResolve(config.browserExport.nodeResolve);
-	const _rollupBabel = rollupBabel({
-		exclude: 'node_modules/**',
-		generatorOpts: config.browserExport.babel.generatorOpts,
-		runtimeHelpers: true,
-		presets: config.browserExport.babel.presets,
-		plugins: config.browserExport.babel.plugins
-	});
-	const dest = `${settings.boltRootDir}/private/${settings.name}/lib`;
-	const cacheDir = `${settings.boltRootDir}/cache/${settings.name}`;
+	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
+	const dest = path.join(config.boltRootDir, 'private', config.name, webPath);
+	const cacheDir = path.join(config.boltRootDir, 'cache', config.name);
 
-	rollupStream({
+	rollupVinylAdaptor({
+		rollup,
 		input: {
-			contents:settings.contents,
-			contentsPath:settings.contentsPath,
-			path:`${settings.cwd}/${settings.outputName}.js`
+			input: {
+				contents:config.contents,
+				contentsPath:config.contentsPath,
+				path:path.join(config.cwd, `${config.outputName}.js`)
+			},
+			external: ['text-encoding'],
+			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
+			plugins: [
+				rollupMemoryPlugin(),
+				rollupNodeResolve(bolt.get(config, 'browserExport.nodeResolve', {})),
+				rollupPluginCommonjs({}),
+				rollupBabel({
+					exclude: 'node_modules/**',
+					generatorOpts: bolt.get(config, 'browserExport.babel.generatorOpts', {}),
+					presets: bolt.get(config, 'browserExport.babel.presets', []),
+					externalHelpers: true,
+					sourceMaps: true,
+					plugins: [
+						'@babel/plugin-external-helpers',
+						...bolt.get(config, 'browserExport.babel.plugins', [])
+					]
+				})
+			]
 		},
-		external: ['text-encoding'],
-		globals: {'text-encoding':'window'},
-		format: 'iife',
-		name: `${settings.outputName}`,
-		sourcemap: true,
-		cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
-		plugins: [
-			rollupMemoryPlugin(),
-			_rollupNodeResolve,
-			rollupPluginCommonjs({}),
-			_rollupBabel
-		]
+		output: {
+			globals: {'text-encoding':'window'},
+			format: 'iife',
+			name: config.outputName,
+			sourcemap: true
+		}
 	})
+		.on('error', err=>{
+			console.error(err);
+			done();
+		})
 		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir, id:cacheId, waiting, done}))
-		.pipe(vinylSourceStream(`${settings.outputName}.js`))
-		.pipe(vinylBuffer())
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulpBoltBrowser())
-		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))
 		.pipe(ignore.exclude('*.map'))
 		.pipe(uglifyEs.default({}))
 		.pipe(rename(path=>{path.extname = '.min.js';}))
-		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:'/lib'}))
+		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))
 		.on('end', ()=>bolt.waitCurrentEnd({waiting, done}));
 }

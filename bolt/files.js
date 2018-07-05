@@ -10,6 +10,12 @@ const _fs = require('fs');
 const path = require('path');
 const fs = {};
 const exec = util.promisify(require('child_process').exec);
+const _readDir = (!!_fs.promises ? _fs.promises.readdir : util.promisify(_fs.readdir));
+const _lstatPromise = util.promisify(_lstat);
+const _isFilePromise = util.promisify(_isFile);
+const _isDirectoryPromise = util.promisify(_isDirectory);
+if (!bolt.stores) throw new Error('Stores need to load first!');
+const {statDir, statFile} = bolt.stores;
 
 
 const xIsSync = /Sync$/;
@@ -19,6 +25,138 @@ bolt.forOwn(_fs, (method, methodName)=>{
 		fs[methodName] = util.promisify(method);
 	}
 });
+
+fs.readdir = async function readDir(dir) {
+	if (require.cacheHas('readDirCache', dir)) {
+		const results = require.cacheGet('readDirCache', dir);
+		if (!results[0]) return results[1];
+		return Promise.reject(results[0]);
+	}
+
+	try {
+		const files = await _readDir(dir);
+		require.cacheSet('readDirCache', dir, [null, files]);
+		return files;
+	} catch(err) {
+		require.cacheSet('readDirCache', dir, [err, undefined]);
+		return Promise.reject(err);
+	}
+};
+
+fs.lstat = function lstat(file, cb) {
+	if (cb) return _lstat(file, cb);
+	return _lstatPromise(file);
+};
+
+function __lstat(file, cb) {
+	_fs.lstat(file, (err, stat)=>{
+		require.cacheSet('lStatCache', file, [err, stat]);
+		if (!err) {
+			if (!stat.isSymbolicLink()) require.cacheSet('statCache', file, [null, stat]);
+			return cb(null, stat);
+		}
+		return cb(err, null);
+	});
+}
+
+function _lstat(file, cb) {
+	if (require.cacheHas('lStatCache', file)) return cb(...require.cacheGet('lStatCache', file));
+	const parent = path.dirname(file);
+	if (parent !== file) return isDirectory(parent, (err, isDir)=>{
+		if (!!err) {
+			require.cacheSet('lStatCache', file, [err, null]);
+			return cb(err, null);
+		} else if (!isDir) {
+			const _err = new Error('No parent directory');
+			require.cacheSet('lStatCache', file, [err, null]);
+			return cb(err, null);
+		}
+		return __lstat(file, cb);
+	});
+	return __lstat(file, cb);
+}
+
+function statAction(err, stat, cb) {
+	if (!err) return (!!cb?cb(null, stat):stat);
+	if (err.code === 'ENOENT' || err.code === 'ENOTDIR') return (!!cb?cb(null, false):false);
+	return (!!cb?cb(err):err);
+}
+
+function isDirectory(dir, cb) {
+	if (cb) return _isDirectory(dir, cb);
+	return _isDirectoryPromise(dir);
+}
+
+function __isDirectory(dir, cb) {
+	fs.lstat(dir, function(err, stat) {
+		if (!err) {
+			statDir.set(dir, [null, stat.isDirectory()]);
+			if (!stat.isSymbolicLink()) require.cacheSet('statCache', dir, [null, stat]);
+			return statAction(null, statDir.get(dir)[1], cb);
+		}
+		statDir.set(dir, [err, null]);
+		return statAction(err, null, cb);
+	});
+}
+
+function _isDirectory(dir, cb) {
+	if (statDir.has(dir)) return statAction(...statDir.get(dir), cb);
+	const parent = path.dirname(dir);
+	if (parent !== dir) return isDirectory(parent, (err, isDir)=>{
+		if (!!err) {
+			statDir.set(dir, [err, null]);
+			return statAction(err, null, cb);
+		} else if (!isDir) {
+			statDir.set(dir, [null, false]);
+			return statAction(null, false, cb);
+		}
+		return __isDirectory(dir, cb);
+	});
+	return __isDirectory(dir, cb);
+}
+
+
+function isFile(file, cb) {
+	if (cb) return _isFile(file, cb);
+	return _isFilePromise(file);
+}
+
+async function fileExists(filePath) {
+	try {
+		if (await isDirectory(filePath)) return true;
+		if (await isFile(filePath)) return true;
+	} catch(err) {}
+	return false;
+}
+
+function __isFile(file, cb) {
+	fs.lstat(file, function(err, stat) {
+		if (!err) {
+			statFile.set(file, [null, stat.isFile() || stat.isFIFO()]);
+			if (!stat.isSymbolicLink()) require.cacheSet('statCache', file, [null, stat]);
+			return statAction(null, statFile.get(file)[1], cb);
+		}
+		statFile.set(file, [err, null]);
+		return statAction(err, null, cb);
+	});
+}
+
+function _isFile(file, cb) {
+	if (statFile.has(file)) return statAction(...statFile.get(file), cb);
+	const parent = path.dirname(file);
+	if (parent !== file) return isDirectory(parent, (err, isDir)=>{
+		if (!!err) {
+			statFile.set(file, [err, null]);
+			return statAction(err, null, cb);
+		} else if (!isDir) {
+			statFile.set(file, [null, false]);
+			return statAction(null, false, cb);
+		}
+		return __isFile(file, cb);
+	});
+
+	return __isFile(file, cb);
+}
 
 function _startsWithUpperCase(txt) {
 	return (txt[0] === txt[0].toUpperCase());
@@ -35,15 +173,6 @@ function _startsWithUpperCase(txt) {
  */
 function getRoot() {
 	return path.dirname(process.argv[1]);
-}
-
-async function fileExists(filePath) {
-	try {
-		const stat = await fs.lstat(filePath);
-		return !!stat;
-	} catch(error) {
-		return false;
-	}
 }
 
 /**
@@ -183,7 +312,7 @@ function isPathRelativeTo(testPath, isRelativeTo) {
 }
 
 async function makeDirectory(dir) {
-	const ancestors = _getAncestors(dir)
+	const ancestors = _getAncestors(dir);
 
 	await bolt.mapAsync(ancestors, async (dir)=>{
 		try {

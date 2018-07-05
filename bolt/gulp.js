@@ -77,7 +77,6 @@ function getRollupBundleCache({cacheDir, id}) {
 	try {
 		return require(path.join(cacheDir, `${id}.json`));
 	} catch(err) {
-		console.log('ERROR', id);
 	}
 }
 

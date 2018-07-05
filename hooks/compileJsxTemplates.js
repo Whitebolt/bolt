@@ -25,11 +25,10 @@ module.exports = function() {
 		try {
 			event.config.content = babel.transform(event.config.content, {
 				plugins: [
-					'@babel/plugin-syntax-jsx',
+					'@babel/transform-react-jsx',
 					['@babel/plugin-proposal-decorators', {legacy:true}],
-					'transform-class-properties',
-					'@babel/plugin-proposal-object-rest-spread',
-					'@babel/transform-react-jsx'
+					['@babel/plugin-proposal-class-properties', {loose:true}],
+					'@babel/plugin-proposal-object-rest-spread'
 				],
 				presets: [['@babel/env', {
 					targets: {node: 'current'},
