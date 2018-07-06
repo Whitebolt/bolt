@@ -1,6 +1,11 @@
 'use strict';
 
+const path = require('path');
 const babel = require('@babel/core');
+const write = require('util').promisify(require('fs').writeFile);
+
+const xPathSep = new RegExp(`\\${path.sep}`, 'g');
+const xJs = /\.js$/;
 
 bolt.CompileJsxEvent = class CompilesJsxEvent extends bolt.Event {};
 
@@ -16,13 +21,26 @@ function compile(event) {
 	}
 }
 
-module.exports = function() {
-	// @annotation key moduleEvaluateJsx
+function saveToCache(app, fileName, transpiledContent) {
+	const cacheDir = path.join(boltRootDir, 'cache', app.config.name, 'jsx');
+	const cacheFileName = path.join(cacheDir, fileName);
 
-	return event=>{
-		if (Buffer.isBuffer(event.config.content)) event.content = event.config.content.toString();
+	setImmediate(async ()=>{
+		await bolt.makeDirectory(cacheDir);
+		write(cacheFileName, transpiledContent);
+	});
+}
 
-		try {
+function transpile(app, event) {
+	if (Buffer.isBuffer(event.config.content)) event.content = event.config.content.toString();
+
+	try {
+		const transpiledFileName = (bolt.__transpiled.has(event.target) ?
+			bolt.__transpiled.get(event.target) :
+			event.target
+		);
+
+		if (!xJs.test(transpiledFileName)) {
 			event.config.content = babel.transform(event.config.content, {
 				plugins: [
 					'@babel/transform-react-jsx',
@@ -35,12 +53,21 @@ module.exports = function() {
 					modules: 'commonjs'
 				}]]
 			}).code;
-		} catch(error) {
-			console.error(error || event.config.content.toString());
+
+			saveToCache(app, `cache${event.target.replace(xPathSep, '-')}.js`, event.config.content);
 		}
-
-		const compileJsxEvent = getEmitFunction(event)('compileJsx', new bolt.CompileJsxEvent(event.config));
-
-		return ((!!event.sync) ? compile(event) : compileJsxEvent.then(()=>compile(event)));
+	} catch(error) {
+		console.error(error || event.config.content.toString());
 	}
+
+	const compileJsxEvent = getEmitFunction(event)('compileJsx', new bolt.CompileJsxEvent(event.config));
+
+	return ((!!event.sync) ? compile(event) : compileJsxEvent.then(()=>compile(event)));
+}
+
+module.exports = function() {
+	// @annotation key loadRootHooks
+	// @annotation when after
+
+	return app=>bolt.on('moduleEvaluateJsx', event=>transpile(app, event));
 };
