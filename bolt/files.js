@@ -323,9 +323,7 @@ async function makeDirectory(dir) {
 	await bolt.mapAsync(ancestors, async (dir)=>{
 		try {
 			if (!(await fileExists(dir))) await fs.mkdir(dir);
-		} catch(error) {
-			console.log(error);
-		}
+		} catch(error) {}
 	});
 }
 

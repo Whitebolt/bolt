@@ -12,7 +12,7 @@ const cacheId = 'gulpReact';
 
 function fn(
 	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
-	rollupPluginCommonjs, rollupPluginJson, settings, replaceWithSourcemaps, header, done, rollupPluginSourcemaps,
+	rollupPluginCommonjs, rollupPluginJson, settings, replaceWithSourcemaps, header, done,
 	rollup
 ) {
 	const webPath = 'lib';

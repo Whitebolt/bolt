@@ -8,7 +8,7 @@ const cacheId = 'gulpBolt';
 
 function fn(
 	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
-	rollupPluginCommonjs, settings, done, rollupPluginSourcemaps, rollup
+	rollupPluginCommonjs, settings, done, rollup
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};

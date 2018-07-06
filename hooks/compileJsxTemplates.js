@@ -21,8 +21,8 @@ function compile(event) {
 	}
 }
 
-function saveToCache(app, fileName, transpiledContent) {
-	const cacheDir = path.join(boltRootDir, 'cache', app.config.name, 'jsx');
+function saveToCache(fileName, transpiledContent) {
+	const cacheDir = path.join(boltRootDir, 'cache', 'jsx');
 	const cacheFileName = path.join(cacheDir, fileName);
 
 	setImmediate(async ()=>{
@@ -31,7 +31,7 @@ function saveToCache(app, fileName, transpiledContent) {
 	});
 }
 
-function transpile(app, event) {
+function transpile(event) {
 	if (Buffer.isBuffer(event.config.content)) event.content = event.config.content.toString();
 
 	try {
@@ -54,7 +54,7 @@ function transpile(app, event) {
 				}]]
 			}).code;
 
-			saveToCache(app, `cache${event.target.replace(xPathSep, '-')}.js`, event.config.content);
+			saveToCache(`cache${event.target.replace(xPathSep, '-')}.js`, event.config.content);
 		}
 	} catch(error) {
 		console.error(error || event.config.content.toString());
@@ -66,8 +66,7 @@ function transpile(app, event) {
 }
 
 module.exports = function() {
-	// @annotation key loadRootHooks
-	// @annotation when after
+	// @annotation key moduleEvaluateJsx
 
-	return app=>bolt.on('moduleEvaluateJsx', event=>transpile(app, event));
+	return event=>transpile(event);
 };

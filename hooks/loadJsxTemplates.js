@@ -6,8 +6,8 @@ const fs = require('fs');
 const xPathSep = new RegExp(`\\${path.sep}`, 'g');
 
 
-function checkCache(app, event) {
-	const cacheDir = path.join(boltRootDir, 'cache', app.config.name, 'jsx');
+function checkCache(event) {
+	const cacheDir = path.join(boltRootDir, 'cache', 'jsx');
 	const cacheFileName = path.join(cacheDir, `cache${event.target.replace(xPathSep, '-')}.js`);
 
 	try {
@@ -19,15 +19,14 @@ function checkCache(app, event) {
 			bolt.__transpiled.set(event.target, cacheFileName);
 		}
 	} catch(err) {
-		console.error(err);
+
 	}
 
 }
 
 module.exports = function() {
-	// @annotation key loadRootHooks
-	// @annotation when after
+	// @annotation key moduleLoadJsx
 
 	bolt.__transpiled = new Map();
-	return app=>bolt.on('moduleLoadJsx', event=>checkCache(app, event));
+	return event=>checkCache(event);
 };
