@@ -4,9 +4,15 @@
  * @module bolt/bolt
  */
 
+
+const _fs = Object.assign({}, require('fs'));
+if (Object.getOwnPropertyDescriptor(_fs, 'promises')) {
+	Object.defineProperty(_fs, 'promises', {
+		get() {return _fs.promises}
+	});
+}
 const Bluebird = require('bluebird');
 const util = require('util');
-const _fs = require('fs');
 const path = require('path');
 const fs = {};
 const exec = util.promisify(require('child_process').exec);

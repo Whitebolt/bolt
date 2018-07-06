@@ -11,6 +11,7 @@ global.__originalCwd = process.cwd();
 process.chdir(path.dirname(fs.realpathSync(__filename)));
 const requireX = require('require-extra');
 requireX.set('followHardLinks', true);
+requireX.set('useCache', true);
 const bolt = requireX.sync("lodash").runInContext();
 bolt.require = require('require-extra');
 bolt.annotation =  new (bolt.require.sync('@simpo/object-annotations'))();

@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "2.0.1",
+  "version": "2.1.0",
   "keywords": [
     "Server",
     "React",
@@ -43,7 +43,7 @@
     "@simpo/linux-user": "^0.1.0",
     "@simpo/map-watch": "^1.0.1",
     "@simpo/object-annotations": "^1.0.2",
-    "@simpo/rollup-vinyl-adaptor": "^1.25.0",
+    "@simpo/rollup-vinyl-adaptor": "^1.26.0",
     "@simpo/rrule": "^2.2.0",
     "@simpo/websocket-express": "^1.3.0",
     "babel-plugin-syntax-async-functions": "^7.0.0-beta.0",
@@ -100,7 +100,7 @@
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "redux": "^4.0.0",
-    "require-extra": "^1.6.0",
+    "require-extra": "^1.7.1",
     "require-like": "^0.1.2",
     "rollup": "^0.62.0",
     "rollup-plugin-babel": "^4.0.0-beta.4",

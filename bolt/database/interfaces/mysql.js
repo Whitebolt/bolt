@@ -3,12 +3,13 @@
 const mysql = require('mysql2/promise');
 const queryBuilder = require('mongo-sql');
 const {quoteObject} = require('mongo-sql/lib/utils');
+const {replaceSequence} = require('../../string'); //Fix missing bolt method.
 
 const xCasted = /\:\:(.*)/;
 const xDollarDigit = /\$\d+/g;
 const xDoubleQuotes = /\"/g;
 
-const mutateToMySqlFormat = bolt.replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
+const mutateToMySqlFormat = replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
 
 function _getOrderItem(field, direction, query) {
 	if (bolt.isObject(field)) {
