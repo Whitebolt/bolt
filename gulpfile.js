@@ -292,6 +292,25 @@ function createTask(taskId) {
 	return gulp.series(deps);
 }
 
-bolt.forOwn(tasks, (task, id)=>gulp.task(id, createTask(id)));
+function addTasksToGulp(tasks) {
+	const taskIds = new Set([...Object.keys(tasks)]);
+	let count = taskIds.size;
 
+	function addTasks() {
+		count = taskIds.size;
+		taskIds.forEach(taskId=>{
+			try {
+				gulp.task(taskId, createTask(taskId));
+				taskIds.delete(taskId);
+			} catch(err) {
+
+			}
+		});
+	}
+
+	addTasks();
+	while((count > 0) && (count !== taskIds.size)) addTasks();
+}
+
+addTasksToGulp(tasks);
 if (!module.parent && (process.argv.length > 2)) gulp.start([process.argv[2]]);

@@ -53,7 +53,8 @@ function fn(
 						['@babel/plugin-proposal-class-properties', {loose:true}],
 						...bolt.get(config, 'browserExport.babel.plugins', [])
 					]
-				})
+				}),
+				rollupReactBoltPlugin(config)
 			]
 		},
 		output: {

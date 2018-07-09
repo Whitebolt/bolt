@@ -103,14 +103,19 @@ function lopGen(text, seperator='/') {
 	};
 }
 
-function substituteCSP(txt, obj={}) {
+function substituteCSP(txt, obj=(bolt.isObject(txt)?txt:{})) {
 	if (bolt.isObject(txt)) return JSON.parse(substituteCSP(JSON.stringify(txt), obj));
 
 	let match;
+	let count = 0;
 	while (match = xSubstitutions.exec(txt)) {
-		if (match[1] in obj) txt = txt.replace(match[0], obj[match[1]]);
+		if (bolt.has(obj, match[1])) {
+			txt = txt.replace(match[0], bolt.get(obj, match[1]));
+			count++;
+		}
 	}
-	return txt;
+
+	return ((count>0)?substituteCSP(txt, obj):txt);
 }
 
 
