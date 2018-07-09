@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "2.2.3",
+  "version": "2.3.0",
   "keywords": [
     "Server",
     "React",
@@ -276,6 +276,14 @@
         "event": "boltModuleLoaded",
         "action": "load",
         "description": "bolt module"
+      },
+      {
+        "event": "boltModuleFail",
+        "action": "load",
+        "typeColour": "red",
+        "propertyColour": "red",
+        "description": "failed bolt module",
+        "property": "<%= params[0] %>"
       },
       {
         "event": "mongoConnected",

@@ -3,11 +3,13 @@
 
 let [configDone, boltLoaded] = [false, false];
 
+
 const bolt = init();
 const packageConfig = bolt.require.sync('./package.json').config || {};
 const ready = bolt.require.sync('./lib/ready')(bolt, ()=>boltLoaded);
 bolt.require.sync('./lib/requirex')(bolt, ()=>boltLoaded);
 bolt.require.sync('./lib/platformScope')(bolt, __dirname);
+
 
 
 function init() {
@@ -56,9 +58,11 @@ async function appLauncher(config) {
 				excludes: packageConfig.appLaunchExcludes,
 				basedir: __dirname,
 				parent: __filename,
-				onload: bolt.boltOnLoad,
+				onload: (...params)=>bolt.boltOnLoad(...params),
 				onerror: error=>{
-					console.log('Failed to load bolt module: ', error.source);
+					bolt.ready(()=>{
+						bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleFail', error.source));
+					});
 					console.error(error.error);
 				}
 			});
@@ -71,19 +75,23 @@ async function appLauncher(config) {
 	}
 }
 
-bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
+bolt.boltOnLoad = function boltOnLoad(target, exports) {
 	if (bolt.isObject(exports)) {
 		bolt.functions(exports).forEach(methodName=>{
 			bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
 		});
 	}
 
-	bolt.ready(()=>{
-		bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleLoaded', modulePath));
-	});
+	try {
+		bolt.ready(()=>{
+			bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleLoaded', target));
+		});
+	} catch (err) {
+		console.log(err);
+	}
 
 	if (!('__modules' in bolt)) bolt.__modules = new Set();
-	return bolt.__modules.add(modulePath);
+	return bolt.__modules.add(target);
 };
 
 /**
@@ -100,9 +108,11 @@ async function pm2Controller() {
 		retry: true,
 		basedir:__dirname,
 		parent: __filename,
-		onload: bolt.boltOnLoad,
+		onload: (...params)=>bolt.boltOnLoad(...params),
 		onerror: error=>{
-			console.log('Failed to load bolt module: ', error.source);
+			bolt.ready(()=>{
+				bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleFail', error.source));
+			});
 			console.error(error.error);
 		}
 	};
@@ -126,5 +136,6 @@ process.on('unhandledRejection', (reason, promise) => {
 	console.error('Unhandled Rejection at: Promise', promise, 'reason:', reason);
 });
 
-if (!module.parent) pm2Controller();
+
+if (!module.parent && !process.env.pm_uptime) pm2Controller();
 module.exports = appLauncher;
