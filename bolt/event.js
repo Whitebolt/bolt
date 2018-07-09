@@ -29,5 +29,11 @@ const exported = reflect(eventsExportMethods, events);
 reflect(pubsubExportMethods, pubsub, exported);
 exported.Event = Event;
 
+exported.waitEmit = (waitEventName, eventName, ...params)=>bolt.afterOnce(
+    waitEventName,
+    ()=>bolt.emit(eventName, ...params)
+);
+
+
 
 module.exports = exported;

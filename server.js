@@ -7,10 +7,9 @@ let [configDone, boltLoaded] = [false, false];
 const path = require('path');
 const bolt = init();
 const packageConfig = bolt.require.sync('./package.json').config || {};
-const ready = loadLibModule('ready')(bolt, ()=>boltLoaded);
-loadLibModule('requirex')(bolt, ()=>boltLoaded);
 loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
 Object.assign(bolt, loadBoltModule('event'));
+loadLibModule('requirex')(bolt, ()=>boltLoaded);
 
 
 function loadBoltModule(moduleId, sync=true) {
@@ -61,7 +60,7 @@ async function appLauncher(config) {
 		bolt.require.set('roots', config.root);
 
 		if (!boltLoaded) {
-			await bolt.require.import('./bolt/', {
+			const boltImportOptions = {
 				merge: true,
 				imports: bolt,
 				retry: true,
@@ -69,16 +68,15 @@ async function appLauncher(config) {
 				basedir: __dirname,
 				parent: __filename,
 				onload: (...params)=>bolt.boltOnLoad(...params),
-				onerror: error=>{
-					bolt.ready(()=>{
-						bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleFail', error.source));
-					});
+				onerror: error=> {
+					bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
 					console.error(error.error);
 				}
-			});
+			};
 
+			await bolt.require.import('./bolt/', boltImportOptions);
 			boltLoaded = true;
-			ready();
+			bolt.emit('ready');
 		}
 
 		return _startApp(config);
@@ -86,18 +84,12 @@ async function appLauncher(config) {
 }
 
 bolt.boltOnLoad = function boltOnLoad(target, exports) {
+	bolt.waitEmit('initialiseApp', 'boltModuleLoaded', target);
+
 	if (bolt.isObject(exports)) {
 		bolt.functions(exports).forEach(methodName=>{
 			bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
 		});
-	}
-
-	try {
-		bolt.ready(()=>{
-			bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleLoaded', target));
-		});
-	} catch (err) {
-		console.log(err);
 	}
 
 	if (!('__modules' in bolt)) bolt.__modules = new Set();
@@ -112,7 +104,7 @@ bolt.boltOnLoad = function boltOnLoad(target, exports) {
  * @returns {Promise}   Promise resolving when app launched.
  */
 async function pm2Controller() {
-	let boltImportOptions = {
+	const boltImportOptions = {
 		merge:true,
 		imports:bolt,
 		retry: true,
@@ -120,9 +112,7 @@ async function pm2Controller() {
 		parent: __filename,
 		onload: (...params)=>bolt.boltOnLoad(...params),
 		onerror: error=>{
-			bolt.ready(()=>{
-				bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleFail', error.source));
-			});
+			bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
 			console.error(error.error);
 		}
 	};
@@ -130,7 +120,7 @@ async function pm2Controller() {
 
 	await bolt.require.import('./bolt/', boltImportOptions);
 	boltLoaded = true;
-	ready();
+	bolt.emit('ready');
 	const args = await bolt.require('./cli');
 
 	return Promise.all(args._.map(cmd=>{

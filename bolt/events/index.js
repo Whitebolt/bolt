@@ -5,8 +5,14 @@ const Private = require('./Private');
 const util = require('util');
 const setImmediatePromise = util.promisify(setImmediate);
 
+function makeArray(ary) {
+	if ((ary === undefined) || (ary === null)) return [];
+	if (ary instanceof Set) return [...ary.values()];
+	return (Array.isArray(ary) ? ary : [ary]);
+}
+
 function splitter(item) {
-	return bolt.chain(bolt.makeArray(item))
+	return bolt.chain(makeArray(item))
 		.map(item=>item.split(','))
 		.flattenDeep()
 		.map(item=>item.trim())

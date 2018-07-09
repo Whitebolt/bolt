@@ -266,9 +266,7 @@ function getPackage(dirPath=boltRootDir, eventName) {
 		if (eventName) bolt.chain(eventName.split(','))
 			.map(eventName=>eventName.trim())
 			.filter(eventName=>eventName)
-			.forEach(eventName=>{
-				bolt.ready(()=>bolt.afterOnce('initialiseApp', ()=>bolt.emit(eventName, pkgPath)));
-			})
+			.forEach(eventName=>bolt.waitEmit('initialiseApp', eventName, pkgPath))
 			.value();
 		return pkg;
 	} catch(err) {
@@ -355,11 +353,14 @@ async function _setSslCerts(config) {
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 async function loadConfig(name, profile) {
-	const config = await _parseConfig(await require.try(true, getConfigLoadPaths(`settings/apps/${name}.json`)));
-	bolt.ready(()=>bolt.afterOnce('initialiseApp', ()=>bolt.emit('configFileLoaded', `settings/apps/${name}.json`)));
+	const appConfigPath = `settings/apps/${name}.json`;
+	const profileConfigPath = `settings/profiles/${profile}.json`;
+
+	const config = await _parseConfig(await require.try(true, getConfigLoadPaths(appConfigPath)));
+	bolt.waitEmit('initialiseApp', 'configFileLoaded', appConfigPath);
 	if (!profile) profile = (config.development ? 'development' : 'production');
-	const profileConfig = await require.try(true, getConfigLoadPaths(`settings/profiles/${profile}.json`));
-	bolt.ready(()=>bolt.afterOnce('initialiseApp', ()=>bolt.emit('configFileLoaded', `settings/profiles/${profile}.json`)));
+	const profileConfig = await require.try(true, getConfigLoadPaths(profileConfigPath));
+	bolt.waitEmit('initialiseApp', 'configFileLoaded', profileConfigPath);
 	await _setSslCerts(config);
 
 	if (profileConfig) {
