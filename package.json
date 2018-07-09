@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "2.2.0",
+  "version": "2.2.1",
   "keywords": [
     "Server",
     "React",
@@ -254,6 +254,12 @@
     },
     "eventConsoleLogging": [
       {
+        "event": "configFileLoaded",
+        "action": "load",
+        "property": "<%= params[0]; %>",
+        "description": "config"
+      },
+      {
         "event": "configLoaded",
         "action": "init",
         "property": "<%= Date().toLocaleString(); %>",
@@ -262,6 +268,11 @@
       },
       {
         "event": "extraBoltModuleLoaded",
+        "action": "load",
+        "description": "bolt module"
+      },
+      {
+        "event": "boltModuleLoaded",
         "action": "load",
         "description": "bolt module"
       },

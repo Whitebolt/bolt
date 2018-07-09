@@ -1,28 +1,26 @@
 #!/usr/bin/env node
 'use strict';
 
-Error.stackTraceLimit = Infinity;
-
 let [configDone, boltLoaded] = [false, false];
 
-const path = require('path');
-const fs = require('fs');
-global.__originalCwd = process.cwd();
-process.chdir(path.dirname(fs.realpathSync(__filename)));
-const requireX = require('require-extra');
-requireX.set('followHardLinks', true);
-requireX.set('useCache', true);
-const bolt = requireX.sync("lodash").runInContext();
-bolt.require = require('require-extra');
-bolt.annotation =  new (bolt.require.sync('@simpo/object-annotations'))();
+const bolt = init();
 const packageConfig = bolt.require.sync('./package.json').config || {};
-const ready = require('./lib/ready')(bolt, ()=>boltLoaded);
-require('./lib/requirex')(bolt, ()=>boltLoaded);
-require('./lib/platformScope')(bolt, __dirname);
+const ready = bolt.require.sync('./lib/ready')(bolt, ()=>boltLoaded);
+bolt.require.sync('./lib/requirex')(bolt, ()=>boltLoaded);
+bolt.require.sync('./lib/platformScope')(bolt, __dirname);
 
 
-global.startTime = process.hrtime();
-
+function init() {
+	Error.stackTraceLimit = Infinity;
+	Object.assign(global, {__originalCwd:process.cwd(), startTime:process.hrtime()});
+	process.chdir(require('path').dirname(require('fs').realpathSync(__filename)));
+	const requireX = require('require-extra').set('followHardLinks', true).set('useCache', true);
+	const bolt = Object.assign(requireX.sync("lodash").runInContext(), {
+		require:requireX,
+		annotation:new (requireX.sync('@simpo/object-annotations'))()
+	});
+	return bolt;
+}
 
 /**
  * Start the app loading process.
@@ -48,11 +46,12 @@ async function appLauncher(config) {
 	if (!configDone) {
 		configDone = true;
 
-		requireX.set('roots', config.root);
+		bolt.require.set('roots', config.root);
 
 		if (!boltLoaded) {
 			await bolt.require.import('./bolt/', {
 				merge: true,
+				mixin: true,
 				imports: bolt,
 				retry: true,
 				excludes: packageConfig.appLaunchExcludes,
@@ -80,6 +79,10 @@ bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
 		});
 	}
 
+	bolt.ready(()=>{
+		bolt.afterOnce('initialiseApp', ()=>bolt.emit('boltModuleLoaded', modulePath));
+	});
+
 	if (!('__modules' in bolt)) bolt.__modules = new Set();
 	return bolt.__modules.add(modulePath);
 };
@@ -94,6 +97,7 @@ bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
 async function pm2Controller() {
 	let boltImportOptions = {
 		merge:true,
+		mixin: true,
 		imports:bolt,
 		retry: true,
 		basedir:__dirname,

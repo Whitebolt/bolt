@@ -4,6 +4,7 @@
  * @module bolt/bolt
  * @todo Add windows and mac path?
  */
+
 const Promise = require('bluebird');
 const freeport = Promise.promisify(require('find-free-port'));
 const path = require('path');
@@ -250,16 +251,25 @@ function getConfigLoadPaths(serverConfigFile = (env.serverConfigFile || packageC
  * @param {string} dirPath    Path to load from.
  * @returns {BoltConfig}          The package object.
  */
-function getPackage(dirPath=boltRootDir) {
+function getPackage(dirPath=boltRootDir, eventName) {
+	const pkgPath = path.join(dirPath, 'package.json');
 	try {
-		return require((dirPath + '/package.json').replace('//', '/'));
-	} catch(e) {
+		const pkg = require(pkgPath);
+		if (eventName) bolt.chain(eventName.split(','))
+			.map(eventName=>eventName.trim())
+			.filter(eventName=>eventName)
+			.forEach(eventName=>{
+				bolt.ready(()=>bolt.afterOnce('initialiseApp', ()=>bolt.emit(eventName, pkgPath)));
+			})
+			.value();
+		return pkg;
+	} catch(err) {
 		return {};
 	}
 }
 
 function _getPackage(dirPath=boltRootDir) {
-	const data = getPackage(dirPath);
+	const data = getPackage(dirPath, 'configFileLoaded');
 	if (Object.keys(data).length && data.hasOwnProperty('name')) data[bolt.camelCase(data.name)+'Path'] = dirPath;
 	bolt.set(data, 'config.__packagePath', dirPath);
 	return data;
@@ -338,8 +348,10 @@ async function _setSslCerts(config) {
  */
 async function loadConfig(name, profile) {
 	const config = await _parseConfig(await require.try(true, getConfigLoadPaths(`settings/apps/${name}.json`)));
+	bolt.ready(()=>bolt.afterOnce('initialiseApp', ()=>bolt.emit('configFileLoaded', `settings/apps/${name}.json`)));
 	if (!profile) profile = (config.development ? 'development' : 'production');
 	const profileConfig = await require.try(true, getConfigLoadPaths(`settings/profiles/${profile}.json`));
+	bolt.ready(()=>bolt.afterOnce('initialiseApp', ()=>bolt.emit('configFileLoaded', `settings/profiles/${profile}.json`)));
 	await _setSslCerts(config);
 
 	if (profileConfig) {
