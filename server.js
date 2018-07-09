@@ -4,22 +4,32 @@
 let [configDone, boltLoaded] = [false, false];
 
 
+const path = require('path');
 const bolt = init();
 const packageConfig = bolt.require.sync('./package.json').config || {};
-const ready = bolt.require.sync('./lib/ready')(bolt, ()=>boltLoaded);
-bolt.require.sync('./lib/requirex')(bolt, ()=>boltLoaded);
-bolt.require.sync('./lib/platformScope')(bolt, __dirname);
+const ready = loadLibModule('ready')(bolt, ()=>boltLoaded);
+loadLibModule('requirex')(bolt, ()=>boltLoaded);
+loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
+Object.assign(bolt, loadBoltModule('event'));
 
 
+function loadBoltModule(moduleId, sync=true) {
+	return bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'bolt', moduleId)));
+}
+
+function loadLibModule(moduleId, sync=true) {
+	return bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'lib', moduleId)));
+}
 
 function init() {
 	Error.stackTraceLimit = Infinity;
 	Object.assign(global, {__originalCwd:process.cwd(), startTime:process.hrtime()});
-	process.chdir(require('path').dirname(require('fs').realpathSync(__filename)));
+	process.chdir(path.dirname(require('fs').realpathSync(__filename)));
 	const requireX = require('require-extra').set('followHardLinks', true).set('useCache', true);
 	const bolt = Object.assign(requireX.sync("lodash").runInContext(), {
 		require:requireX,
-		annotation:new (requireX.sync('@simpo/object-annotations'))()
+		annotation:new (requireX.sync('@simpo/object-annotations'))(),
+		__paths: new Set([__dirname])
 	});
 	return bolt;
 }

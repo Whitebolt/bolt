@@ -373,6 +373,7 @@ async function loadConfig(name, profile) {
 	config.debug = (config.hasOwnProperty('debug') ? config.debug : false);
 	if (bolt.fire) await bolt.emit('configLoaded', config);
 	if (config.debug && !config.production) process.kill(process.pid, 'SIGUSR1');
+	bolt.__paths = new Set([...config.root]);
 
 	return config;
 }

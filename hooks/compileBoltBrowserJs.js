@@ -1,6 +1,6 @@
 'use strict';
 
-const {clearCache} = bolt.requireLib('build');
+const {clearCache} = loadLibModule('build');
 const filesId = '__modules';
 
 bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
@@ -34,7 +34,7 @@ module.exports = function(app) {
 
 				if (browserExport) {
 					bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
-					if (target === boltRootDir + '/lib/lodash') {
+					if (target === `${boltRootDir}/lib/lodash`) {
 						boltContent += `import lodash from "lodash";`;
 						return;
 					}

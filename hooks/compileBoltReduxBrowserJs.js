@@ -1,6 +1,6 @@
 'use strict';
 
-const {clearCache} = bolt.requireLib('build');
+const {clearCache} = loadLibModule('build');
 const reduxType = ['types', 'actionCreators', 'reducers'];
 const filesId = '__redux';
 
