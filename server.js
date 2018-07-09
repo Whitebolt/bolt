@@ -51,7 +51,6 @@ async function appLauncher(config) {
 		if (!boltLoaded) {
 			await bolt.require.import('./bolt/', {
 				merge: true,
-				mixin: true,
 				imports: bolt,
 				retry: true,
 				excludes: packageConfig.appLaunchExcludes,
@@ -97,7 +96,6 @@ bolt.boltOnLoad = function boltOnLoad(modulePath, exports) {
 async function pm2Controller() {
 	let boltImportOptions = {
 		merge:true,
-		mixin: true,
 		imports:bolt,
 		retry: true,
 		basedir:__dirname,

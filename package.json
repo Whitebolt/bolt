@@ -12,7 +12,7 @@
       "email": "kris@whitebolt.net"
     }
   ],
-  "version": "2.2.2",
+  "version": "2.2.3",
   "keywords": [
     "Server",
     "React",
@@ -242,7 +242,8 @@
       "pm2",
       "string",
       "system",
-      "template"
+      "template",
+      "stores"
     ],
     "csp": {
       "sandbox": [

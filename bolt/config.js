@@ -89,7 +89,15 @@ async function _parseConfig(config) {
 
 async function getRoots(...configs) {
 	return Promise.all(_concatPropertyArray(configs, 'root')
-		.map(root=>bolt.fs.realpath(path.normalize(root)).then(root=>root+'/',err=>undefined))
+		.filter(root=>root)
+		.map(async (root)=>{
+			try {
+				const _root = await bolt.fs.realpath(path.normalize(root));
+				return `${_root}${path.sep}`;
+			} catch(err) {
+
+			}
+		})
 		.value()
 	).filter(root=>root);
 }

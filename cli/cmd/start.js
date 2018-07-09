@@ -77,7 +77,8 @@ async function start(args) {
 			delete siteConfig.questions;
 		}
 
-		console.log('\x1bc'); // Clear the console
+
+		if (!args.noclear) console.log('\x1bc'); // Clear the console
 
 		if (!siteConfig.development && siteConfig.production) {
 			siteConfig.sock = `${siteConfig.runDirectory}/${siteConfig.name}-${process.pid}.sock`;
