@@ -1,5 +1,5 @@
 'use strict';
-// @annotation zone server
+// @annotation zone server gulp
 
 const child = require('child_process');
 const write = require('util').promisify(require('fs').writeFile);
@@ -15,7 +15,13 @@ const xNewLine = /\n/;
 
 function runGulp(taskName, {config}, args=[]) {
 	const startTime = process.hrtime();
-	const ls = child.spawn(
+	config.boltGulpModules = [...bolt.__modules]
+		.filter(target=>{
+			//console.log(target, bolt.annotation.get(require(target), 'zone'));
+			return (bolt.annotation.get(require(target), 'zone') || new Set()).has('gulp')
+		});
+
+	const gulp = child.spawn(
 		'gulp',
 		[
 			taskName,
@@ -29,7 +35,7 @@ function runGulp(taskName, {config}, args=[]) {
 	let gulpTaskPath = '';
 
 	let current = '';
-	ls.stdout.on('data',data=>{
+	gulp.stdout.on('data',data=>{
 		current += data.toString();
 		if (xNewLine.test(current)) {
 			data = current;
@@ -64,9 +70,9 @@ function runGulp(taskName, {config}, args=[]) {
 		}
 	});
 
-	ls.stderr.on('data', data=>console.error('Gulp Error: ', data.toString()));
+	gulp.stderr.on('data', data=>console.error('Gulp Error: ', data.toString()));
 
-	ls.on('close', code=>{
+	gulp.on('close', code=>{
 		const timeTaken = process.hrtime(startTime);
 		let message = `Done in ${timeTaken[0]}.${timeTaken[1].toString().substr(0,3)}s`;
 		if (code > 0) message += ` Exited with code ${code}`;

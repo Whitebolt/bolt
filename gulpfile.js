@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-boltLoad(['stores', 'array', 'object', 'function', 'string', 'promise', 'gulp', 'files']);
-
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
@@ -19,10 +17,12 @@ const tasks = createTasks(settings.root);
 
 function boltLoad(modules) {
 	global.bolt = require('lodash').runInContext();
-	modules.forEach(id=>Object.assign(global.bolt, require(`./bolt/${id}`)))
+	modules.forEach(modulePath=>Object.assign(global.bolt, require(modulePath)));
 }
 
 function processSettings(obj, parent, parentProp) {
+	const isObject = obj=>((obj!==null) && (typeof obj === 'object'));
+
 	let allNumbers = true;
 	Object.keys(obj).forEach(propName=>{
 		allNumbers = allNumbers && xIsDigit.test(propName);
@@ -33,7 +33,7 @@ function processSettings(obj, parent, parentProp) {
 	} else {
 		Object.keys(obj).forEach(propName=>{
 			const value = obj[propName];
-			if (bolt.isObject(value)) processSettings(value, obj, propName);
+			if (isObject(value)) processSettings(value, obj, propName);
 		});
 	}
 }
@@ -45,6 +45,10 @@ function initSettings() {
 		processSettings(Object.assign(cmdArgvSettings, cmdArgvs.settings));
 		delete cmdArgvs.settings;
 	}
+
+	boltLoad(cmdArgvSettings.boltGulpModules);
+
+	//console.log(Object.keys(bolt).sort().join('\n'));
 
 	const settings = Object.assign(
 		global.settings || {}, {

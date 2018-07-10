@@ -81,15 +81,13 @@ async function _startInstance(pm2Config, boltConfig) {
  * @returns {Promise.<Object>}      Promise resolving to pm2 application object.
  */
 async function pm2LaunchApp(siteConfig) {
-	const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root || []) || {}).boltConfigProperties;
 	let pm2Config = bolt.pick(siteConfig, processFileProperties);
 	if (pm2Config.uid) delete pm2Config.uid;
 	if (pm2Config.gid) delete pm2Config.gid;
-	let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
 
 	await connectApp();
 	await _removeOldInstances(pm2Config);
-	return _startInstance(pm2Config, boltConfig);
+	return _startInstance(pm2Config, siteConfig);
 }
 
 module.exports = {

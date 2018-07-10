@@ -151,7 +151,6 @@ function _concatArrayUnique(ary1, ary2) {
 }
 
 const _configMergeOverrides = {
-	boltConfigProperties: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 	modules: (objValue, srcValue)=>_concatArrayUnique(objValue, srcValue),
 	questions: (objValue, srcValue)=>[...bolt.makeArray(srcValue), ...bolt.makeArray(objValue)],
 	nodeModulesServe: (objValue, srcValue, key, object, source)=>{
@@ -199,7 +198,7 @@ function _getConfig(config) {
 	let _packageConfigs = mergePackageConfigs(config.root);
 	packageConfigs.push(bolt.pickDeep(packageData, ['version', 'name', 'description']));
 	packageConfigs.push({template:'index', serverName: packageData.name});
-	packageConfigs.push(bolt.pick(packageData.config, _packageConfigs.boltConfigProperties || []));
+	packageConfigs.push(packageData.config);
 	packageConfigs.push(_packageConfigs);
 
 	const modules = [];

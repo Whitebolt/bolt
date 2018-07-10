@@ -1,5 +1,5 @@
 'use strict';
-// @annotation zone server manager
+// @annotation zone server manager gulp
 
 function getRequireExtraStore(storeId) {
 	if ('getStore' in require) return require.getStore(storeId) || new Map();

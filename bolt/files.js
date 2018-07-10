@@ -1,5 +1,5 @@
 'use strict';
-// @annotation zone server manager
+// @annotation zone server manager gulp
 
 /**
  * @module bolt/bolt

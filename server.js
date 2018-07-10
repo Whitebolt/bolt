@@ -29,9 +29,26 @@ const boltImportOptions = {
 
 
 function loadBoltModule(moduleId, sync=true) {
+	const filePaths = bolt.require.getStore('filePaths');
+	const fileCache = bolt.require.getStore('fileCache');
+
 	const mod = bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'bolt', moduleId)));
-	bolt.annotation.set(mod, 'zone', new Set());
-	bolt.annotation.from('function(){'+mod.toString().replace(xUseStrict,'')+'}', mod);
+	if (!!mod) {
+		const target = filePaths.get(mod);
+		if (!!target) {
+			bolt.annotation.set(mod, 'modulePath', target);
+			bolt.__modules = bolt.__modules || new Set();
+			bolt.__modules.add(target);
+		}
+		bolt.annotation.set(mod, 'zone', new Set());
+		if (fileCache.has(target)) bolt.annotation.from(
+			`function(){
+				${fileCache.get(target).toString().replace(xUseStrict,'')}
+			}`,
+			mod
+		);
+	}
+
 	return mod;
 }
 
@@ -40,6 +57,7 @@ function loadLibModule(moduleId, sync=true) {
 }
 
 function init() {
+	const xSpaces = /\s+/;
 	Error.stackTraceLimit = Infinity;
 	Object.assign(global, {__originalCwd:process.cwd(), startTime:process.hrtime()});
 	process.chdir(path.dirname(require('fs').realpathSync(__filename)));
@@ -48,6 +66,10 @@ function init() {
 		require:requireX,
 		annotation:new (requireX.sync('@simpo/object-annotations'))(),
 		__paths: new Set([__dirname])
+	});
+	bolt.annotation.addParser(value=>{
+		// @annotation key zone
+		return new Set([...value.split(xSpaces).map(zone=>zone.trim())]);
 	});
 	return bolt;
 }
@@ -72,7 +94,6 @@ function _startApp(config) {
 
 function onBoltModuleReady(event) {
 	const {allowedZones, target, exports} = event;
-	if (!exports) console.log(target, allowedZones, exports);
 	const zones = bolt.annotation.get(exports, 'zone') || new Set();
 	if (!allowedZones.find(zone=>zones.has(zone))) {
 		event.unload = true;
