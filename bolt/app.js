@@ -163,7 +163,18 @@ async function _boltLoader(app) {
 			merge: true,
 			retry: true,
 			imports: bolt,
-			onload: (...params)=>bolt.boltOnLoad(['server'], ...params),
+			onload: async (target, exports)=>{
+				const event = new bolt.BoltModuleReadyEvent({
+					type: 'boltModuleReady',
+					sync: false,
+					target,
+					exports,
+					allowedZones: ['server'],
+					unload: false
+				});
+				await bolt.emit('boltModuleReady', event);
+				return !event.unload;
+			},
 			onerror: error=>{
 				bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
 				console.error(error.error);

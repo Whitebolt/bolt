@@ -7,9 +7,25 @@ let [configDone, boltLoaded] = [false, false];
 const xUseStrict = /["']use strict["'](?:\;|)/;
 const path = require('path');
 const bolt = init();
+
+
 loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
-Object.assign(bolt, loadBoltModule('event'));
+initEvents(bolt);
 loadLibModule('requirex')(bolt, ()=>boltLoaded);
+bolt.on('boltModuleReady', onBoltModuleReady);
+
+
+const boltImportOptions = {
+	merge: true,
+	imports: bolt,
+	retry: true,
+	basedir: __dirname,
+	parent: __filename,
+	onerror: error=> {
+		bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
+		console.error(error.error);
+	}
+};
 
 
 function loadBoltModule(moduleId, sync=true) {
@@ -36,6 +52,12 @@ function init() {
 	return bolt;
 }
 
+function initEvents(bolt) {
+	Object.assign(bolt, loadBoltModule('event'));
+	bolt.BoltModuleReadyEvent = class BoltModuleReadyEvent extends bolt.Event {};
+	return bolt;
+}
+
 /**
  * Start the app loading process.
  *
@@ -46,6 +68,27 @@ function init() {
 function _startApp(config) {
 	bolt.after('initialiseApp', (configPath, app)=>bolt.loadHooks(app));
 	return bolt.loadApplication(config);
+}
+
+function onBoltModuleReady(event) {
+	const {allowedZones, target, exports} = event;
+	if (!exports) console.log(target, allowedZones, exports);
+	const zones = bolt.annotation.get(exports, 'zone') || new Set();
+	if (!allowedZones.find(zone=>zones.has(zone))) {
+		event.unload = true;
+		return;
+	}
+
+	bolt.waitEmit('initialiseApp', 'boltModuleLoaded', target);
+
+	if (bolt.isObject(exports)) {
+		bolt.functions(exports).forEach(methodName=>{
+			bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
+		});
+	}
+
+	if (!('__modules' in bolt)) bolt.__modules = new Set();
+	return bolt.__modules.add(target);
 }
 
 
@@ -63,21 +106,18 @@ async function appLauncher(config) {
 		bolt.require.set('roots', config.root);
 
 		if (!boltLoaded) {
-			const boltImportOptions = {
-				merge: true,
-				imports: bolt,
-				retry: true,
-				basedir: __dirname,
-				parent: __filename,
-				//excludes: packageConfig.appLaunchExcludes,
-				onload: (...params)=>bolt.boltOnLoad(['server'], ...params),
-				onerror: error=> {
-					bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
-					console.error(error.error);
-				}
-			};
-
-			await bolt.require.import('./bolt/', boltImportOptions);
+			await bolt.require.import('./bolt/', {...boltImportOptions, onload: async(target, exports)=> {
+				const event = new bolt.BoltModuleReadyEvent({
+					type: 'boltModuleReady',
+					sync: false,
+					target,
+					exports,
+					allowedZones: ['server'],
+					unload: false
+				});
+				await bolt.emit('boltModuleReady', event);
+				return !event.unload;
+			}});
 			boltLoaded = true;
 			bolt.emit('ready');
 		}
@@ -85,23 +125,6 @@ async function appLauncher(config) {
 		return _startApp(config);
 	}
 }
-
-bolt.boltOnLoad = function boltOnLoad(allowedZones, target, exports) {
-	if (!exports) console.log(target, allowedZones, exports);
-	const zones = bolt.annotation.get(exports, 'zone') || new Set();
-	if (!allowedZones.find(zone=>zones.has(zone))) return false;
-
-	bolt.waitEmit('initialiseApp', 'boltModuleLoaded', target);
-
-	if (bolt.isObject(exports)) {
-		bolt.functions(exports).forEach(methodName=>{
-			bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
-		});
-	}
-
-	if (!('__modules' in bolt)) bolt.__modules = new Set();
-	return bolt.__modules.add(target);
-};
 
 /**
  * PM2 app launcher.  Will launch given app using pm2.  The app launching actually, happens when config is sent via a
@@ -112,20 +135,19 @@ bolt.boltOnLoad = function boltOnLoad(allowedZones, target, exports) {
  */
 async function pm2Controller() {
 	const zones = [((process.getuid && process.getuid() === 0) ? 'manager' : 'server')];
-	const boltImportOptions = {
-		merge:true,
-		imports:bolt,
-		retry: true,
-		basedir:__dirname,
-		parent: __filename,
-		onload: (...params)=>bolt.boltOnLoad(zones, ...params),
-		onerror: error=>{
-			bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
-			console.error(error.error);
-		}
-	};
+	await bolt.require.import('./bolt/', {...boltImportOptions, onload: async (target, exports)=>{
+		const event = new bolt.BoltModuleReadyEvent({
+			type: 'boltModuleReady',
+			sync: false,
+			target,
+			exports,
+			allowedZones: zones,
+			unload: false
+		});
+		await bolt.emit('boltModuleReady', event);
+		return !event.unload;
+	}});
 
-	await bolt.require.import('./bolt/', boltImportOptions);
 	boltLoaded = true;
 	bolt.emit('ready');
 	const args = await bolt.require('./cli');
