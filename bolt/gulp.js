@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server
 
 const child = require('child_process');
 const write = require('util').promisify(require('fs').writeFile);

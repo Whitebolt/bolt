@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server manager
 
 const errorClasses = new Map();
 

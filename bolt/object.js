@@ -1,5 +1,5 @@
 'use strict';
-// @annotation browser-export
+// @annotation zone browser manager server
 
 /**
  * @module bolt/bolt

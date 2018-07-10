@@ -3,7 +3,7 @@
 const mysql = require('mysql2/promise');
 const queryBuilder = require('mongo-sql');
 const {quoteObject} = require('mongo-sql/lib/utils');
-const {replaceSequence} = require('../../string'); //Fix missing bolt method.
+const {replaceSequence} = loadBoltModule('string'); //Fix missing bolt method.
 
 const xCasted = /\:\:(.*)/;
 const xDollarDigit = /\$\d+/g;

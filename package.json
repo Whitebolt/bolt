@@ -224,27 +224,6 @@
       "sessionLength"
     ],
     "boltEnvPrefix": "BOLT",
-    "appLaunchExcludes": [
-      "pm2",
-      "system",
-      "config",
-      "nginx"
-    ],
-    "pm2LaunchIncludes": [
-      "array",
-      "database",
-      "config",
-      "event",
-      "files",
-      "function",
-      "nginx",
-      "object",
-      "pm2",
-      "string",
-      "system",
-      "template",
-      "stores"
-    ],
     "csp": {
       "sandbox": [
         "allow-forms",

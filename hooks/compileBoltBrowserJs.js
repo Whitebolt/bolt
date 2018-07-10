@@ -23,23 +23,22 @@ module.exports = function(app) {
 			.map(target=>{
 				const exports = require(target);
 
-				let browserExport = bolt.annotation.get(exports, 'browser-export');
+				let browserExport = (bolt.annotation.get(exports, 'zone') || new Set()).has('browser');
 				if (bolt.__moduleAnnotations.has(target)) {
 					bolt.__moduleAnnotations.get(target).forEach(exports=>{
-						browserExport = browserExport || bolt.annotation.get(exports, 'browser-export');
+						const zones = bolt.annotation.get(exports, 'zone') || new Set();
+						browserExport = browserExport || zones.has('browser');
 					});
 					bolt.__moduleAnnotations.get(target).clear();
 					bolt.__moduleAnnotations.delete(target);
 				}
 
-				if (browserExport) {
-					bolt.emit(exportEventType, new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false}));
-					if (target === `${boltRootDir}/lib/lodash`) {
-						boltContent += `import lodash from "lodash";`;
-						return;
-					}
-
-					return {
+				if (browserExport  || (target === 'lodash')) {
+					bolt.emit(
+						exportEventType,
+						new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false})
+					);
+					if (target !== 'lodash') return {
 						target,
 						exportedNames:Object.keys(exports).filter(key=>{
 							if (!bolt.isFunction(exports[key])) return true;
@@ -47,6 +46,7 @@ module.exports = function(app) {
 						}),
 						namedExports:Object.keys(exports)
 					}
+					boltContent += `import lodash from "lodash";`;
 				}
 			})
 			.filter(name=>name)

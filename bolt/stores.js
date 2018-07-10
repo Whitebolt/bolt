@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server manager
 
 function getRequireExtraStore(storeId) {
 	if ('getStore' in require) return require.getStore(storeId) || new Map();

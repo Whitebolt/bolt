@@ -1,5 +1,5 @@
 'use strict';
-// @annotation browser-export
+// @annotation zone browser server
 
 function initState(instance, ...initiators) {
 	const _initiators = bolt.chain(initiators)

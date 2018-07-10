@@ -1,5 +1,5 @@
 'use strict';
-// @annotation browser-export
+// @annotation zone browser server manager
 
 const xQuoted = /^(["'])(.*)\1$/;
 const xObject = /^\{.*\}$/;

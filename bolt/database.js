@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server manager
 
 /**
  * @module bolt/bolt

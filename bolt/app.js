@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server manager
 
 /**
  * @module bolt/bolt
@@ -162,9 +163,9 @@ async function _boltLoader(app) {
 			merge: true,
 			retry: true,
 			imports: bolt,
-			onload:(modulePath, exports)=>bolt.boltOnLoad(modulePath, exports),
+			onload: (...params)=>bolt.boltOnLoad(['server'], ...params),
 			onerror: error=>{
-				console.log('Failed to load bolt module: ', error.source);
+				bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
 				console.error(error.error);
 			}
 		});

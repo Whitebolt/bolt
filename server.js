@@ -4,16 +4,19 @@
 let [configDone, boltLoaded] = [false, false];
 
 
+const xUseStrict = /["']use strict["'](?:\;|)/;
 const path = require('path');
 const bolt = init();
-const packageConfig = bolt.require.sync('./package.json').config || {};
 loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
 Object.assign(bolt, loadBoltModule('event'));
 loadLibModule('requirex')(bolt, ()=>boltLoaded);
 
 
 function loadBoltModule(moduleId, sync=true) {
-	return bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'bolt', moduleId)));
+	const mod = bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'bolt', moduleId)));
+	bolt.annotation.set(mod, 'zone', new Set());
+	bolt.annotation.from('function(){'+mod.toString().replace(xUseStrict,'')+'}', mod);
+	return mod;
 }
 
 function loadLibModule(moduleId, sync=true) {
@@ -64,10 +67,10 @@ async function appLauncher(config) {
 				merge: true,
 				imports: bolt,
 				retry: true,
-				excludes: packageConfig.appLaunchExcludes,
 				basedir: __dirname,
 				parent: __filename,
-				onload: (...params)=>bolt.boltOnLoad(...params),
+				//excludes: packageConfig.appLaunchExcludes,
+				onload: (...params)=>bolt.boltOnLoad(['server'], ...params),
 				onerror: error=> {
 					bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
 					console.error(error.error);
@@ -83,7 +86,11 @@ async function appLauncher(config) {
 	}
 }
 
-bolt.boltOnLoad = function boltOnLoad(target, exports) {
+bolt.boltOnLoad = function boltOnLoad(allowedZones, target, exports) {
+	if (!exports) console.log(target, allowedZones, exports);
+	const zones = bolt.annotation.get(exports, 'zone') || new Set();
+	if (!allowedZones.find(zone=>zones.has(zone))) return false;
+
 	bolt.waitEmit('initialiseApp', 'boltModuleLoaded', target);
 
 	if (bolt.isObject(exports)) {
@@ -104,19 +111,19 @@ bolt.boltOnLoad = function boltOnLoad(target, exports) {
  * @returns {Promise}   Promise resolving when app launched.
  */
 async function pm2Controller() {
+	const zones = [((process.getuid && process.getuid() === 0) ? 'manager' : 'server')];
 	const boltImportOptions = {
 		merge:true,
 		imports:bolt,
 		retry: true,
 		basedir:__dirname,
 		parent: __filename,
-		onload: (...params)=>bolt.boltOnLoad(...params),
+		onload: (...params)=>bolt.boltOnLoad(zones, ...params),
 		onerror: error=>{
 			bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
 			console.error(error.error);
 		}
 	};
-	if (process.getuid && process.getuid() === 0) boltImportOptions.includes = packageConfig.pm2LaunchIncludes;
 
 	await bolt.require.import('./bolt/', boltImportOptions);
 	boltLoaded = true;

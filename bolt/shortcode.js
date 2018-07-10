@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server
 
 const Promise = require('bluebird');
 const parser = require('shortcode-insert')();

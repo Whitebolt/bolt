@@ -1,5 +1,5 @@
 'use strict';
-// @annotation browser-export
+// @annotation zone browser server
 
 const _defaultTrue = [
 	'true', 'True', 'TRUE',

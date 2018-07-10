@@ -1,4 +1,5 @@
 'use strict';
+// @annotation zone server
 
 const through = require('through2');
 const destroy = require('destroy');
