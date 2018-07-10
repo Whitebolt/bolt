@@ -95,7 +95,7 @@ module.exports = function(app) {
 			`--boltRootDir=${boltRootDir}`
 		]);
 
-		clearCache(filesId);
+		//clearCache(filesId);
 		bolt.__moduleAnnotations.clear();
 		delete bolt.__moduleAnnotations;
 	});

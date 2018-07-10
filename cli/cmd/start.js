@@ -9,9 +9,7 @@ const inquirer = require('inquirer');
  * @param {Object} siteConfig     The application config to use to fire it up.
  */
 function launchApp(siteConfig) {
-	const boltConfigProperties = (bolt.mergePackageConfigs(siteConfig.root) || {}).boltConfigProperties;
-	let boltConfig = bolt.pick(siteConfig, boltConfigProperties);
-	launcher(boltConfig);
+	launcher(siteConfig);
 }
 
 async function _createChoicesMenu(section) {
