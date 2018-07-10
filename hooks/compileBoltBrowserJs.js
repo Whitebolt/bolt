@@ -45,7 +45,7 @@ module.exports = function(app) {
 							return !((bolt.isFunction(exports[key])) && (bolt.annotation.get(exports[key], 'browser-export') === false));
 						}),
 						namedExports:Object.keys(exports)
-					}
+					};
 					boltContent += `import lodash from "lodash";`;
 				}
 			})

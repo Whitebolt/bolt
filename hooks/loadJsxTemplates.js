@@ -4,6 +4,8 @@ const path = require('path');
 const fs = require('fs');
 
 const xPathSep = new RegExp(`\\${path.sep}`, 'g');
+const statCompileScript = fs.statSync(require.resolve('./compileJsxTemplates.js'));
+const stateCompileHere = fs.statSync(__filename);
 
 
 function checkCache(event) {
@@ -14,7 +16,7 @@ function checkCache(event) {
 		const statCache = fs.statSync(cacheFileName);
 		const statTarget = fs.statSync(event.target);
 
-		if (statCache.mtimeMs > statTarget.mtimeMs) {
+		if (statCache.mtimeMs > Math.max(statTarget.mtimeMs, statCompileScript.mtimeMs, stateCompileHere.mtimeMs)) {
 			event.data.target = cacheFileName;
 			bolt.__transpiled.set(event.target, cacheFileName);
 		}

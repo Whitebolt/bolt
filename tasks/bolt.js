@@ -10,7 +10,7 @@ const cacheId = 'gulpBolt';
 
 function fn(
 	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
-	rollupPluginCommonjs, settings, done, rollup
+	rollupPluginCommonjs, settings, done, rollup, rollupPluginJson
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};
@@ -32,6 +32,7 @@ function fn(
 				rollupMemoryPlugin(),
 				rollupNodeResolve(bolt.get(config, 'browserExport.nodeResolve', {})),
 				rollupPluginCommonjs({}),
+				rollupPluginJson(),
 				rollupBabel({
 					exclude: 'node_modules/**',
 					generatorOpts: bolt.get(config, 'browserExport.babel.generatorOpts', {}),

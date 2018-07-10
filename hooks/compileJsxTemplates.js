@@ -46,12 +46,14 @@ function transpile(event) {
 					'@babel/transform-react-jsx',
 					['@babel/plugin-proposal-decorators', {legacy:true}],
 					['@babel/plugin-proposal-class-properties', {loose:true}],
-					'@babel/plugin-proposal-object-rest-spread'
+					'@babel/plugin-proposal-object-rest-spread',
+					loadLibModule('babelResolveTransform')
 				],
 				presets: [['@babel/env', {
 					targets: {node: 'current'},
 					modules: 'commonjs'
-				}]]
+				}]],
+				filename: event.target
 			}).code;
 
 			saveToCache(`cache${event.target.replace(xPathSep, '-')}.js`, event.config.content);

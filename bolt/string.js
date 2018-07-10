@@ -118,7 +118,13 @@ function substituteCSP(txt, obj=(bolt.isObject(txt)?txt:{})) {
 	return ((count>0)?substituteCSP(txt, obj):txt);
 }
 
+function upperCamelCase(value) {
+	const _value = bolt.camelCase(value);
+	return _value.charAt(0).toUpperCase() + _value.slice(1);
+}
+
 
 module.exports = {
-	replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen, substituteCSP
+	replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen,
+	substituteCSP, upperCamelCase
 };

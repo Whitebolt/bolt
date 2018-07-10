@@ -7,6 +7,8 @@ let [configDone, boltLoaded] = [false, false];
 const xUseStrict = /["']use strict["'](?:\;|)/;
 const path = require('path');
 const bolt = init();
+const filePaths = bolt.require.getStore('filePaths');
+const fileCache = bolt.require.getStore('fileCache');
 
 
 loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
@@ -29,9 +31,6 @@ const boltImportOptions = {
 
 
 function loadBoltModule(moduleId, sync=true) {
-	const filePaths = bolt.require.getStore('filePaths');
-	const fileCache = bolt.require.getStore('fileCache');
-
 	const mod = bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'bolt', moduleId)));
 	if (!!mod) {
 		const target = filePaths.get(mod);

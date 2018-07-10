@@ -1,10 +1,15 @@
 'use strict';
 
 const {clearCache} = loadLibModule('build');
+const path = require('path');
 
 const filesId = '__react';
 
 bolt.ExportToBrowserReactBoltEvent = class ExportToBrowserReactBoltEvent extends bolt.Event {};
+
+function getExportNameFromFileName(target) {
+	return bolt.upperCamelCase(path.basename(path.basename(path.basename(target, '.jsx'), '.js'), '.json'));
+}
 
 
 module.exports = function(){
@@ -22,22 +27,24 @@ module.exports = function(){
 		const names = bolt.chain(files)
 			.map(target=>{
 				const exports = require(target);
-
 				if (bolt.annotation.get(exports, 'browser-export') !== false) {
-					const name = exports.default.name;
-					reactBoltContent += `import ${name} from "${target}";\n`;
-					bolt.emit(
-						exportEventType,
-						new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync:false, name})
-					);
-					requireMap.push({name, target});
-					return name;
+					if (!!exports.default) {
+						const name = exports.default.name || getExportNameFromFileName(target);
+						reactBoltContent += `import ${name} from "${target}";\n`;
+						bolt.emit(
+							exportEventType,
+							new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync:false, name})
+						);
+						requireMap.push({name, target});
+						return name;
+					}
 				}
 			})
 			.filter(name=>name)
 			.value();
 
 		reactBoltContent += `export default {${names.join(',')}}`;
+
 		bolt.runGulp('react', app, [
 			`--outputName=${name}`,
 			`--contents=${reactBoltContent}`,
