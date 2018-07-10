@@ -16,17 +16,23 @@ const xNewLine = /\n/;
 function runGulp(taskName, {config}, args=[]) {
 	const startTime = process.hrtime();
 	config.boltGulpModules = [...bolt.__modules]
-		.filter(target=>{
-			//console.log(target, bolt.annotation.get(require(target), 'zone'));
-			return (bolt.annotation.get(require(target), 'zone') || new Set()).has('gulp')
-		});
+		.filter(target=>(bolt.annotation.get(require(target), 'zone') || new Set()).has('gulp'));
+	const boltConfigPropsDeleteWhenLive = new Set(bolt.makeArray(config.boltConfigPropsDeleteWhenLive));
+	const gulpConfig = Object.assign(...bolt.chain(config)
+		.keys()
+		.filter(key=>!boltConfigPropsDeleteWhenLive.has(key))
+		.map(key=>{
+			return {[key]:config[key]};
+		})
+		.value()
+	);
 
 	const gulp = child.spawn(
 		'gulp',
 		[
 			taskName,
 			...args,
-			...bolt.objectToArgsArray(config, 'settings')
+			...bolt.objectToArgsArray(gulpConfig, 'settings')
 		],
 		{cmd: boltRootDir}
 	);
