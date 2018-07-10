@@ -353,30 +353,32 @@ async function _setSslCerts(config) {
  * @returns {Promise<boltConfig>} Promise resolving to the config object.
  */
 async function loadConfig(name, profile) {
+	const filePaths = require.getStore('filePaths');
 	const appConfigPath = `settings/apps/${name}.json`;
 	const profileConfigPath = `settings/profiles/${profile}.json`;
 
-	const config = await _parseConfig(await require.try(true, getConfigLoadPaths(appConfigPath)));
-	bolt.waitEmit('initialiseApp', 'configFileLoaded', appConfigPath);
-	if (!profile) profile = (config.development ? 'development' : 'production');
+	const config = await require.try(true, getConfigLoadPaths(appConfigPath));
+	const parsedConfig = await _parseConfig(config);
+	bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(config));
+	if (!profile) profile = (parsedConfig.development ? 'development' : 'production');
 	const profileConfig = await require.try(true, getConfigLoadPaths(profileConfigPath));
-	bolt.waitEmit('initialiseApp', 'configFileLoaded', profileConfigPath);
-	await _setSslCerts(config);
+	bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(profileConfig));
+	await _setSslCerts(parsedConfig);
 
 	if (profileConfig) {
 		delete profileConfig.name;
-		bolt.mergeWith(config, profileConfig, _configMerger);
+		bolt.mergeWith(parsedConfig, profileConfig, _configMerger);
 	}
 
-	await _assignPort(config);
+	await _assignPort(parsedConfig);
 
-	config.development = (config.hasOwnProperty('development') ? config.development : false);
-	config.debug = (config.hasOwnProperty('debug') ? config.debug : false);
-	if (bolt.fire) await bolt.emit('configLoaded', config);
-	if (config.debug && !config.production) process.kill(process.pid, 'SIGUSR1');
-	bolt.__paths = new Set([...config.root]);
+	parsedConfig.development = (parsedConfig.hasOwnProperty('development') ? parsedConfig.development : false);
+	parsedConfig.debug = (parsedConfig.hasOwnProperty('debug') ? parsedConfig.debug : false);
+	if (bolt.fire) await bolt.emit('configLoaded', parsedConfig);
+	if (parsedConfig.debug && !parsedConfig.production) process.kill(process.pid, 'SIGUSR1');
+	bolt.__paths = new Set([...parsedConfig.root]);
 
-	return config;
+	return parsedConfig;
 }
 
 module.exports = {
