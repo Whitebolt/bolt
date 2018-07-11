@@ -23,13 +23,8 @@ function fn(
 		rollup,
 		input: {
 			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
-			input: {
-				contents:config.contents,
-				contentsPath:config.contentsPath,
-				path:path.join(config.cwd, `${config.outputName}.js`)
-			},
+			input: path.join(cacheDir, `${config.outputName}.js`),
 			plugins: [
-				rollupMemoryPlugin(),
 				rollupNodeResolve({
 					...bolt.get(config, 'browserExport.nodeResolve', {}),
 					extensions:[
@@ -46,8 +41,6 @@ function fn(
 					presets: bolt.get(config, 'browserExport.babel.presets', []),
 					plugins: [
 						'@babel/plugin-external-helpers',
-						'@babel/transform-react-jsx',
-						['@babel/plugin-proposal-decorators', {legacy:true}],
 						['@babel/plugin-proposal-class-properties', {loose:true}],
 						...bolt.get(config, 'browserExport.babel.plugins', [])
 					]
@@ -56,12 +49,13 @@ function fn(
 		},
 		output: {
 			format: 'iife',
-			name: settings.outputName,
+			name: config.outputName,
 			sourcemap: true
 		}
 	})
 		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir, id:cacheId, waiting, done}))
 		.pipe(sourcemaps.init({loadMaps: true}))
+		.pipe(rename(path=>{path.dirname = '';}))
 		.pipe(replaceWithSourcemaps(xBreakingInCSPGetGlobal, cspReplace))
 		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))

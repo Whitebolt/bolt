@@ -21,15 +21,10 @@ function fn(
 	rollupVinylAdaptor({
 		rollup,
 		input: {
-			input: {
-				contents:config.contents,
-				contentsPath:config.contentsPath,
-				path:path.join(config.cwd, `${config.outputName}.js`)
-			},
+			input: path.join(cacheDir, `${config.outputName}.js`),
 			external: ['text-encoding'],
 			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
 			plugins: [
-				rollupMemoryPlugin(),
 				rollupNodeResolve(bolt.get(config, 'browserExport.nodeResolve', {})),
 				rollupPluginCommonjs({}),
 				rollupPluginJson(),
@@ -59,6 +54,7 @@ function fn(
 		})
 		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir, id:cacheId, waiting, done}))
 		.pipe(sourcemaps.init({loadMaps: true}))
+		.pipe(rename(path=>{path.dirname = '';}))
 		.pipe(gulpBoltBrowser())
 		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))

@@ -2,7 +2,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 const rollupReactBoltPlugin = require('../lib/rollupReactBoltPlugin');
 
 const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
@@ -13,7 +12,7 @@ const cacheId = 'gulpReact';
 function fn(
 	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
 	rollupPluginCommonjs, rollupPluginJson, settings, replaceWithSourcemaps, header, done,
-	rollup
+	rollup, rollupPluginSourcemaps
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};
@@ -24,14 +23,9 @@ function fn(
 	rollupVinylAdaptor({
 		rollup,
 		input: {
-			input: {
-				contents:config.contents,
-				contentsPath:config.contentsPath,
-				path:path.join(config.cwd, `${config.outputName}.js`)
-			},
+			input: path.join(cacheDir, `${config.outputName}.js`),
 			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
 			plugins: [
-				rollupMemoryPlugin(),
 				rollupNodeResolve({
 					...bolt.get(config, 'browserExport.nodeResolve', {}),
 					extensions:[
@@ -48,13 +42,11 @@ function fn(
 					sourceMaps: true,
 					plugins: [
 						'@babel/plugin-external-helpers',
-						'@babel/transform-react-jsx',
-						['@babel/plugin-proposal-decorators', {legacy:true}],
-						['@babel/plugin-proposal-class-properties', {loose:true}],
 						...bolt.get(config, 'browserExport.babel.plugins', [])
 					]
 				}),
-				rollupReactBoltPlugin(config)
+				rollupReactBoltPlugin(config),
+				rollupPluginSourcemaps()
 			]
 		},
 		output: {
@@ -69,6 +61,7 @@ function fn(
 			done();
 		})
 		.pipe(sourcemaps.init({loadMaps: true}))
+		.pipe(rename(path=>{path.dirname = '';}))
 		.pipe(header(`window.${settings.outputName} = {DEBUG:true};`))
 		.pipe(replaceWithSourcemaps(xBreakingInCSPGetGlobal, cspReplace))
 		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))

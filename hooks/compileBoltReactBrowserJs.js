@@ -2,6 +2,7 @@
 
 const {clearCache} = loadLibModule('build');
 const path = require('path');
+const write = require('util').promisify(require('fs').writeFile);
 
 const filesId = '__react';
 
@@ -19,22 +20,28 @@ module.exports = function(){
 	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
 		const name = 'ReactBolt';
+		const cacheDir = path.join(boltRootDir, 'cache', app.config.name);
+		const outputFilename = path.join(cacheDir, `${name}.js`);
 		const files = [...bolt[filesId]];
-		let reactBoltContent = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
+		let contents = '';
 		const exportEventType = 'exportReactComponentToBrowser';
 		const requireMap = [];
 
+
 		const names = bolt.chain(files)
-			.map(target=>{
+			.map(target=>((bolt.__transpiled.has(target)) ? [bolt.__transpiled.get(target), target]: [target, target]))
+			.map(([target, orginalTarget])=>{
 				const exports = require(target);
 				if (bolt.annotation.get(exports, 'browser-export') !== false) {
 					if (!!exports.default) {
-						const name = exports.default.name || getExportNameFromFileName(target);
-						reactBoltContent += `import ${name} from "${target}";\n`;
-						bolt.emit(
+						const name = exports.default.name || getExportNameFromFileName(orginalTarget);
+						contents += `import ${name} from "${target}";\n`;
+						bolt.emit(exportEventType, new bolt.ExportToBrowserReactBoltEvent({
 							exportEventType,
-							new bolt.ExportToBrowserReactBoltEvent({exportEventType, target, sync:false, name})
-						);
+							target:orginalTarget,
+							sync:false,
+							name
+						}));
 						requireMap.push({name, target});
 						return name;
 					}
@@ -43,11 +50,14 @@ module.exports = function(){
 			.filter(name=>name)
 			.value();
 
-		reactBoltContent += `export default {${names.join(',')}}`;
+		contents += `export default {${names.join(',')}}`;
+
+		await bolt.makeDirectory(cacheDir);
+		await write(outputFilename, contents);
 
 		bolt.runGulp('react', app, [
 			`--outputName=${name}`,
-			`--contents=${reactBoltContent}`,
+			`--contents=${contents}`,
 			`--boltRootDir=${boltRootDir}`,
 			...bolt.objectToArgsArray(requireMap, 'settings.reactBoltMap')
 		]);

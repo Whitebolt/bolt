@@ -1,7 +1,10 @@
 'use strict';
 
 const {clearCache} = loadLibModule('build');
+const path = require('path');
+const write = require('util').promisify(require('fs').writeFile);
 const filesId = '__modules';
+
 
 bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
 
@@ -13,8 +16,10 @@ module.exports = function(app) {
 
 	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
-		let boltContent = '';
+		let contents = '';
 		const name = 'bolt';
+		const cacheDir = path.join(boltRootDir, 'cache', app.config.name);
+		const outputFilename = path.join(cacheDir, `${name}.js`);
 		const files = [...bolt[filesId]];
 		const exportedLookup = new Set();
 		const exportEventType = 'exportBoltToBrowserGlobal';
@@ -46,7 +51,7 @@ module.exports = function(app) {
 						}),
 						namedExports:Object.keys(exports)
 					};
-					boltContent += `import lodash from "lodash";`;
+					contents += `import lodash from "lodash";`;
 				}
 			})
 			.filter(name=>name)
@@ -64,34 +69,37 @@ module.exports = function(app) {
 			})
 			.reverse()
 			.forEach(exported=>{
-				boltContent += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
+				contents += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
 			})
 			.forEach((exports, n)=>{
-				if (n === 0) boltContent += `const bolt = lodash.runInContext();`;
+				if (n === 0) contents += `const bolt = lodash.runInContext();`;
 				exports.exportedNames.forEach(exportedName=>{ // @todo Make this less verbose!
-					boltContent += `bolt["${exportedName}"] = ${exportedName};\n`;
+					contents += `bolt["${exportedName}"] = ${exportedName};\n`;
 				});
 			})
 			.value();
 
-		boltContent += `bolt.MODE = new Set();\n`;
-		boltContent += `window.process = window.process || {};\n`;
-		boltContent += `window.process.env = window.process.env = {};\n`;
+		contents += `bolt.MODE = new Set();\n`;
+		contents += `window.process = window.process || {};\n`;
+		contents += `window.process.env = window.process.env = {};\n`;
 		if (app.config.development) {
-			boltContent += `bolt.MODE.add("DEVELOPMENT");`;
-			boltContent += `window.process.env.NODE_ENV = 'development';`;
+			contents += `bolt.MODE.add("DEVELOPMENT");`;
+			contents += `window.process.env.NODE_ENV = 'development';`;
 		} else {
-			boltContent += `window.process.env.NODE_ENV = 'production';`;
+			contents += `window.process.env.NODE_ENV = 'production';`;
 		}
-		if (app.config.debug) boltContent += `bolt.MODE.add("DEBUG");`;
-		if (app.config.production) boltContent += `bolt.MODE.add("PRODUCTION");`;
-		boltContent += `bolt.LOGLEVEL = ${app.config.logLevel}\n`;
-		boltContent += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.config.version}"}\n`;
-		boltContent += `export default bolt;`;
+		if (app.config.debug) contents += `bolt.MODE.add("DEBUG");`;
+		if (app.config.production) contents += `bolt.MODE.add("PRODUCTION");`;
+		contents += `bolt.LOGLEVEL = ${app.config.logLevel}\n`;
+		contents += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.config.version}"}\n`;
+		contents += `export default bolt;`;
+
+		await bolt.makeDirectory(cacheDir);
+		await write(outputFilename, contents);
 
 		bolt.runGulp('bolt', app, [
 			`--outputName=${name}`,
-			`--contents=${boltContent}`,
+			`--contents=${contents}`,
 			`--boltRootDir=${boltRootDir}`
 		]);
 

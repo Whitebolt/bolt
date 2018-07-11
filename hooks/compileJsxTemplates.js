@@ -53,6 +53,12 @@ function transpile(event) {
 					targets: {node: 'current'},
 					modules: 'commonjs'
 				}]],
+				"generatorOpts": {
+					"compact": true,
+					"quotes": 'single',
+					"sourceMaps": true
+				},
+				sourceMaps: 'inline',
 				filename: event.target
 			}).code;
 
