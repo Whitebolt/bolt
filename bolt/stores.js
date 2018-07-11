@@ -18,14 +18,19 @@ function clear(options={}) {
 	});
 }
 
+function getStore(storeId, constructor=Map, ...constructParams) {
+	if (!stores.hasOwnProperty(storeId)) stores[storeId] = new constructor(...constructParams);
+	return stores[storeId];
+}
+
 
 const stores = {
 	clear,
-	statDir: new Map(),
-	statFile: new Map(),
+	statDir: getRequireExtraStore('statDir'),
+	statFile: getRequireExtraStore('statFile'),
 	readDirCache: getRequireExtraStore('readDirCache'),
 	lStatCache: getRequireExtraStore('lStatCache'),
 	statCache: getRequireExtraStore('statCache')
 };
 
-module.exports = {stores};
+module.exports = {stores, getStore};
