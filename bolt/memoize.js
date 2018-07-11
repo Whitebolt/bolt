@@ -12,6 +12,13 @@ function memoize(fn, options) {
 	const {resolver=_defaultResolver, cache=new Map()} = (bolt.isFunction(options) ? {resolver:options} : options);
 
 	function memoized(...params) {
+		const fnOptions = params[params.length-1];
+		if (!!fnOptions && bolt.isObject(fnOptions) && !fnOptions.noCache) {
+			const _fnOptions = bolt.omit(params.pop(), ['noCache']);
+			if (bolt.objectLength(_fnOptions) > 1) return fn(...params, bolt.omit(_fnOptions, ['noCache']));
+			return fn(...params);
+		}
+
 		const lookupId = resolver(...params);
 		if (memoized.cache.has(lookupId)) {
 			const [err, data] = memoized.cache.get(lookupId);
@@ -36,6 +43,13 @@ function memoizeNode(fn, options) {
 
 	function memoized(...params) {
 		const cb = params.pop();
+		const fnOptions = params[params.length-1];
+		if (!!fnOptions && bolt.isObject(fnOptions) && !fnOptions.noCache) {
+			const _fnOptions = bolt.omit(params.pop(), ['noCache']);
+			if (bolt.objectLength(_fnOptions) > 1) return fn(...params, bolt.omit(_fnOptions, ['noCache']), cb);
+			return fn(...params, cb);
+		}
+
 		const lookupId = resolver(...params);
 		if (memoized.cache.has(lookupId)) return cb(...memoized.cache.get(lookupId));
 		return fn(...params, (...result)=>{
@@ -50,6 +64,13 @@ function memoizePromise(fn, options) {
 	const {resolver=_defaultResolver, cache=new Map()} = (bolt.isFunction(options) ? {resolver:options} : options);
 
 	function memoized(...params) {
+		const fnOptions = params[params.length-1];
+		if (!!fnOptions && bolt.isObject(fnOptions) && !fnOptions.noCache) {
+			const _fnOptions = bolt.omit(params.pop(), ['noCache']);
+			if (bolt.objectLength(_fnOptions) > 1) return fn(...params, bolt.omit(_fnOptions, ['noCache']));
+			return fn(...params);
+		}
+
 		const lookupId = resolver(...params);
 		if (memoized.cache.has(lookupId)) {
 			const [err, ...data] = memoized.cache.get(lookupId);
