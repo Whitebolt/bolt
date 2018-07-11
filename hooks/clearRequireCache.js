@@ -1,21 +1,19 @@
 'use strict';
 
-
 module.exports = function() {
 	// @annotation key runApp
 	// @annotation when after
 
 	let once = false;
-	let clear = ()=>{
-		require.clearAllCache();
-		bolt.stores.clear();
-	};
+	const clear = ()=>Promise.all([
+		Promise.resolve(require.clearAllCache()),
+		bolt.clearStores()
+	]);
 
-	return async (app)=>{
+	return async ()=>{
 		if (!once) {
 			once = true;
-			setInterval(()=>clear(), 60*1000*2); // every 2 minutes.
-			clear();
+			bolt.cron('2 * * * *', clear, true);
 		}
 	}
 };

@@ -30,7 +30,7 @@ bolt.forOwn(_fs, (method, methodName)=>{
 });
 
 fs.readdir = async function readDir(dir) {
-	const readDirCache = bolt.getStore('statCachereadDirCache');
+	const readDirCache = bolt.getStore('readDirCache');
 	if (readDirCache.has(dir)) {
 		const results = readDirCache.get(dir);
 		if (!results[0]) return results[1];
