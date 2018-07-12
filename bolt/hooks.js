@@ -25,7 +25,7 @@ function _loadHooks(roots) {
 				const when = bolt.annotation.get(loader, 'when') || 'on';
 				const _once = bolt.annotation.get(loader, 'once');
 				const once = (!bolt.annotation.has(loader, 'once') ?
-					true :
+					false :
 					(_once === undefined) ? true : bolt.toBool(_once)
 				);
 
