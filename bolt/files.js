@@ -17,7 +17,6 @@ const util = require('util');
 const path = require('path');
 const fs = {};
 const exec = util.promisify(require('child_process').exec);
-const _readDir = (!!_fs.promises ? _fs.promises.readdir : util.promisify(_fs.readdir));
 
 
 const xIsSync = /Sync$/;
@@ -28,25 +27,6 @@ bolt.forOwn(_fs, (method, methodName)=>{
 		fs[methodName] = util.promisify(method);
 	}
 });
-
-fs.readdir = async function readDir(dir) {
-	const readDirCache = bolt.getStore('readDirCache');
-	if (readDirCache.has(dir)) {
-		const results = readDirCache.get(dir);
-		if (!results[0]) return results[1];
-		return Promise.reject(results[0]);
-	}
-
-	try {
-		const files = await _readDir(dir);
-		readDirCache.set(dir, [null, files]);
-		return files;
-	} catch(err) {
-		readDirCache.set(dir, [err, undefined]);
-		return Promise.reject(err);
-	}
-};
-
 
 async function fileExists(filePath) {
 	try {
@@ -151,7 +131,7 @@ async function _directoriesInDirectories(dirPaths) {
  */
 async function _directoriesInDirectory(dirPath) {
 	try {
-		const files = (await fs.readdir(dirPath)).map(_mapJoin(dirPath));
+		const files = (await bolt.readdir(dirPath)).map(_mapJoin(dirPath));
 		const dirs = files.filter(async (fileName)=>{
 			try {
 				const stat = await bolt.lstat(fileName);
@@ -194,7 +174,7 @@ async function _filesInDirectory(dirPath, ext) {
 	let xExt = new RegExp('\.' + ext);
 
 	try {
-		const files = await fs.readdir(dirPath);
+		const files = await bolt.readdir(dirPath);
 		return bolt.chain(files)
 			.filter(fileName => xExt.test(fileName))
 			.map(_mapResolve(dirPath))

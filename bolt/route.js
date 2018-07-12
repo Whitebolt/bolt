@@ -36,23 +36,19 @@ function _annotateRouterMethod(routers, routerName) {
  * @param {Array.<string>|string} roots   Root(s) to load routers from.
  * @returns {Promise}
  */
-function _loadRoutes(app, roots) {
-	return bolt
-		.importIntoObject({roots, dirName:'routers', eventName:'loadedRouter'})
-		.then(routers=>routers[0])
-		.then(routers=>bolt.chain(routers)
-			.keys()
-			.map(routerName => _annotateRouterMethod(routers, routerName))
-			.sort(bolt.prioritySorter)
-			.value()
-		)
-		.each(routerBuilder=>{
-			bolt.makeArray(routerBuilder(app)).forEach(router=>{
-				let method = bolt.annotation.get(router, 'method') || bolt.annotation.get(routerBuilder, 'method');
-				let route = bolt.annotation.get(router, 'route') || bolt.annotation.get(routerBuilder, 'route');
-				app[method](route, router);
-			});
-		});
+async function _loadRoutes(app, roots) {
+	const routers = (await bolt.importIntoObject({roots, dirName:'routers', eventName:'loadedRouter'}))[0];
+
+	return bolt.chain(routers)
+		.keys()
+		.map(routerName => _annotateRouterMethod(routers, routerName))
+		.sort(bolt.prioritySorter)
+		.forEach(routerBuilder=>bolt.makeArray(routerBuilder(app)).forEach(router=>{
+			let method = bolt.annotation.get(router, 'method') || bolt.annotation.get(routerBuilder, 'method');
+			let route = bolt.annotation.get(router, 'route') || bolt.annotation.get(routerBuilder, 'route');
+			app[method](route, router);
+		}))
+		.value();
 }
 
 /**

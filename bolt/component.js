@@ -8,7 +8,7 @@
 const path = require('path');
 const Promise = require('bluebird');
 
-const xSlash = /\//g;
+const xSlash = bolt.memoizeRegExp(/\//g);
 
 const componentLoadSequence = [
 	['Hooks', 'loadComponentHooks'],
@@ -43,7 +43,8 @@ function _getComponentPath(component) {
  * @returns {string}                 The component file path.
  */
 function _getRelativeDirectoryPathForComponent(component) {
-	return component.path.replace(xSlash, '/components/');
+	return xSlash.replace(component.path, '/components/');
+	//return component.path.replace(xSlash, '/components/');
 }
 
 /**

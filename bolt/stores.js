@@ -2,6 +2,7 @@
 // @annotation zone server manager gulp
 
 const lockableStores = new WeakSet(); // Don't get caught in infinite loop of wrapping stores.
+const xIsRequireId = /^require\./;
 
 
 function getRequireExtraStore(storeId) {
@@ -18,7 +19,6 @@ function getLockableStore(store, storeId) {
 	const originalClear = store.clear.bind(store);
 
 	store.clear = (...params)=> {
-		console.log(locks.size, storeId);
 		if (!locks.size) return originalClear(...params);
 		if (!!warnings.size) console.warn(`Someone tried to clear store (${storeId}) but is currently locked`);
 		let resolve;
@@ -62,7 +62,10 @@ function clearStores(options={}) {
 }
 
 function getStore(storeId, constructor=Map, ...constructParams) {
-	if (!stores.hasOwnProperty(storeId)) stores[storeId] = new constructor(...constructParams);
+	if (!stores.hasOwnProperty(storeId)) stores[storeId] = (xIsRequireId.test(storeId) ?
+		getRequireExtraStore(storeId) :
+		new constructor(...constructParams)
+	);
 	return getLockableStore(stores[storeId], storeId);
 }
 
@@ -73,12 +76,6 @@ async function deleteStore(storeId) {
 }
 
 
-const stores = {
-	statDir: getRequireExtraStore('statDir'),
-	statFile: getRequireExtraStore('statFile'),
-	readDirCache: getRequireExtraStore('readDirCache'),
-	lStatCache: getRequireExtraStore('lStatCache'),
-	statCache: getRequireExtraStore('statCache')
-};
+const stores = {};
 
 module.exports = {stores, getStore, deleteStore, clearStores};
