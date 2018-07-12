@@ -12,6 +12,7 @@ bolt.ExportToBrowserReduxBoltEvent = class ExportToBrowserReduxBoltEvent extends
 module.exports = function(){
 	// @annotation key loadAllComponents
 	// @annotation when after
+	// @annotation once
 
 	function loadReduxExport(type, files) {
 		const exportEventType = `exportRedux${bolt.peakCase(type)}ToBrowser`;

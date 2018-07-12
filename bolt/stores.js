@@ -1,6 +1,8 @@
 'use strict';
 // @annotation zone server manager gulp
 
+const minimatch = require('minimatch');
+
 const lockableStores = new WeakSet(); // Don't get caught in infinite loop of wrapping stores.
 const xIsRequireId = /^require\./;
 
@@ -48,17 +50,18 @@ function getLockableStore(store, storeId) {
 	return store;
 }
 
-function clearStores(options={}) {
-	const {includes=Object.keys(stores),excludes=[]} = options;
-	return Promise.all(bolt.difference(bolt.makeArray(includes), ['clear', ...bolt.makeArray(excludes)]).map(storeId=>{
-		const store = stores[storeId];
-		if ('clear' in store) {
-			try {
-				return Promise.resolve(store.clear());
-			} catch (err) {}
-		}
-		return Promise.resolve();
-	}));
+function clearStore(storeId) {
+	if (!~storeId.indexOf('*')) {
+		if (!stores.hasOwnProperty(storeId)) return true;
+		return stores[storeId].clear();
+	} else {
+		return Promise.all(bolt.chain(stores)
+			.keys()
+			.filter(id=>minimatch(id, storeId))
+			.map(id=>Promise.resolve(stores[id].clear()))
+			.value()
+		);
+	}
 }
 
 function getStore(storeId, constructor=Map, ...constructParams) {
@@ -78,4 +81,4 @@ async function deleteStore(storeId) {
 
 const stores = {};
 
-module.exports = {stores, getStore, deleteStore, clearStores};
+module.exports = {stores, getStore, deleteStore, clearStore};

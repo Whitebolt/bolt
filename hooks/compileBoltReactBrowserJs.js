@@ -16,6 +16,7 @@ function getExportNameFromFileName(target) {
 module.exports = function(){
 	// @annotation key loadAllComponents
 	// @annotation when after
+	// @annotation once
 
 	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;

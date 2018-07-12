@@ -87,6 +87,7 @@
     "magic-string": "^0.25.0",
     "md5": "^2.2.1",
     "mime": "^2.3.1",
+    "minimatch": "^3.0.4",
     "mongo-sql": "^5.0.6",
     "mongodb": "^3.1.0",
     "morgan": "^1.9.0",
@@ -245,6 +246,14 @@
         "description": "firing controller method <%= params[0] %> for",
         "property": "<%= params[1] %>",
         "level": 4
+      },
+      {
+        "event": "runningCronTask",
+        "action": "cron",
+        "description": "Running cron task",
+        "property": "<%= params[0] %>",
+        "typeColour": "yellow",
+        "propertyColour": "magenta"
       },
       {
         "event": "createdPidFile",

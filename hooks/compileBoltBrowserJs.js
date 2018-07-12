@@ -12,6 +12,7 @@ bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Even
 module.exports = function(app) {
 	// @annotation key loadRootHooks
 	// @annotation when after
+	// @annotation once
 
 
 	return app=>setImmediate(async ()=>{
