@@ -6,8 +6,8 @@
  * @todo Add windows and mac path?
  */
 
-const Promise = require('bluebird');
-const freeport = Promise.promisify(require('find-free-port'));
+const promisify = require('util').promisify || Promise.promisify;
+const freeport = promisify(require('find-free-port'));
 const path = require('path');
 
 const packageData = _getPackage(boltRootDir);
@@ -89,7 +89,7 @@ async function _parseConfig(config) {
 }
 
 async function getRoots(...configs) {
-	return Promise.all(_concatPropertyArray(configs, 'root')
+	const roots = await Promise.all(_concatPropertyArray(configs, 'root')
 		.filter(root=>root)
 		.map(async (root)=>{
 			try {
@@ -100,7 +100,9 @@ async function getRoots(...configs) {
 			}
 		})
 		.value()
-	).filter(root=>root);
+	);
+
+	return roots.filter(root=>root);
 }
 
 /**

@@ -12,7 +12,6 @@ if (Object.getOwnPropertyDescriptor(_fs, 'promises')) {
 		get() {return _fs.promises}
 	});
 }
-const Bluebird = require('bluebird');
 const util = require('util');
 const path = require('path');
 const fs = {};
@@ -92,7 +91,7 @@ function getCallerFileName() {
  * @public
  * @param {Array|string} dirPath    Path(s) to search.
  * @param {string} dirNameToFind    Name of directories to return.
- * @returns {Bluebird}               The found directories.
+ * @returns {Promise}               The found directories.
  */
 async function directoriesInDirectory(dirPath, dirNameToFind) {
 	const dirs = await ((Array.isArray(dirPath)) ?
@@ -112,7 +111,7 @@ async function directoriesInDirectory(dirPath, dirNameToFind) {
  *
  * @private
  * @param {Array|string} dirPaths   Path(s) to search.
- * @returns {Bluebird}               Found directories.
+ * @returns {Promise}               Found directories.
  */
 async function _directoriesInDirectories(dirPaths) {
 	const dirs = await Promise.all(dirPaths.map(dirPath=>directoriesInDirectory(dirPath)));
@@ -127,7 +126,7 @@ async function _directoriesInDirectories(dirPaths) {
  *
  * @private
  * @param {string} dirPath    Path to search.
- * @returns {Bluebird}         Found directories.
+ * @returns {Promise}         Found directories.
  */
 async function _directoriesInDirectory(dirPath) {
 	try {
@@ -162,7 +161,7 @@ function _mapResolve(dirPath) {
  * @public
  * @param {string|Array.<string>} dirPath      	Path(s) to search.
  * @param {string} [ext='js']   				Filter files based on this extension.
- * @returns {Bluebird}          				 	Bluebird resoving to found files.
+ * @returns {Promise}          				 	Promise resoving to found files.
  */
 async function filesInDirectory(dirPath, ext = 'js') {
 	if (!Array.isArray(dirPath)) _filesInDirectory(dirPath, ext);
@@ -225,9 +224,9 @@ async function grant(dir, uid, gid) {
 }
 
 module.exports = {
-	directoriesInDirectory: (...params)=>Bluebird.resolve(directoriesInDirectory(...params)),
+	directoriesInDirectory,
 	fileExists,
-	filesInDirectory: (...params)=>Bluebird.resolve(filesInDirectory(...params)),
+	filesInDirectory,
 	fs,
 	getCallerFileName,
 	getRoot,

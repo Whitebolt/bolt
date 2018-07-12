@@ -250,7 +250,7 @@
       {
         "event": "runningCronTask",
         "action": "cron",
-        "description": "Running cron task",
+        "description": "run cron task",
         "property": "<%= params[0] %>",
         "typeColour": "yellow",
         "propertyColour": "magenta"

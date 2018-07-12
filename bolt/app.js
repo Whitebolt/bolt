@@ -5,7 +5,6 @@
  * @module bolt/bolt
  */
 
-const Promise = require('bluebird');
 const ejs = require('@simpo/ejs');
 const path = require('path');
 
@@ -49,7 +48,7 @@ function _registerLogEvent(config) {
 				.then(txt=>bolt.entityDecode(txt))
 		];
 
-		Promise.all(promises).spread((description, property) => {
+		Promise.all(promises).then(([description, property])=>{
 			let message = {
 				level,
 				type: config.action || config.event,
@@ -216,18 +215,17 @@ function _loadApplication(configPath) {
  * @param {string} options.eventName               The event to fire once import is complete.
  * @returns {Promise}
  */
-function importIntoObject(options) {
-	return Promise.all(bolt.directoriesInDirectory(options.roots, [options.dirName])
-		.mapSeries(dirPath=>{
-			const importOptions = Object.assign({}, {
-				imports: options.importObj || {},
-				onload: filepath=>bolt.emit(options.eventName, filepath),
-				basedir: boltRootDir,
-				parent: __filename
-			}, options.importOptions || {});
-			return require.import(dirPath, importOptions);
-		})
-	);
+async function importIntoObject(options) {
+	const dirs = await bolt.directoriesInDirectory(options.roots, [options.dirName]);
+	return Promise.all(dirs.map(async (dirPath)=>{
+		const importOptions = Object.assign({}, {
+			imports: options.importObj || {},
+			onload: filepath=>bolt.emit(options.eventName, filepath),
+			basedir: boltRootDir,
+			parent: __filename
+		}, options.importOptions || {});
+		return require.import(await dirPath, importOptions);
+	}));
 }
 
 /**

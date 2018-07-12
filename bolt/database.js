@@ -5,7 +5,6 @@
  * @module bolt/bolt
  */
 
-const Promise = require('bluebird');
 const collectionLogic = require('./database/collectionLogic');
 
 /**

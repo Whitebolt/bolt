@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 
 /**
  * Handle any errors.

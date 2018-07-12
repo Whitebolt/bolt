@@ -6,7 +6,6 @@
  */
 
 const path = require('path');
-const Promise = require('bluebird');
 
 const xSlash = bolt.memoizeRegExp(/\//g);
 
@@ -105,10 +104,11 @@ function _createComponent(app, fullPath) {
  * @param {Array.<string>} roots     The root directories to search from.
  * @returns {Promise.<string[]>}     Promise resolving to an array of full paths to load from.
  */
-function _getComponentDirectories(roots) {
-	return bolt.directoriesInDirectory(roots, ['components'])
-		.mapSeries(dirPath=>bolt.directoriesInDirectory(dirPath))
-		.then(dirPaths=>bolt.flattenDeep(dirPaths));
+async function _getComponentDirectories(roots) {
+	const componentDirs = await bolt.directoriesInDirectory(roots, ['components']);
+	const dirs = await Promise.all(componentDirs.map(async (dirPath)=>bolt.directoriesInDirectory(await dirPath)));
+
+	return bolt.flattenDeep(dirs);
 }
 
 /**

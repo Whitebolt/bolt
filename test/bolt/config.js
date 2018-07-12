@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 const chai = require('chai');
 const assert = chai.assert;
 const morphEnv = require('mock-env').morph;

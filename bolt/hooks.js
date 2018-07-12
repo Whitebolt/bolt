@@ -5,6 +5,18 @@
  * @module bolt/bolt
  */
 
+const allowedWhen = new Set(['on','after','before']);
+
+function _getOnceAnnotation(ref) {
+	const _once = bolt.annotation.get(ref, 'once');
+	return (!bolt.annotation.has(ref, 'once') ? false : (_once === undefined) ? true : bolt.toBool(_once));
+}
+
+function _getEmitAction(when, once) {
+	const action = `${when}${once?'Once':''}`;
+	return (action==='onOnce'?'once':action);
+}
+
 /**
  * Load hooks in given directory into the application.
  *
@@ -12,31 +24,27 @@
  * @param {string|array.<string>} roots    Path to search for hook directory in and then load hooks from.
  * @returns {Array.<Function>}             Array of unregister functions for these hooks.
  */
-function _loadHooks(roots) {
-	return bolt.directoriesInDirectory(roots, ['hooks'])
-		.map(dirPath => require.import(dirPath, {
+async function _loadHooks(roots) {
+	const hookDirectories = await bolt.directoriesInDirectory(roots, ['hooks']);
+
+	return Promise.all(bolt.chain(hookDirectories)
+		.map(dirPath=>require.import(dirPath, {
 			onload: hookPath=>bolt.emit('loadedHook', hookPath)
 		}))
-		.each(hooks =>
-			Object.keys(hooks).forEach(_key=>{
-				const loader = hooks[_key];
-				bolt.annotation.from(loader);
-				const key = bolt.annotation.get(loader, 'key');
-				const when = bolt.annotation.get(loader, 'when') || 'on';
-				const _once = bolt.annotation.get(loader, 'once');
-				const once = (!bolt.annotation.has(loader, 'once') ?
-					false :
-					(_once === undefined) ? true : bolt.toBool(_once)
-				);
+		.map(async (promise)=>bolt.forIn(await promise, loader=>{
+			bolt.annotation.from(loader);
 
-				if (key && ((when === 'after') || (when === 'before') || (when === 'on'))) {
-					bolt.makeArray(loader()).forEach(hook=>{
-						const action = `${when}${once?'Once':''}`;
-						return bolt[action==='onOnce'?'once':action](key, hook);
-					});
-				}
-			})
-		);
+			const [key, when, once] = [
+				bolt.annotation.get(loader, 'key'),
+				bolt.annotation.get(loader, 'when') || 'on',
+				_getOnceAnnotation(loader)
+			];
+			const action = _getEmitAction(when, once);
+
+			if (key && allowedWhen.has(when)) bolt.makeArray(loader()).forEach(hook=>bolt[action](key, hook));
+		}))
+		.value()
+	);
 }
 
 /**

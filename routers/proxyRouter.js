@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 const proxy = require('express-http-proxy');
 const iconv = require('iconv-lite');
 
