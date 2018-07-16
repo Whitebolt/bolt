@@ -34,15 +34,15 @@ async function _loadHooks(roots) {
 		.map(async (promise)=>bolt.forIn(await promise, (loader, _name)=>{
 			bolt.annotation.from(loader);
 
-			const [key, when, once, schedule, name, immediateStart, runNow] = [
-				bolt.annotation.get(loader, 'key'),
-				bolt.annotation.get(loader, 'when') || 'on',
-				_getBoolAnnotation(loader, 'once'),
-				bolt.annotation.get(loader, 'schedule'),
-				bolt.annotation.get(loader, 'name') || _name,
-				_getBoolAnnotation(loader, 'start', true),
-				_getBoolAnnotation(loader, 'now', true)
-			];
+			const {
+				key,
+				when='on',
+				once=false,
+				schedule,
+				name=_name,
+				immediateStart=true,
+				runNow=true
+			} = bolt.annotation.toObject(loader);
 			const action = _getEmitAction(when, (schedule?true:once));
 
 			if (key && allowedWhen.has(when)) bolt.makeArray(loader()).forEach(hook=>{

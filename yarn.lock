@@ -701,12 +701,16 @@
     chai-as-promised "^6.0.0"
     lodash "^4.16.4"
 
-"@simpo/object-annotations@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@simpo/object-annotations/-/object-annotations-1.0.2.tgz#4d974f77f8896223f863d40449dfcee35c8d63a1"
+"@simpo/object-annotations@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@simpo/object-annotations/-/object-annotations-1.1.0.tgz#2c0b1b31aeae59e17a1a37c74068ebb9eb186ecc"
   dependencies:
-    "@simpo/map-watch" "^1.0.1"
-    lodash "^4.16.4"
+    lodash.findindex "^4.6.0"
+    lodash.isequal "^4.5.0"
+    lodash.isobject "^3.0.2"
+    lodash.isregexp "^4.0.1"
+    lodash.isstring "^4.0.1"
+    lodash.union "^4.6.0"
 
 "@simpo/rollup-vinyl-adaptor@^1.26.0":
   version "1.26.0"
@@ -3485,7 +3489,7 @@ lodash.escaperegexp@^4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/lodash.escaperegexp/-/lodash.escaperegexp-4.1.2.tgz#64762c48618082518ac3df4ccf5d5886dae20347"
 
-lodash.findindex@^4.4.0:
+lodash.findindex@^4.4.0, lodash.findindex@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/lodash.findindex/-/lodash.findindex-4.6.0.tgz#a3245dee61fb9b6e0624b535125624bb69c11106"
 
@@ -3497,7 +3501,7 @@ lodash.isarray@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/lodash.isarray/-/lodash.isarray-3.0.4.tgz#79e4eb88c36a8122af86f844aa9bcd851b5fbb55"
 
-lodash.isequal@^4.0.0:
+lodash.isequal@^4.0.0, lodash.isequal@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/lodash.isequal/-/lodash.isequal-4.5.0.tgz#415c4478f2bcc30120c22ce10ed3226f7d3e18e0"
 
@@ -3508,6 +3512,10 @@ lodash.isobject@^3.0.2:
 lodash.isplainobject@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz#7c526a52d89b45c45cc690b88163be0497f550cb"
+
+lodash.isregexp@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/lodash.isregexp/-/lodash.isregexp-4.0.1.tgz#e13e647b30cd559752a04cd912086faf7da1c30b"
 
 lodash.isstring@^4.0.1:
   version "4.0.1"
@@ -3570,6 +3578,10 @@ lodash.templatesettings@^4.0.0:
   resolved "https://registry.yarnpkg.com/lodash.templatesettings/-/lodash.templatesettings-4.1.0.tgz#2b4d4e95ba440d915ff08bc899e4553666713316"
   dependencies:
     lodash._reinterpolate "~3.0.0"
+
+lodash.union@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.union/-/lodash.union-4.6.0.tgz#48bb5088409f16f1821666641c44dd1aaae3cd88"
 
 lodash@4.17.5:
   version "4.17.5"
@@ -4048,6 +4060,10 @@ nginx-o@^0.1.1:
 nocache@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/nocache/-/nocache-2.0.0.tgz#202b48021a0c4cbde2df80de15a17443c8b43980"
+
+node-cron@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/node-cron/-/node-cron-1.2.1.tgz#8c90bc5dc723a56289b0786655ab4a1c4cb60368"
 
 node-fetch@^1.0.1:
   version "1.7.3"
@@ -4941,9 +4957,9 @@ require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
 
-require-extra@^1.9.1:
-  version "1.9.1"
-  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.9.1.tgz#f8a069cfc5456c79c2f869b247d8aa4b849687bf"
+require-extra@^1.10.2:
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.10.2.tgz#cbb45e66692e5f218972eac521ff5c298a7c5920"
   dependencies:
     "@babel/plugin-proposal-decorators" "^7.0.0-beta.35"
     babel-polyfill "^6.26.0"

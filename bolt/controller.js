@@ -10,6 +10,8 @@ const injector = require('./controller/injectors');
 const testControllerAnnotationSecurity = require('./controller/securityTests');
 
 
+
+
 /**
  * @module bolt/bolt
  */
@@ -44,17 +46,14 @@ function _getMethodPaths(methodPath) {
  *                                                Can be method source.
  * @param {string} config.methodPath              The path to the method in the app.
  */
-function _addAnnotationsToControllerMethods(config) {
-	let {component, method, sourceMethod, methodPath} = config;
-
-	bolt.annotation.set(method, 'accept-errors', false);
-	bolt.annotation.from(sourceMethod, method);
-
-	bolt.annotation.setFrom(method,  {
-		componentName: component.name,
-		componentPath: component.path,
+function _addAnnotationsToControllerMethods({component, sourceMethod, methodPath}) {
+	bolt.annotation.setFrom(sourceMethod,  {
+		'componentName': component.name,
+		'componentPath': component.path,
+		'accept-errors': false,
 		methodPath
 	});
+	bolt.annotation.from(sourceMethod);
 }
 
 /**
@@ -80,6 +79,7 @@ function _getControllerMethod(config) {
 
 	bolt.annotation.set(sourceMethod, 'controllerMethod', method);
 	bolt.annotation.set(method, 'sourceMethod', sourceMethod);
+	bolt.annotation.link(sourceMethod, method);
 
 	return method;
 }
@@ -98,7 +98,7 @@ function _getControllerMethod(config) {
 function _setControllerRoutes(config) {
 	let {methodPath, app, method, name} = config;
 
-	let visibility = bolt.annotation.get(method, 'visibility') || 'public';
+	let visibility = bolt.annotation.get(method, 'visibility', 'public');
 	if ((visibility === 'public') || (visibility === 'viewOnly') || (visibility === 'protected')) {
 		_getMethodPaths(methodPath).forEach((methodPath, priority) => {
 			let _methodPath = methodPath.length?methodPath:'/';
@@ -132,7 +132,7 @@ function _assignControllerRoutes(component, controller, controllerName) {
 		let sourceMethod = controller[name];
 		let methodPath = component.path + '/' + controllerName + '/' + name;
 		let method = _getControllerMethod({sourceMethod, controller});
-		_addAnnotationsToControllerMethods({component, methodPath, method, sourceMethod});
+		_addAnnotationsToControllerMethods({component, methodPath, sourceMethod});
 		_setControllerRoutes({methodPath, app, name, method});
 	});
 
