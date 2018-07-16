@@ -8,13 +8,13 @@ class CronTab {
 		this.tasks = Object.create(null);
 	}
 
-	create({when, fn, immediateStart=false, runNow=false, name}) {
+	create({schedule, fn, immediateStart=false, runNow=false, name}) {
 		const _fn = (...params)=>{
 			bolt.emit('runningCronTask', name || 'anonymous');
 			return fn(...params);
 		};
 		if (runNow) setImmediate(()=>_fn());
-		const task = nodeCron.schedule(when, _fn);
+		const task = nodeCron.schedule(schedule, _fn);
 		if (immediateStart) task.start();
 		if (!!name) {
 			if (name in this.tasks) throw new RangeError(`Cannot add task: ${name}, as a task of that name already exists.`);

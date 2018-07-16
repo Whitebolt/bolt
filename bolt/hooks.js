@@ -5,11 +5,11 @@
  * @module bolt/bolt
  */
 
-const allowedWhen = new Set(['on','after','before']);
+const allowedWhen = new Set(['on','after','before'])
 
-function _getOnceAnnotation(ref) {
-	const _once = bolt.annotation.get(ref, 'once');
-	return (!bolt.annotation.has(ref, 'once') ? false : (_once === undefined) ? true : bolt.toBool(_once));
+function _getBoolAnnotation(ref, key, defaultValue=false) {
+	const value = bolt.annotation.get(ref, key);
+	return (!bolt.annotation.has(ref, key) ? defaultValue : (value === undefined) ? true : bolt.toBool(value));
 }
 
 function _getEmitAction(when, once) {
@@ -31,17 +31,30 @@ async function _loadHooks(roots) {
 		.map(dirPath=>require.import(dirPath, {
 			onload: hookPath=>bolt.emit('loadedHook', hookPath)
 		}))
-		.map(async (promise)=>bolt.forIn(await promise, loader=>{
+		.map(async (promise)=>bolt.forIn(await promise, (loader, _name)=>{
 			bolt.annotation.from(loader);
 
-			const [key, when, once] = [
+			const [key, when, once, schedule, name, immediateStart, runNow] = [
 				bolt.annotation.get(loader, 'key'),
 				bolt.annotation.get(loader, 'when') || 'on',
-				_getOnceAnnotation(loader)
+				_getBoolAnnotation(loader, 'once'),
+				bolt.annotation.get(loader, 'schedule'),
+				bolt.annotation.get(loader, 'name') || _name,
+				_getBoolAnnotation(loader, 'start', true),
+				_getBoolAnnotation(loader, 'now', true)
 			];
-			const action = _getEmitAction(when, once);
+			const action = _getEmitAction(when, (schedule?true:once));
 
-			if (key && allowedWhen.has(when)) bolt.makeArray(loader()).forEach(hook=>bolt[action](key, hook));
+			if (key && allowedWhen.has(when)) bolt.makeArray(loader()).forEach(hook=>{
+				if (!schedule) return bolt[action](key, hook);
+				return bolt[action](key, (...params)=>bolt.cron({
+					name,
+					schedule, 
+					fn:()=>hook(...params),
+					immediateStart,
+					runNow
+				}));
+			});
 		}))
 		.value()
 	);
