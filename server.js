@@ -4,11 +4,11 @@
 let [configDone, boltLoaded] = [false, false];
 
 
-const xUseStrict = /["']use strict["'](?:\;|)/;
+
 const path = require('path');
+const {loadBoltModule, loadLibModule, onBoltModuleReady, provideBolt} = require('./lib/loaders');
 const bolt = init();
-const filePaths = bolt.require.getStore('filePaths');
-const fileCache = bolt.require.getStore('fileCache');
+
 
 
 loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
@@ -30,31 +30,6 @@ const boltImportOptions = {
 };
 
 
-function loadBoltModule(moduleId, sync=true) {
-	const mod = bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'bolt', moduleId)));
-	if (!!mod) {
-		const target = filePaths.get(mod);
-		if (!!target) {
-			bolt.annotation.set(mod, 'modulePath', target);
-			bolt.__modules = bolt.__modules || new Set();
-			bolt.__modules.add(target);
-		}
-		bolt.annotation.set(mod, 'zone', new Set());
-		if (fileCache.has(target)) bolt.annotation.from(
-			`function(){
-				${fileCache.get(target).toString().replace(xUseStrict,'')}
-			}`,
-			mod
-		);
-	}
-
-	return mod;
-}
-
-function loadLibModule(moduleId, sync=true) {
-	return bolt.require.try(sync, [...bolt.__paths].map(dir=>path.join(dir, 'lib', moduleId)));
-}
-
 function init() {
 	const xSpaces = /\s+/;
 	Error.stackTraceLimit = Infinity;
@@ -70,7 +45,7 @@ function init() {
 		// @annotation key zone
 		return new Set([...value.split(xSpaces).map(zone=>zone.trim())]);
 	});
-	return bolt;
+	return provideBolt(bolt);
 }
 
 function initEvents(bolt) {
@@ -90,27 +65,6 @@ function _startApp(config) {
 	bolt.after('initialiseApp', (configPath, app)=>bolt.loadHooks(app));
 	return bolt.loadApplication(config);
 }
-
-function onBoltModuleReady(event) {
-	const {allowedZones, target, exports} = event;
-	const zones = bolt.annotation.get(exports, 'zone') || new Set();
-	if (!allowedZones.find(zone=>zones.has(zone))) {
-		event.unload = true;
-		return;
-	}
-
-	bolt.waitEmit('initialiseApp', 'boltModuleLoaded', target);
-
-	if (bolt.isObject(exports)) {
-		bolt.functions(exports).forEach(methodName=>{
-			bolt.annotation.from(exports[methodName].toString(), exports[methodName]);
-		});
-	}
-
-	if (!('__modules' in bolt)) bolt.__modules = new Set();
-	return bolt.__modules.add(target);
-}
-
 
 /**
  * Direct app launcher (not using pm2).  Will basically launch the app detailed in the supplied config.
