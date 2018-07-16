@@ -1,56 +1,14 @@
 #!/usr/bin/env node
 'use strict';
 
-const xSpaces = /\s+/;
 let [configDone, boltLoaded] = [false, false];
 
-const path = require('path');
-const {loadBoltModule, loadLibModule, loadBoltModules} = require('./lib/loaders');
-const bolt = _init();
 
+const {loadBoltModules} = require('./lib/loaders');
+const {init} = require('./lib/init');
 
-function _init() {
-	Error.stackTraceLimit = Infinity;
-	Object.assign(global, {__originalCwd:process.cwd(), startTime:process.hrtime()});
-	process.chdir(path.dirname(require('fs').realpathSync(__filename)));
-	return _getBolt();
-}
+const bolt = init(__filename, ()=>boltLoaded);
 
-function _getBolt() {
-	const {provideBolt} = require('./lib/loaders');
-	const requireX = require('require-extra')
-		.set('followHardLinks', true)
-		.set('useCache', true);
-
-	const bolt = Object.assign(
-		requireX.sync("lodash").runInContext(),
-		{
-			require: requireX,
-			annotation: new (requireX.sync('@simpo/object-annotations'))(),
-			__paths: new Set([__dirname])
-		}
-	);
-
-	provideBolt(bolt);
-	_initLoader(bolt);
-
-	return bolt;
-}
-
-function _initLoader(bolt) {
-	bolt.annotation.addParser(value=>{
-		// @annotation key zone
-		return new Set([...value.split(xSpaces).map(zone=>zone.trim())]);
-	});
-
-	const {createPlatformScope, boltRequireXLoader} = loadLibModule(['platformScope', 'requirex']);
-	createPlatformScope(bolt, __dirname, [loadBoltModule, loadLibModule]);
-	Object.assign(bolt, loadBoltModule('event'));
-	bolt.BoltModuleReadyEvent = class BoltModuleReadyEvent extends bolt.Event {};
-	boltRequireXLoader(bolt, ()=>boltLoaded);
-
-	return bolt;
-}
 
 /**
  * Start the app loading process.
