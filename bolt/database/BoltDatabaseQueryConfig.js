@@ -1,7 +1,5 @@
 'use strict';
 
-const {FreezeSet} = require('@simpo/map-watch');
-
 const defaults = Object.freeze({
   accessLevel: 'read',
   collection: 'pages',
@@ -11,8 +9,7 @@ const defaults = Object.freeze({
     filterUnauthorisedFields:true
   })
 });
-const accessLevels = new FreezeSet('read', 'write', 'admin');
-accessLevels.freeze();
+const accessLevels = new Set('read', 'write', 'admin');
 
 /**
  * A database query config class.  Used to hold references to the database and collection. Used to set various access

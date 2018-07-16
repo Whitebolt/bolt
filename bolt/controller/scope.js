@@ -4,9 +4,9 @@
  * @module bolt/bolt
  */
 
-const {Memory} = require('@simpo/map-watch');
+const Private = loadLibModule('Private');
 
-const _memory = new Memory();
+const $private = new Private();
 const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;
 const controllerContextError = (new bolt.ErrorFactory('ControllerContext')).error;
 
@@ -21,12 +21,12 @@ const controllerContextError = (new bolt.ErrorFactory('ControllerContext')).erro
  */
 function _getControllerCascade(controller, returnArray=false) {
 	let cascade;
-	if (_memory.has(controller, 'cascade')) {
-		cascade = _memory.get(controller, 'cascade')
+	if ($private.has(controller, 'cascade')) {
+		cascade = $private.get(controller, 'cascade')
 	} else {
 		let component = bolt.annotation.get(controller, 'parent');
 		cascade = _getNamedControllerCascade(component, bolt.annotation.get(controller, 'name'));
-		_memory.set(controller, 'cascade', cascade);
+		$private.set(controller, 'cascade', cascade);
 	}
 	return bolt.chain((returnArray===true) ? Array.from(cascade) : cascade);
 }
@@ -271,7 +271,7 @@ function ownKeysComponent(controllers) {
 function createComponentScope(controller) {
 	let component = ((controller instanceof bolt.BoltComponent) ? controller : bolt.annotation.get(controller, 'parent'));
 
-	if (_memory.has(component.controllers, 'componentScope')) return _memory.get(component.controllers, 'componentScope');
+	if ($private.has(component.controllers, 'componentScope')) return $private.get(component.controllers, 'componentScope');
 	let scope = new Proxy(component.controllers, {
 		apply: applyComponent,
 		defineProperty,
@@ -286,7 +286,7 @@ function createComponentScope(controller) {
 		set: setComponent,
 		setPrototypeOf
 	});
-	_memory.set(component.controllers, scope, 'componentScope');
+	$private.set(component.controllers, scope, 'componentScope');
 
 	return scope;
 }
@@ -302,7 +302,7 @@ function createControllerScope(controller, router, extraParams) {
 	let component = bolt.annotation.get(controller, 'parent');
 	let name = bolt.annotation.get(controller, 'name');
 
-	if (_memory.has(component.controllers[name], 'controllerScope')) return _memory.get(component.controllers[name], 'controllerScope');
+	if ($private.has(component.controllers[name], 'controllerScope')) return $private.get(component.controllers[name], 'controllerScope');
 	let scope = new Proxy(component.controllers[name], {
 		apply,
 		defineProperty,
@@ -317,7 +317,7 @@ function createControllerScope(controller, router, extraParams) {
 		set,
 		setPrototypeOf
 	});
-	_memory.set(component.controllers[name], scope, 'controllerScope');
+	$private.set(component.controllers[name], scope, 'controllerScope');
 
 	return scope;
 }

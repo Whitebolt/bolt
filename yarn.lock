@@ -693,17 +693,9 @@
     is-root "^1.0.0"
     lru-cache "^2.5.0"
 
-"@simpo/map-watch@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@simpo/map-watch/-/map-watch-1.0.1.tgz#ecc8eb33e8c02a02d4fe6a3d01becc89bed3f1ed"
-  dependencies:
-    bluebird "^3.4.6"
-    chai-as-promised "^6.0.0"
-    lodash "^4.16.4"
-
-"@simpo/object-annotations@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@simpo/object-annotations/-/object-annotations-1.1.0.tgz#2c0b1b31aeae59e17a1a37c74068ebb9eb186ecc"
+"@simpo/object-annotations@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@simpo/object-annotations/-/object-annotations-1.2.0.tgz#dbfe6887784a5d1416a294ed38dc1d97db0df955"
   dependencies:
     lodash.findindex "^4.6.0"
     lodash.isequal "^4.5.0"
