@@ -5,7 +5,7 @@ let [configDone, boltLoaded] = [false, false];
 
 
 const {loadBoltModules} = require('./lib/loaders');
-const {init} = require('./lib/init');
+const {init, loadAnnotations} = require('./lib/init');
 
 const bolt = init(__filename, ()=>boltLoaded);
 
@@ -39,6 +39,8 @@ async function appLauncher(config) {
 	if (!!configDone) return Promise.resolve();
 	configDone = true;
 	bolt.require.set('roots', config.root);
+	loadAnnotations(bolt, config.root);
+
 	if (!boltLoaded) await _loadBoltModules('./bolt/', {basedir: __dirname, parent: __filename}, ['server']);
 	return _startApp(config);
 }

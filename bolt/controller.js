@@ -9,8 +9,6 @@ const createControllerScope = require('./controller/scope');
 const injector = require('./controller/injectors');
 const testControllerAnnotationSecurity = require('./controller/securityTests');
 
-require('./controller/annotationParsers');
-
 
 /**
  * @module bolt/bolt

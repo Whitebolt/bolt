@@ -264,6 +264,13 @@
         "propertyColour": "green"
       },
       {
+        "event": "addAnnotationParser",
+        "action": "load",
+        "description": "annotation <%= params[1] %>",
+        "property": "<%= params[0] %>",
+        "level": 3
+      },
+      {
         "event": "removedPidFile",
         "action": "system",
         "description": "removed pid file",

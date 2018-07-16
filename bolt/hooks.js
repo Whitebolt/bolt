@@ -49,7 +49,7 @@ async function _loadHooks(roots) {
 				if (!schedule) return bolt[action](key, hook);
 				return bolt[action](key, (...params)=>bolt.cron({
 					name,
-					schedule, 
+					schedule,
 					fn:()=>hook(...params),
 					immediateStart,
 					runNow
