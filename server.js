@@ -1,56 +1,54 @@
 #!/usr/bin/env node
 'use strict';
 
+const xSpaces = /\s+/;
 let [configDone, boltLoaded] = [false, false];
 
-
-
 const path = require('path');
-const {loadBoltModule, loadLibModule, onBoltModuleReady, provideBolt} = require('./lib/loaders');
-const bolt = init();
+const {loadBoltModule, loadLibModule, loadBoltModules} = require('./lib/loaders');
+const bolt = _init();
 
 
-
-loadLibModule('platformScope')(bolt, __dirname, [loadBoltModule, loadLibModule]);
-initEvents(bolt);
-loadLibModule('requirex')(bolt, ()=>boltLoaded);
-bolt.on('boltModuleReady', onBoltModuleReady);
-
-
-const boltImportOptions = {
-	merge: true,
-	imports: bolt,
-	retry: true,
-	basedir: __dirname,
-	parent: __filename,
-	onerror: error=> {
-		bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
-		console.error(error.error);
-	}
-};
-
-
-function init() {
-	const xSpaces = /\s+/;
+function _init() {
 	Error.stackTraceLimit = Infinity;
 	Object.assign(global, {__originalCwd:process.cwd(), startTime:process.hrtime()});
 	process.chdir(path.dirname(require('fs').realpathSync(__filename)));
-	const requireX = require('require-extra').set('followHardLinks', true).set('useCache', true);
-	const bolt = Object.assign(requireX.sync("lodash").runInContext(), {
-		require:requireX,
-		annotation:new (requireX.sync('@simpo/object-annotations'))(),
-		__paths: new Set([__dirname])
-	});
+	return _getBolt();
+}
+
+function _getBolt() {
+	const {provideBolt} = require('./lib/loaders');
+	const requireX = require('require-extra')
+		.set('followHardLinks', true)
+		.set('useCache', true);
+
+	const bolt = Object.assign(
+		requireX.sync("lodash").runInContext(),
+		{
+			require: requireX,
+			annotation: new (requireX.sync('@simpo/object-annotations'))(),
+			__paths: new Set([__dirname])
+		}
+	);
+
+	provideBolt(bolt);
+	_initLoader(bolt);
+
+	return bolt;
+}
+
+function _initLoader(bolt) {
 	bolt.annotation.addParser(value=>{
 		// @annotation key zone
 		return new Set([...value.split(xSpaces).map(zone=>zone.trim())]);
 	});
-	return provideBolt(bolt);
-}
 
-function initEvents(bolt) {
+	const {createPlatformScope, boltRequireXLoader} = loadLibModule(['platformScope', 'requirex']);
+	createPlatformScope(bolt, __dirname, [loadBoltModule, loadLibModule]);
 	Object.assign(bolt, loadBoltModule('event'));
 	bolt.BoltModuleReadyEvent = class BoltModuleReadyEvent extends bolt.Event {};
+	boltRequireXLoader(bolt, ()=>boltLoaded);
+
 	return bolt;
 }
 
@@ -66,6 +64,12 @@ function _startApp(config) {
 	return bolt.loadApplication(config);
 }
 
+async function _loadBoltModules(loadPath, boltImportOptions, allowedZones) {
+	await loadBoltModules(loadPath, boltImportOptions, allowedZones);
+	boltLoaded = true;
+	bolt.emit('ready');
+}
+
 /**
  * Direct app launcher (not using pm2).  Will basically launch the app detailed in the supplied config.
  *
@@ -74,30 +78,11 @@ function _startApp(config) {
  * @returns {Promise}       Promise resolving when app launched.
  */
 async function appLauncher(config) {
-	if (!configDone) {
-		configDone = true;
-
-		bolt.require.set('roots', config.root);
-
-		if (!boltLoaded) {
-			await bolt.require.import('./bolt/', {...boltImportOptions, onload: async(target, exports)=> {
-				const event = new bolt.BoltModuleReadyEvent({
-					type: 'boltModuleReady',
-					sync: false,
-					target,
-					exports,
-					allowedZones: ['server'],
-					unload: false
-				});
-				await bolt.emit('boltModuleReady', event);
-				return !event.unload;
-			}});
-			boltLoaded = true;
-			bolt.emit('ready');
-		}
-
-		return _startApp(config);
-	}
+	if (!!configDone) return Promise.resolve();
+	configDone = true;
+	bolt.require.set('roots', config.root);
+	if (!boltLoaded) await _loadBoltModules('./bolt/', {basedir: __dirname, parent: __filename}, ['server']);
+	return _startApp(config);
 }
 
 /**
@@ -109,23 +94,9 @@ async function appLauncher(config) {
  */
 async function pm2Controller() {
 	const zones = [((process.getuid && process.getuid() === 0) ? 'manager' : 'server')];
-	await bolt.require.import('./bolt/', {...boltImportOptions, onload: async (target, exports)=>{
-		const event = new bolt.BoltModuleReadyEvent({
-			type: 'boltModuleReady',
-			sync: false,
-			target,
-			exports,
-			allowedZones: zones,
-			unload: false
-		});
-		await bolt.emit('boltModuleReady', event);
-		return !event.unload;
-	}});
+	await _loadBoltModules('./bolt/', {basedir: __dirname, parent: __filename}, zones);
 
-	boltLoaded = true;
-	bolt.emit('ready');
 	const args = await bolt.require('./cli');
-
 	return Promise.all(args._.map(cmd=>{
 		if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
 	}));

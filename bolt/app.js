@@ -7,8 +7,8 @@
 
 const ejs = require('@simpo/ejs');
 const path = require('path');
-
 const chalk = require('chalk');
+const {loadBoltModules} = loadLibModule('loaders');
 
 /**
  *  @external ejsOptions
@@ -157,29 +157,11 @@ async function _boltLoader(app) {
 	const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
 		.filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
 
-	await Promise.all(boltDirectories.map(dirPath=>{
-		return require.import(dirPath, {
-			merge: true,
-			retry: true,
-			imports: bolt,
-			onload: async (target, exports)=>{
-				const event = new bolt.BoltModuleReadyEvent({
-					type: 'boltModuleReady',
-					sync: false,
-					target,
-					exports,
-					allowedZones: ['server'],
-					unload: false
-				});
-				await bolt.emit('boltModuleReady', event);
-				return !event.unload;
-			},
-			onerror: error=>{
-				bolt.waitEmit('initialiseApp', 'boltModuleFail', error.source);
-				console.error(error.error);
-			}
-		});
-	}));
+	await Promise.all(boltDirectories.map(dirPath=>loadBoltModules(
+		dirPath,
+		{basedir: __dirname, parent: __filename},
+		['server']
+	)));
 
 	bolt.emit('extraBoltModulesLoaded');
 

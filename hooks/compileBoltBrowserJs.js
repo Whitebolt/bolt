@@ -1,6 +1,5 @@
 'use strict';
 
-const {clearCache} = loadLibModule('build');
 const path = require('path');
 const write = require('util').promisify(require('fs').writeFile);
 const filesId = '__modules';
@@ -28,16 +27,7 @@ module.exports = function(app) {
 		const exported = bolt.chain(files)
 			.map(target=>{
 				const exports = require(target);
-
-				let browserExport = (bolt.annotation.get(exports, 'zone') || new Set()).has('browser');
-				if (bolt.__moduleAnnotations.has(target)) {
-					bolt.__moduleAnnotations.get(target).forEach(exports=>{
-						const zones = bolt.annotation.get(exports, 'zone') || new Set();
-						browserExport = browserExport || zones.has('browser');
-					});
-					bolt.__moduleAnnotations.get(target).clear();
-					bolt.__moduleAnnotations.delete(target);
-				}
+				const browserExport = (bolt.annotation.get(exports, 'zone') || new Set()).has('browser');
 
 				if (browserExport  || (target === 'lodash')) {
 					bolt.emit(
@@ -103,9 +93,5 @@ module.exports = function(app) {
 			`--contents=${contents}`,
 			`--boltRootDir=${boltRootDir}`
 		]);
-
-		//clearCache(filesId);
-		bolt.__moduleAnnotations.clear();
-		delete bolt.__moduleAnnotations;
 	});
 };
