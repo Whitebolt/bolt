@@ -247,7 +247,7 @@ function _getConfig(config) {
  * @private
  * @returns {BoltConfig}    The config object.
  */
-function getConfigLoadPaths(serverConfigFile = (env.serverConfigFile || packageConfig.serverConfigFile)) {
+function getConfigLoadPaths(serverConfigFile=(env.serverConfigFile || packageConfig.serverConfigFile)) {
 	const configLoadPaths = [boltRootDir + '/' + serverConfigFile];
 	if (env.hasOwnProperty('config')) bolt.makeArray(env.config).forEach(config=>configLoadPaths.push(config + '/' + serverConfigFile));
 	if (packageConfig.serverConfigPath) configLoadPaths.push(packageConfig.serverConfigPath + '/' + serverConfigFile);
@@ -346,35 +346,41 @@ async function _setSslCerts(config) {
 	});
 }
 
-async function _loadAppConfig(name, filePaths) {
-	const searchPaths = getConfigLoadPaths(`settings/apps/${name}.json`);
-	const config = await require.try(true, [...searchPaths]);
-	if (!config) {
-		console.error(`No configurations found for app: ${name}, using the search path:\n\t${searchPaths.join('\n\t')}`);
-		process.exit(9);
-	}
-	bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(config));
-	return _parseConfig(config);
+function _getConfigLoadPaths(name, type) {
+	return getConfigLoadPaths(`settings/${(type==='app'?'apps':((type==='profile')?'profiles':''))}/${name}.json`);
 }
 
-async function _loadProfileConfig(name, appConfig, filePaths) {
-	const searchPaths = getConfigLoadPaths(`settings/profiles/${name}.json`);
+async function _getAppConfig(name, filePaths) {
+	const searchPaths = _getConfigLoadPaths(name, 'app');
 	const config = await require.try(true, [...searchPaths]);
 	if (!!config) {
 		bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(config));
 		return _parseConfig(config);
 	}
 
-	const defaultProfile = (appConfig.development ? 'development' : 'production');
-	const defaultSearchPaths = getConfigLoadPaths(`settings/profiles/${defaultProfile}.json`);
-	console.warn(`No configurations found for profile: ${name}, using the search path:\n\t${searchPaths.join('\n\t')}\nWill use default of '${defaultProfile}'.`);
-	const defaultConfig = await require.try(defaultSearchPaths);
-	if (!defaultConfig) {
-		console.error(`No configurations found for default profile: ${name}, using the search path:\n\t${defaultSearchPaths.join('\n\t')}`);
-		process.exit(9);
+	console.error(`Could not load config for app, ${name}, using search path:\n\t${searchPaths.join('\n\t')}`);
+	process.exit(9);
+}
+
+async function _getProfileConfig(name, appConfig, filePaths) {
+	const searchPaths = _getConfigLoadPaths(name, 'profile');
+	const config = await require.try(true, [...searchPaths]);
+	if (!!config) {
+		bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(config));
+		return config;
 	}
-	bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(defaultConfig));
-	return _parseConfig(defaultConfig);
+
+	const defaultProfile = (appConfig.development ? 'development' : 'production');
+	console.warn(`Could not load config for profile, ${name}, using search path:\n\t${searchPaths.join('\n\t')}\nWill use default profile of ${defaultProfile}.`);
+	const defaultSearchPaths = _getConfigLoadPaths(defaultProfile, 'profile');
+	const defaultConfig = await require.try(true, [...defaultSearchPaths]);
+	if (!!defaultConfig) {
+		bolt.waitEmit('initialiseApp', 'configFileLoaded', filePaths.get(defaultConfig));
+		return defaultConfig;
+	}
+
+	console.error(`Could not load config for default profile, ${defaultProfile}, using search path:\n\t${defaultSearchPaths.join('\n\t')}`);
+	process.exit(9);
 }
 
 /**
@@ -387,20 +393,20 @@ async function _loadProfileConfig(name, appConfig, filePaths) {
  */
 async function loadConfig(name, profile) {
 	const filePaths = require.getStore('filePaths');
-	const appConfig = await _loadAppConfig(name, filePaths);
-	const profileConfig = await _loadProfileConfig(profile, appConfig, filePaths);
+	const appConfig = await _getAppConfig(name, filePaths);
+	const profileConfig = await _getProfileConfig(profile, appConfig, filePaths);
 
-	if (!!profileConfig) {
+	await _setSslCerts(appConfig);
+	if (profileConfig) {
 		delete profileConfig.name;
 		bolt.mergeWith(appConfig, profileConfig, _configMerger);
 	}
-
-	await _setSslCerts(appConfig);
 	await _assignPort(appConfig);
 
 	appConfig.development = (appConfig.hasOwnProperty('development') ? appConfig.development : false);
 	appConfig.debug = (appConfig.hasOwnProperty('debug') ? appConfig.debug : false);
-	if (bolt.fire) await bolt.emit('configLoaded', appConfig);
+
+	if (bolt.emit) await bolt.emit('configLoaded', appConfig);
 	if (appConfig.debug && !appConfig.production) process.kill(process.pid, 'SIGUSR1');
 	bolt.__paths = new Set([...appConfig.root]);
 
