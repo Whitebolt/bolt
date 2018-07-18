@@ -78,7 +78,7 @@ function _registerLogEvent(config) {
  * @private
  * @param {BoltApplication} app    The express application.
  */
-function _initLogging(app) {
+function initLogging(app) {
 	app.config.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
 	_initConsoleLogging(app.config.logLevel, message=>{
 		const pc = message.data.style.property.colour || 'yellow';
@@ -178,7 +178,7 @@ async function _boltLoader(app) {
 function _loadApplication(configPath) {
 	return (bolt.isString(configPath) ? require.async(configPath) : Promise.resolve(configPath))
 		.then(_createApp)
-		.then(_initLogging)
+		.then(initLogging)
 		.then(app=>{
 			bolt.emit('configLoaded', configPath);
 			return app;
@@ -280,5 +280,5 @@ class BoltApplication extends express {
 }
 
 module.exports = {
-	loadApplication, getApp, importIntoObject, BoltApplication
+	loadApplication, getApp, importIntoObject, BoltApplication, initLogging
 };
