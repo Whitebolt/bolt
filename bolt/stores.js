@@ -4,7 +4,7 @@
 const minimatch = require('minimatch');
 
 const lockableStores = new WeakSet(); // Don't get caught in infinite loop of wrapping stores.
-const xIsRequireId = /^require\./;
+const {xIsRequireId} = bolt.consts;
 
 
 function getRequireExtraStore(storeId) {

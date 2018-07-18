@@ -5,7 +5,7 @@
  * @module bolt/bolt
  */
 
-const xStartDigitUnderscore = /^\d+_/;
+const {xStartDigitUnderscore} = bolt.consts;
 
 /**
  * Add properties to each method used by bolt.

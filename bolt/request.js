@@ -5,7 +5,7 @@
  * @module bolt/bolt
  */
 
-const xEndSlash = /\/$/;
+const {xTrailingSlash} = bolt.consts;
 
 /**
  * Get the path from a url removing an trailing slashes.
@@ -20,7 +20,7 @@ const xEndSlash = /\/$/;
 function getPathFromRequest(req) {
 	// @annotation browser-export false
 
-	let path = req.path.trim().replace(xEndSlash, '');
+	const path = xTrailingSlash.replace(req.path.trim() , '');
 	return ((path === '') ? '/' : path);
 }
 

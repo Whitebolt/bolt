@@ -1,8 +1,7 @@
 'use strict';
 // @annotation zone server
 
-const xTrailingSlash = bolt.memoizeRegExp(/\/$/);
-
+const {xTrailingSlash} = bolt.consts;
 const promisify = require('util').promisify || Promise.promisify;
 const path = require('path');
 const fs = {...require('fs')};

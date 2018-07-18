@@ -6,8 +6,7 @@
  */
 
 const dateFormat = require('dateformat');
-const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
-const xSubstitutions = /\$\{(.*?)\}/g;
+const {xSubstitutions, chars} = bolt.consts || require('./consts');
 
 /**
  * Replace the last string within a string.

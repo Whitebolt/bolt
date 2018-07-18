@@ -1,12 +1,14 @@
 'use strict';
 // @annotation zone browser server manager gulp
 
-const xQuoted = /^(["'])(.*)\1$/;
-const xObject = /^\{.*\}$/;
-const xArray = /^\[.*\]$/;
-const xPreFunctionParams = /\)[\s\S]*/;
-const xPostFunctionParams = /^.*?\(/;
-const paramDefaultMatchers = new Map([['null',null],['undefined',undefined],['true',true],['false',false]]);
+const {
+	xQuoted,
+	xObject,
+	xArray,
+	xPreFunctionParams,
+	xPostFunctionParams,
+	paramDefaultMatchers
+} = bolt.consts;
 
 const paramCache = new WeakMap();
 

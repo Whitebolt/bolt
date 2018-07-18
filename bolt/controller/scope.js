@@ -7,7 +7,7 @@
 const Private = loadLibModule('Private');
 
 const $private = new Private();
-const xStackFindProxy = /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/;
+const {xStackFindProxy} = bolt.consts;
 const controllerContextError = (new bolt.ErrorFactory('ControllerContext')).error;
 
 

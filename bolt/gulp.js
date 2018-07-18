@@ -5,13 +5,15 @@ const child = require('child_process');
 const write = require('util').promisify(require('fs').writeFile);
 const path = require('path');
 
-const xParseGulpLog = /^\[(\d\d\:\d\d\:\d\d)\]\s+(.*)/;
-const xAnsi = /\x1b\[[0-9;]*[a-zA-Z]/g;
-const xGulpUsing = /^Using gulpfile /;
-const xGetGulpTaskNamePath = /^Found task \'(.*?)\' in (.*)/;
-const xGulpFinishedAfter = /^Finished \'.*?\' after .*$/;
-const xGetGulpTaskName = /^Starting \'(.*?)\'/;
-const xNewLine = /\n/;
+const {
+	xParseGulpLog,
+	xAnsi,
+	xGulpUsing,
+	xGetGulpTaskNamePath,
+	xGulpFinishedAfter,
+	xGetGulpTaskName,
+	xNewLine
+} = bolt.consts;
 
 function runGulp(taskName, {config}, args=[]) {
 	const startTime = process.hrtime();

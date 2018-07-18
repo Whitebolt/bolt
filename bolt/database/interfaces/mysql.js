@@ -5,9 +5,7 @@ const queryBuilder = require('mongo-sql');
 const {quoteObject} = require('mongo-sql/lib/utils');
 const {replaceSequence} = loadBoltModule('string'); //Fix missing bolt method.
 
-const xCasted = /\:\:(.*)/;
-const xDollarDigit = /\$\d+/g;
-const xDoubleQuotes = /\"/g;
+const {xCasted, xDollarDigit, xDoubleQuotes} = bolt.consts;
 
 const mutateToMySqlFormat = replaceSequence([[xDollarDigit, '?'],[xDoubleQuotes]]);
 

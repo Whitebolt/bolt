@@ -7,7 +7,7 @@
 
 const entityParser = require('html-entities').Html5Entities;
 
-const xSpaces = /\s+/;
+const {xSpaces} = bolt.consts;
 
 function classNames(...classes) {
 	return (bolt.chain(classes)

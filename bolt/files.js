@@ -17,8 +17,7 @@ const path = require('path');
 const fs = {};
 const exec = util.promisify(require('child_process').exec);
 
-
-const xIsSync = /Sync$/;
+const {xIsSync} = bolt.consts;
 
 
 bolt.forOwn(_fs, (method, methodName)=>{

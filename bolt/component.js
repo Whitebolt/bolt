@@ -6,8 +6,7 @@
  */
 
 const path = require('path');
-
-const xSlash = bolt.memoizeRegExp(/\//g);
+const {xSlash} = bolt.consts;
 
 const componentLoadSequence = [
 	['Hooks', 'loadComponentHooks'],

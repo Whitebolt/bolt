@@ -5,7 +5,7 @@
  * @module bolt/bolt
  */
 
-const xIsInt = /^[0-9]+$/;
+const {xIsInt} = bolt.consts;
 
 /**
  * Test if a value is a number or can be converted to one.
