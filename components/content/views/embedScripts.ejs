@@ -1,1 +1,3 @@
-<% (req.app.config[parent.lib || "lib"] || []).forEach(lib=>{ %><script src="<%- lib %>"></script><% }); %>
+<% (req.app.config[parent.lib || "lib"] || []).forEach(lib=>{
+	%><script src="<%- lib %>"></script><%=`\n`%><%
+}); %>

@@ -6,13 +6,13 @@
  */
 
 const argv = require('yargs')
-	.command('start [<name>] [<profile>]', 'Start a new bolt server.', yargs=>{
-		yargs.positional('name', {
-			describe: 'The app to run.'
-		}).positional('profile', {
-			describe: 'The profile to apply to the server.'
-		});
-	})
+	.command('start [<name>] [<profile>]', 'Start a new bolt server.', yargs=>yargs
+		.positional('name', {describe: 'The app to run.'})
+		.positional('profile', {describe: 'The profile to apply to the server.'})
+	)
+	.command('gulp [<task>]', 'Run a gulp task under a specfic app and profile.', yargs=>yargs
+		.positional('task', {describe: 'The task to run.'})
+	)
 	.command('list', 'List all running servers, local and remote.')
 	.command('restart', 'Restart a given bolt server.')
 	.command('kill', 'Kill a given bolt server.')
@@ -30,8 +30,8 @@ if (!argv.development && !argv.d) argv.development = false;
 argv.cmd = {};
 
 module.exports = require.import('./cmd/', {
-	merge:true,
-	imports:argv.cmd,
+	merge: true,
+	imports: argv.cmd,
 	basedir: __dirname,
 	parent: __filename
 }).then(()=>argv);

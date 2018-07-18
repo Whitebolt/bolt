@@ -59,7 +59,7 @@ async function pm2Controller() {
 
 	const args = await bolt.require('./cli');
 	return Promise.all(args._.map(cmd=>{
-		if (args.cmd.hasOwnProperty(cmd)) return args.cmd[cmd](args);
+		if (args.cmd.hasOwnProperty(cmd)) args.cmd[cmd](args);
 	}));
 }
 
