@@ -1,9 +1,14 @@
 'use strict';
 
-const EventEmitter = require('events');
-const Private = require('./Private');
+
+const EventEmitter =  require('events');
+const Private = loadLibModule('Private');
 const util = require('util');
 const setImmediatePromise = util.promisify(setImmediate);
+
+
+const $private = new Private();
+
 
 function makeArray(ary) {
 	if ((ary === undefined) || (ary === null)) return [];
@@ -18,16 +23,6 @@ function splitter(item) {
 		.map(item=>item.trim())
 		.filter(item=>(item !== ''))
 		.value();
-}
-
-// Not used anymore.  We need to fire async events at once then wait, this is better.
-function mapPromiseSeries(series, ...params) {
-	function next(item) {
-		return Promise.resolve(item(...params)).then(()=>
-			((series.length)?next(series.shift()):Promise.resolve())
-		);
-	}
-	if (series.length) return next(series.shift());
 }
 
 function mapPromises(series, ...params) {
@@ -47,8 +42,8 @@ class BoltEventEmitter extends EventEmitter {
 		before.setMaxListeners(maxListeners);
 		after.setMaxListeners(maxListeners);
 
-		Private.set(this, 'before', before);
-		Private.set(this, 'after', after);
+		$private.set(this, 'before', before);
+		$private.set(this, 'after', after);
 	}
 
 	async emit(eventName, ...params) {
@@ -62,7 +57,7 @@ class BoltEventEmitter extends EventEmitter {
 
 	async emitBefore(eventName, ...params) {
 		const listeners = bolt.flattenDeep(
-			splitter(eventName).map(eventName=>Private.get(this, 'before').listeners(eventName))
+			splitter(eventName).map(eventName=>$private.get(this, 'before').listeners(eventName))
 		).map(listener=>{
 			return ()=>setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
 		});
@@ -71,7 +66,7 @@ class BoltEventEmitter extends EventEmitter {
 
 	async emitAfter(eventName, ...params) {
 		const listeners = bolt.flattenDeep(
-			splitter(eventName).map(eventName=>Private.get(this, 'after').listeners(eventName))
+			splitter(eventName).map(eventName=>$private.get(this, 'after').listeners(eventName))
 		).map(listener=>{
 			return ()=>setImmediatePromise().then(()=>Promise.resolve(listener(...params)))
 		});
@@ -83,7 +78,7 @@ class BoltEventEmitter extends EventEmitter {
 		let called = false;
 
 		eventNames.forEach(eventName=>{
-			called = called || Private.get(this, 'before').emit(eventName, ...params);
+			called = called || $private.get(this, 'before').emit(eventName, ...params);
 		});
 
 		return called;
@@ -105,7 +100,7 @@ class BoltEventEmitter extends EventEmitter {
 		let called = false;
 
 		eventNames.forEach(eventName=>{
-			called = called || Private.get(this, 'after').emit(eventName, ...params);
+			called = called || $private.get(this, 'after').emit(eventName, ...params);
 		});
 
 		return called;
@@ -121,42 +116,42 @@ class BoltEventEmitter extends EventEmitter {
 	}
 
 	before(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'before').on(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'before').on(eventName, listener));
 		return this;
 	}
 
 	beforeOnce(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'before').once(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'before').once(eventName, listener));
 		return this;
 	}
 
 	prependBefore(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'before').prependListener(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'before').prependListener(eventName, listener));
 		return this;
 	}
 
 	prependOnceBefore(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'before').prependOnceListener(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'before').prependOnceListener(eventName, listener));
 		return this;
 	}
 
 	after(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'after').on(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'after').on(eventName, listener));
 		return this;
 	}
 
 	afterOnce(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'after').once(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'after').once(eventName, listener));
 		return this;
 	}
 
 	prependAfter(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'after').prependListener(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'after').prependListener(eventName, listener));
 		return this;
 	}
 
 	prependAfterOnce(eventName, listener) {
-		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>Private.get(this, 'after').prependOnceListener(eventName, listener));
+		bolt.flattenDeep(splitter(eventName)).forEach(eventName=>$private.get(this, 'after').prependOnceListener(eventName, listener));
 		return this;
 	}
 }

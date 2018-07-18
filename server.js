@@ -7,6 +7,7 @@ let [configDone, boltLoaded] = [false, false];
 const {loadBoltModules} = require('./lib/loaders');
 const {init, loadAnnotations} = require('./lib/init');
 
+
 const bolt = init(__filename, ()=>boltLoaded);
 
 
