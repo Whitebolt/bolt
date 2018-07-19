@@ -4,17 +4,17 @@ const {showLoadMenus} = require('./lib/loadMenus');
 
 
 async function gulp(args) {
-	const config = await showLoadMenus(args);
+	const locals = await showLoadMenus(args);
 
 	if (args.hasOwnProperty('name') && args.hasOwnProperty('profile') && args.hasOwnProperty('task')) {
 		const {runGulp} = loadBoltModule('gulp');
 		const {initLogging} = loadBoltModule('app');
 
 		await bolt.emitBefore('initialiseApp');
-		initLogging({config});
-		await bolt.emitAfter('initialiseApp', config, {config});
+		initLogging({locals});
+		await bolt.emitAfter('initialiseApp', locals, {locals});
 
-		runGulp(args.task, {config}, [`--boltRootDir=${boltRootDir}`]);
+		runGulp(args.task, {locals}, [`--boltRootDir=${boltRootDir}`]);
 	}
 }
 
