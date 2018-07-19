@@ -18,7 +18,7 @@ module.exports = function(app) {
 		if (!bolt[filesId]) return;
 		let contents = '';
 		const name = 'bolt';
-		const cacheDir = path.join(boltRootDir, 'cache', app.config.name);
+		const cacheDir = path.join(boltRootDir, 'cache', app.locals.name);
 		const outputFilename = path.join(cacheDir, `${name}.js`);
 		const files = [...bolt[filesId]];
 		const exportedLookup = new Set();
@@ -73,16 +73,16 @@ module.exports = function(app) {
 		contents += `bolt.MODE = new Set();\n`;
 		contents += `window.process = window.process || {};\n`;
 		contents += `window.process.env = window.process.env = {};\n`;
-		if (app.config.development) {
+		if (app.locals.development) {
 			contents += `bolt.MODE.add("DEVELOPMENT");`;
 			contents += `window.process.env.NODE_ENV = 'development';`;
 		} else {
 			contents += `window.process.env.NODE_ENV = 'production';`;
 		}
-		if (app.config.debug) contents += `bolt.MODE.add("DEBUG");`;
-		if (app.config.production) contents += `bolt.MODE.add("PRODUCTION");`;
-		contents += `bolt.LOGLEVEL = ${app.config.logLevel}\n`;
-		contents += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.config.version}"}\n`;
+		if (app.locals.debug) contents += `bolt.MODE.add("DEBUG");`;
+		if (app.locals.production) contents += `bolt.MODE.add("PRODUCTION");`;
+		contents += `bolt.LOGLEVEL = ${app.locals.logLevel}\n`;
+		contents += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.locals.version}"}\n`;
 		contents += `export default bolt;`;
 
 		await bolt.makeDirectory(cacheDir);

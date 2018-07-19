@@ -16,7 +16,7 @@ const collectionLogic = require('./database/collectionLogic');
  * @param {BoltConfig} config               Bolt config object containing database connection info.
  * @returns {Promise.<BoltApplication>}     Promise resolving to the Bolt Application instance.
  */
-function _loadDatabases(interfaces, app, config=app.config) {
+function _loadDatabases(interfaces, app, config=app.locals) {
 	app.dbs = app.dbs || {};
 	let databases = Object.keys(config.databases);
 

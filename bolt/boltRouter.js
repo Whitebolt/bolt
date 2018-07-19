@@ -44,7 +44,7 @@ function applyAndSend(router) {
 	function send(content={}) {
 		let data;
 		if (router.sendFields) {
-			data = bolt.pick(req.doc, bolt.makeArray(router.sendFields));
+			data = bolt.pick(res.doc, bolt.makeArray(router.sendFields));
 			if (content && (bolt.isObject(content)?Object.keys(content).length:true)) Object.assign(data, {content});
 		} else {
 			data = content;

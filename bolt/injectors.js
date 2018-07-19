@@ -9,7 +9,7 @@
 const path = require('path');
 
 async function _loadInjectors(app) {
-	const paths = bolt.makeArray(app.config.root).map(root=>path.join(root,'injectors'));
+	const paths = bolt.makeArray(app.locals.root).map(root=>path.join(root,'injectors'));
 	const injectors = await require.import(paths, {
 		onload: (injectorPath, exports)=>{
 			bolt.emit('injectorLoaded', injectorPath);

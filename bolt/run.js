@@ -36,10 +36,10 @@ async function _getHttpsOptions(config) {
  * @param {Object} config			The bolt config.
  * @returns {Object}				The new server instance.
  */
-async function _createServer(app, config=app.config) {
+async function _createServer(app, config=app.locals) {
 	if (config.development && !config.production && config.sslServerCrt && config.sslServerKey) {
 		try {
-			return require('https').createServer(await _getHttpsOptions(app.config), app);
+			return require('https').createServer(await _getHttpsOptions(app.locals), app);
 		} catch(error) {}
 	}
 	return require('http').createServer(app);
@@ -80,10 +80,10 @@ async function _doRootTasks2(config, pidController) {
  * @param {BoltApplication} app		The bolt application to delete config properties on.
  */
 function _deleteSecretConfigProps(app) {
-	bolt.makeArray(app.config.boltConfigPropsDeleteWhenLive).forEach(prop=>{
-		if (app.config[prop]) delete app.config[prop];
+	bolt.makeArray(app.locals.boltConfigPropsDeleteWhenLive).forEach(prop=>{
+		if (app.locals[prop]) delete app.locals[prop];
 	});
-	bolt.deepFreeze(app.config);
+	bolt.deepFreeze(app.locals);
 }
 
 /**
@@ -128,7 +128,7 @@ async function _createWelcome(config) {
  * @returns {Promise.<BoltApplication>}		Promise resolved when app has launched fully.
  */
 function _runApp(app) {
-	const config = app.config;
+	const config = app.locals;
 	const root = (config.uid && config.gid && !config.development);
 
 	return new Promise(async (resolve)=>{
@@ -146,7 +146,7 @@ function _runApp(app) {
 
 			console.log(await _createWelcome(config));
 			console.log('Modules:');
-			bolt.makeArray(app.config.modules).forEach((module, n)=>console.log(module.name, module.version));
+			bolt.makeArray(app.locals.modules).forEach((module, n)=>console.log(module.name, module.version));
 
 			bolt.emit('appRunning', config.name, process.hrtime(global.startTime));
 			resolve(app);

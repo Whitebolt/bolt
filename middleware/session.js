@@ -13,14 +13,14 @@ function init(app) {
 
 	app.set('trust proxy', 1);
 
-	const store = bolt['load'+bolt.capitalize(app.config.sessionStore || 'mongo')].sessionStore(session, app);
+	const store = bolt['load'+bolt.capitalize(app.locals.sessionStore || 'mongo')].sessionStore(session, app);
 
 	let sessionMiddleware = session({
 		name: 'sessionId',
-		secret: app.config.secret,
+		secret: app.locals.secret,
 		cookie: {
 			secure: true,
-			maxAge: app.config.sessionLength || 60 * 60 * 1000,
+			maxAge: app.locals.sessionLength || 60 * 60 * 1000,
 			httpOnly: true
 		},
 		store,

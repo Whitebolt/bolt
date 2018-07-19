@@ -17,16 +17,16 @@ function init(app) {
 	/**
 	 * @todo check if /public exists first
 	 */
-	bolt.get(app, 'config.root', []).forEach(rootDir=>{
-		app.use(serve(`${rootDir}/private/${app.config.name||'unknown'}`, {...defaultOptions}));
+	bolt.get(app, 'locals.root', []).forEach(rootDir=>{
+		app.use(serve(`${rootDir}/private/${app.locals.name||'unknown'}`, {...defaultOptions}));
 		app.use(serve(`${rootDir}/public/`, {...defaultOptions}));
 		app.use(serve(`${rootDir}/upload/`, {...defaultOptions}));
 	});
 
-	bolt.chain(bolt.get(app, `config.nodeModulesServe`, {}))
+	bolt.chain(bolt.get(app, `locals.nodeModulesServe`, {}))
 		.keys()
 		.forEach(rootDir=>{
-			const moduleServe = app.config.nodeModulesServe[rootDir];
+			const moduleServe = app.locals.nodeModulesServe[rootDir];
 			if (moduleServe.modules) bolt.makeArray(moduleServe.modules).forEach(moduleName=>{
 				app.use(
 					`${moduleServe.path || '/lib'}/${moduleName}`,

@@ -131,7 +131,7 @@ function _initIntercept(app, proxyConfig) {
  * @returns {Function}              The request path resolver function.
  */
 function _initSlugger(app, appProxyConfig, config) {
-	let _slugger = require.try(true, app.config.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
+	let _slugger = require.try(true, app.locals.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
 		config.proxyReqPathResolver = slugger(appProxyConfig);
 		return config.proxyReqPathResolver;
 	});
@@ -151,7 +151,7 @@ function _initSlugger(app, appProxyConfig, config) {
  * @returns {Promise.<Object>}      Promise resolving to mutated config object.
  */
 function _initInterceptModule(app, appProxyConfig, config) {
-	return bolt.require.try(true, app.config.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
+	return bolt.require.try(true, app.locals.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
 		appProxyConfig.intercepts.push(intercept);
 		return config;
 	});
@@ -199,9 +199,9 @@ function _initOptDecorateRequest(app, appProxyConfig) {
  * @returns {*}
  */
 function _proxyRouter(app, appProxyConfig) {
-	const limit = (bolt.isObject(app.config.uploadLimit) ?
-		app.config.uploadLimit.proxy || defaultUploadLimit :
-		app.config.uploadLimit || defaultUploadLimit
+	const limit = (bolt.isObject(app.locals.uploadLimit) ?
+		app.locals.uploadLimit.proxy || defaultUploadLimit :
+		app.locals.uploadLimit || defaultUploadLimit
 	);
 
 	let config = {
@@ -233,8 +233,8 @@ function proxyRouter(app) {
 	// @annotation priority -10
 
 	let routing = [(req, res, next)=>next()];
-	if (app.config.proxy && app.config.proxy.forwardPath) {
-		bolt.makeArray(app.config.proxy).forEach(proxyConfig=>{
+	if (app.locals.proxy && app.locals.proxy.forwardPath) {
+		bolt.makeArray(app.locals.proxy).forEach(proxyConfig=>{
 			if (proxyConfig.forwardPath) routing.push(_proxyRouter(app, proxyConfig));
 		});
 	}

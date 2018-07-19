@@ -91,7 +91,7 @@ loadMongo.fromId = value=>_toFromId(
 	value=>value.toString(),
 	value=>`Cannot convert ${getType(value)}, from MongoId because it is not a MongoId`
 );
-loadMongo.sessionStore = (session, app, db=app.config.sessionStoreDb || 'main')=>{
+loadMongo.sessionStore = (session, app, db=app.locals.sessionStoreDb || 'main')=>{
 	const MongoStore = require('connect-mongo')(session);
 	return new MongoStore({db: app.dbs[db]});
 };

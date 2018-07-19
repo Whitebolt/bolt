@@ -44,7 +44,7 @@ async function _loadRedux(root, app) {
 	await importer({root, type:'reducers'});
 }
 
-function loadRedux(app, roots=app.config.root) {
+function loadRedux(app, roots=app.locals.root) {
 	let fireEvent = 'loadRedux' + (!app.parent?',loadRootRedux':'');
 	return bolt.emitThrough(()=>_loadRedux(roots, app), fireEvent, app).then(() => app);
 }

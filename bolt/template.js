@@ -121,7 +121,7 @@ function _parseLoadOptions(app, options={}) {
  * @returns {BoltConfig}                          The bolt config object.
  */
 function _getConfig(app) {
-	return (app.config ? app.config : (app.parent ? _getConfig(app.parent) : undefined));
+	return (app.locals ? app.locals : (app.parent ? _getConfig(app.parent) : undefined));
 }
 
 /**
@@ -315,9 +315,9 @@ function _getMethod(route, app) {
 function _getComponentOverridePaths(component) {
 	let rootApp = bolt.getApp(component);
 	let overridePaths = [];
-	if (rootApp.config) {
-		(rootApp.config.template || []).forEach(templateName => {
-			(rootApp.config.root || []).forEach(
+	if (rootApp.locals) {
+		(rootApp.locals.template || []).forEach(templateName => {
+			(rootApp.locals.root || []).forEach(
 				root=>overridePaths.push(`${root}templates/${templateName}${component.filePath}`)
 			);
 		});

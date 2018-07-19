@@ -9,14 +9,14 @@ const frameguard = require('frameguard');
 const xssFilter = require('x-xss-protection');
 
 function _getConnectSrc(app, domains) {
-	const connectSrc = [].concat(app.config.domains).map(domain=>'https://'+domain);
-	if (app.config.development) connectSrc.unshift('https://localhost:' + app.config.port);
+	const connectSrc = [].concat(app.locals.domains).map(domain=>'https://'+domain);
+	if (app.locals.development) connectSrc.unshift('https://localhost:' + app.locals.port);
 	return connectSrc.concat(connectSrc.map(domain=>domain.replace('https://','wss://')));
 }
 function _mergeConfigDirectives(app, directives) {
-	Object.keys(app.config.csp || {}).forEach(directive=>{
-		if (bolt.isArray(app.config.csp[directive])) {
-			directives[directive] = bolt.uniq((directives[directive] || []).concat(app.config.csp[directive]));
+	Object.keys(app.locals.csp || {}).forEach(directive=>{
+		if (bolt.isArray(app.locals.csp[directive])) {
+			directives[directive] = bolt.uniq((directives[directive] || []).concat(app.locals.csp[directive]));
 		}
 	});
 
@@ -66,11 +66,11 @@ function init(app) {
 	});
 
 	let hidePoweredByMiddleware = hidePoweredBy({
-		setTo: app.config.poweredBy || 'Powered by Bolt - https://whitebolt.net/software-development/'
+		setTo: app.locals.poweredBy || 'Powered by Bolt - https://whitebolt.net/software-development/'
 	});
 
 
-	let frameguardConfig = app.config.frameGuard || 'sameorigin';
+	let frameguardConfig = app.locals.frameGuard || 'sameorigin';
 	if ((frameguardConfig === 'sameorigin') && (frameguardConfig === 'deny')) frameguardConfig = {
 		action: 'allow-from',
 		domain: frameguardConfig

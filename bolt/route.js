@@ -64,7 +64,7 @@ async function _loadRoutes(app, roots) {
  */
 function loadRoutes(app) {
 	return bolt.emitThrough(()=>_loadRoutes(
-		app, app.config.root || [], app.routes
+		app, app.locals.root || [], app.routes
 	), 'loadRoutes', app).then(() => app);
 }
 

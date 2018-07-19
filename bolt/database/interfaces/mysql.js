@@ -134,7 +134,7 @@ async function _series(query, ...queries)  {
 	return (await Promise.all(queries.map(queryDef=>query(queryDef)))).map(results=>results[0]);
 }
 
-loadMysql.sessionStore = function(session, app, db=app.config.sessionStoreDb || 'main') {
+loadMysql.sessionStore = function(session, app, db=app.locals.sessionStoreDb || 'main') {
 	const MySqlStore = require('@simpo/express-mysql-session')(session);
 
 	return new MySqlStore({

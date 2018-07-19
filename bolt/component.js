@@ -136,10 +136,10 @@ async function _loadComponents(app, roots) {
  * Load components from the given roots into the given app.
  *
  * @param {BoltApplication|BoltComponent} app           The application object (or component).
- * @param {Array.<string>} [roots=app.config.roots]     The roots to load from.
+ * @param {Array.<string>} [roots=app.locals.roots]     The roots to load from.
  * @returns {Promise.<BoltApplication|BoltComponent>}   Promise resolving to the supplied app object.
  */
-async function loadComponents(app, roots=app.config.root) {
+async function loadComponents(app, roots=app.locals.root) {
 	let fireEvent = 'loadComponents' + (!app.parent?',loadAllComponents':'');
 	await bolt.emitThrough(()=>_loadComponents(app, roots), fireEvent, app);
 

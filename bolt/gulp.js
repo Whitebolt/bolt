@@ -15,16 +15,16 @@ const {
 	xNewLine
 } = bolt.consts;
 
-function runGulp(taskName, {config}, args=[]) {
+function runGulp(taskName, {locals}, args=[]) {
 	const startTime = process.hrtime();
-	config.boltGulpModules = [...bolt.__modules]
+	locals.boltGulpModules = [...bolt.__modules]
 		.filter(target=>(bolt.annotation.get(require(target), 'zone') || new Set()).has('gulp'));
-	const boltConfigPropsDeleteWhenLive = new Set(bolt.makeArray(config.boltConfigPropsDeleteWhenLive));
-	const gulpConfig = Object.assign(...bolt.chain(config)
+	const boltConfigPropsDeleteWhenLive = new Set(bolt.makeArray(locals.boltConfigPropsDeleteWhenLive));
+	const gulpConfig = Object.assign(...bolt.chain(locals)
 		.keys()
 		.filter(key=>!boltConfigPropsDeleteWhenLive.has(key))
 		.map(key=>{
-			return {[key]:config[key]};
+			return {[key]:locals[key]};
 		})
 		.value()
 	);

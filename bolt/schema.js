@@ -28,11 +28,11 @@ function _loadSchemas(roots, app) {
  *
  * @public
  * @param {BoltApplication} app                       Express application.
- * @param {Array.<string>} [roots=app.config.roots]   Root folders to search in.
+ * @param {Array.<string>} [roots=app.locals.roots]   Root folders to search in.
  * @returns {Promise.<BoltApplication>}               Promise resolving to supplied express app after loading of
  *                                                    schemas and firing of related events.
  */
-function loadSchemas(app, roots=app.config.root) {
+function loadSchemas(app, roots=app.locals.root) {
   return bolt.emitThrough(()=>_loadSchemas(roots, app), 'loadSchemas', app).then(() => app);
 }
 

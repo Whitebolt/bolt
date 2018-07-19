@@ -51,7 +51,7 @@ module.exports = function(){
 	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
 		const name = 'ReduxBolt';
-		const cacheDir = path.join(boltRootDir, 'cache', app.config.name);
+		const cacheDir = path.join(boltRootDir, 'cache', app.locals.name);
 		const outputFilename = path.join(cacheDir, `${name}.js`);
 		let contents = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		contents += reduxType.map(type=>{

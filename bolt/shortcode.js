@@ -33,7 +33,7 @@ function parseShortcodes(component, doc, properties=[]) {
  * @param {Object} [importObject]           Object to import into. Defaults to all of the current app shortcodes.
  * @returns {Promise.<BoltComponent>}       Promise resolving to the supplied component.
  */
-function loadShortcodes(component, roots=bolt.getApp(component).config.root, importObj=bolt.getApp(component).shortcodes) {
+function loadShortcodes(component, roots=bolt.getApp(component).locals.root, importObj=bolt.getApp(component).shortcodes) {
 	return bolt
 		.importIntoObject({roots, importObj, dirName:'shortcodes', eventName:'loadedShortcode'})
 		.then(()=>{

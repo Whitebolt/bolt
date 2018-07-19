@@ -64,7 +64,7 @@ async function _loadMiddleware(app, roots, importObj) {
  * @param {Object} [importObj==app.middleware]      The object to import into.
  * @returns {Promise}                               Promise resolved when all middleware loaded.
  */
-async function loadMiddleware(app, roots=app.config.root, middleware=app.middleware) {
+async function loadMiddleware(app, roots=app.locals.root, middleware=app.middleware) {
   await bolt.emitThrough(()=>_loadMiddleware(app, roots, middleware), 'loadMiddleware', app);
   return app;
 }

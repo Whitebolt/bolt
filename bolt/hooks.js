@@ -69,7 +69,7 @@ async function _loadHooks(roots) {
  * @returns {Promise.<BoltApplication>}               Promise resolving to supplied express app after loading of hooks
  *                                                    and firing of related events.
  */
-function loadHooks(app, roots=app.config.root) {
+function loadHooks(app, roots=app.locals.root) {
 	let fireEvent = 'loadHooks' + (!app.parent?',loadRootHooks':'');
 	return bolt.emitThrough(()=>_loadHooks(roots, app), fireEvent, app).then(()=> app);
 }

@@ -28,7 +28,7 @@ function _isWebsocket(req) {
 }
 
 function getUploadLimit(app) {
-	const uploadLimit = app.config.uploadLimit || 102400;
+	const uploadLimit = app.locals.uploadLimit || 102400;
 	if (bolt.isObject(uploadLimit)) return Object.assign({
 		json: defaultUploadLimit,
 		text: defaultUploadLimit,
@@ -48,13 +48,13 @@ function init(app) {
 
 	const jsonParser = bodyParser.json();
 	const urlParser = bodyParser.urlencoded({
-		limit: app.config.uploadLimit || 102400,
+		limit: app.locals.uploadLimit || 102400,
 		extended:true
 	});
 	const textParser = bodyParser.text();
 	const rawParser = bodyParser.raw({
 		type: req=>(req.is('application/octet-stream') || req.is('binary/bmf')),
-		limit: app.config.uploadLimit || 102400
+		limit: app.locals.uploadLimit || 102400
 	});
 
 	function skip(req, res, next, parser) {

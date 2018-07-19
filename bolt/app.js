@@ -79,8 +79,8 @@ function _registerLogEvent(config) {
  * @param {BoltApplication} app    The express application.
  */
 function initLogging(app) {
-	app.config.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
-	_initConsoleLogging(app.config.logLevel, message=>{
+	app.locals.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
+	_initConsoleLogging(app.locals.logLevel, message=>{
 		const pc = message.data.style.property.colour || 'yellow';
 		const tc = ((message.data.style.type.colour || 'green') + 'Bright').replace('BrightBright', 'Bright');
 		const mc = message.data.style.description.colour || 'white';
@@ -88,7 +88,7 @@ function initLogging(app) {
 		const _message = `[${chalk[tc](message.data.type)}] ${chalk[mc].bold(message.data.description)} ${chalk[pc].italic(message.data.property)}`;
 		console.log(_message)
 	});
-	_initAccessLogging(app.config.accessLog);
+	_initAccessLogging(app.locals.accessLog);
 
 	return app;
 }
@@ -153,7 +153,7 @@ async function getComponentDirectories(root) {
  * @returns {Promise.<BoltApplication>}       Promise resolving to app when all is loaded.
  */
 async function _boltLoader(app) {
-	const root = [...app.config.root, ...await getComponentDirectories(app.config.root)];
+	const root = [...app.locals.root, ...await getComponentDirectories(app.locals.root)];
 	const boltDirectories = (await bolt.directoriesInDirectory(root, ['bolt']))
 		.filter(dirPath=>(dirPath !== boltRootDir + '/bolt'));
 
@@ -241,13 +241,13 @@ async function loadApplication(configPath) {
 	await bolt.emitBefore('initialiseApp');
 	const app = await _loadApplication(configPath);
 	bolt.MODE = new Set();
-	if (app.config.debug) bolt.MODE.add("DEBUG");
-	if (app.config.development) bolt.MODE.add("DEVELOPMENT");
-	if (app.config.production) bolt.MODE.add("PRODUCTION");
-	bolt.LOGLEVEL = app.config.logLevel;
+	if (app.locals.debug) bolt.MODE.add("DEBUG");
+	if (app.locals.development) bolt.MODE.add("DEVELOPMENT");
+	if (app.locals.production) bolt.MODE.add("PRODUCTION");
+	bolt.LOGLEVEL = app.locals.logLevel;
 	bolt.VERSION = {
 		lodash:bolt.VERSION,
-		bolt:app.config.version
+		bolt:app.locals.version
 	};
 	await bolt.emitAfter('initialiseApp', configPath, app);
 }
@@ -269,13 +269,23 @@ class BoltApplication extends express {
 	constructor(config) {
 		super();
 		Object.defineProperties(this, {
-			config: {enumerable: true, configurable: false, value: config, writable: false},
 			routers: {enumerable: true, configurable: false, value: {}, writable: false},
 			controllerRoutes: {enumerable: true, configurable: false, value: {}, writable: true},
 			shortcodes: {enumerable: true, configurable: false, value: {}, writable: false},
 			templates: {enumerable: true, configurable: false, value: {}, writable: false},
 			componentType: {enumerable: true, configurable: false, value: 'app', writable: false}
 		});
+		bolt.merge(this.locals, config);
+	}
+
+	get config() {
+		console.warn('Using app.config is depreciated, please use app.locals instead.');
+		return this.locals;
+	}
+
+	set config(value) {
+		console.warn('Using app.config is depreciated, please use app.locals instead.');
+		return this.config = value;
 	}
 }
 
