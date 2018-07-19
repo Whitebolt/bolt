@@ -8,9 +8,9 @@ function done(component) {
 			if (bolt.isString(message)) {
 				component.res.statusMessage = message;
 			} else if (bolt.isObject(message)) {
-				component.req.doc = component.req.doc || {};
-				Object.assign(component.req.doc, message);
-				component.sendFields = [...(component.sendFields || []), ...Object.keys(component.req.doc)];
+				component.res.locals.doc = component.res.locals.doc || {};
+				Object.assign(component.res.locals.doc, message);
+				component.sendFields = [...(component.sendFields || []), ...Object.keys(component.res.locals.doc)];
 			}
 		}
 	}

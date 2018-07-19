@@ -41,10 +41,12 @@ function applyAndSend(router) {
 	const status = router.status || res.statusCode || 200;
 	const statusMessage = router.statusMessage || res.statusMessage;
 
+	if (!!req.doc) console.warn('Depreciated field of req.doc has been set, please use res.locals.doc instead.');
+
 	function send(content={}) {
 		let data;
 		if (router.sendFields) {
-			data = bolt.pick(req.doc, bolt.makeArray(router.sendFields));
+			data = bolt.pick(res.locals.doc, bolt.makeArray(router.sendFields));
 			if (content && (bolt.isObject(content)?Object.keys(content).length:true)) Object.assign(data, {content});
 		} else {
 			data = content;
@@ -58,7 +60,7 @@ function applyAndSend(router) {
 			.end();
 	}
 
-	if (bolt.get(req, 'doc.data', false) && (bolt.get(req, 'doc._responseMimeType') === 'text/csv')) {
+	if (bolt.get(res, 'locals.doc.data', false) && (bolt.get(res, 'locals.doc._responseMimeType') === 'text/csv')) {
 		return sendCsv(req, res, send);
 	} else if (router.template) {
 		return req.app.applyTemplate(router, req).then(send);
@@ -72,12 +74,12 @@ function applyAndSend(router) {
 }
 
 function sendCsv(req, res, send) {
-	const filename = bolt.get(req, 'doc._responseAttachmentName');
+	const filename = bolt.get(res, 'locals.doc._responseAttachmentName');
 
 	res.type("csv");
 	if (filename) res.attachment(filename);
 
-	const data = bolt.get(req, "doc.data", [[]]).map(
+	const data = bolt.get(res, 'locals.doc.data', [[]]).map(
 		row=>`"`+row.map(field=>bolt.replaceSequence(bolt.toString(field), xCsvReplaceSeq)).join(`","`)+`"`
 	).join(`\n`);
 

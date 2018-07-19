@@ -24,9 +24,10 @@ const templateFunctions = {
 	component: async function (componentName, doc={}, req={}, parent={}) {
 		let _componentName = ('/' + bolt.replaceSequence(componentName, [[rxRelativeDir, this.__componentName], ['//', '/']]));
 		let method = _getMethod(_componentName.split('?').shift(), req.app);
+		const res = req.res;
 
 		if (method) {
-			req.doc = req.doc || doc;
+			res.locals.doc = res.locals.doc || doc;
 			const proxiedReq = new Proxy(req, {
 				get: function(target, property, receiver) {
 					if (property === 'doc') return doc;
@@ -255,7 +256,7 @@ function _getComponent(componentName, app) {
 async function _applyTemplate(router, req=router.req) {
 	let view = false;
 	const app = req.app || router.req;
-	const doc = router.doc || req.doc;
+	const doc = router.doc || req.res.locals.doc;
 	const parent = router.parent || {};
 	let template = _getTemplate(app, router);
 	if (!template) {

@@ -1,7 +1,7 @@
 'use strict';
 
 function doc(component) {
-	return bolt.get(component, 'req.doc', {}, true);
+	return bolt.get(component, 'res.locals.doc', {}, true);
 }
 
 module.exports = doc;
