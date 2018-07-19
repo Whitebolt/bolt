@@ -142,17 +142,24 @@ class ControllerInstructions {
 }
 
 function controllerInstruction(instructions, path) {
-  if (!instructions.has(path)) instructions.set(path, new ControllerInstructions());
-  return instructions.get(path);
+	if (!instructions.has(path)) instructions.set(path, new ControllerInstructions());
+	return instructions.get(path);
+}
+
+function _controllerInstructions(req) {
+	const _req = req.__unproxied || req;
+	if (!requests.has(_req)) requests.set(_req, new Map());
+	return requests.get(_req);
 }
 
 function controllerInstructions(req) {
-  const _req = req.__unproxied || req;
-  if (!requests.has(_req)) requests.set(_req, new Map());
-  return requests.get(_req);
+	const instructions = _controllerInstructions(req);
+	return path=>controllerInstruction(instructions, path);
 }
 
-module.exports = req=>{
-  const instructions = controllerInstructions(req);
-  return path=>controllerInstruction(instructions, path);
-};
+
+function instructions(component) {
+	return controllerInstructions(injectors.req(component));
+}
+
+module.exports = instructions;

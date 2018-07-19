@@ -1,6 +1,7 @@
 'use strict';
 // @annotation zone browser manager server gulp
 
+
 /**
  * @module bolt/bolt
  */
@@ -164,6 +165,8 @@ function objectToArgsArray(obj, parent='', args=[]) {
 	return args;
 }
 
+
 module.exports = {
-	addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject, cloneAndMerge, pickHas, objectLength, objectToArgsArray
+	addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject,
+	cloneAndMerge, pickHas, objectLength, objectToArgsArray
 };

@@ -1,11 +1,11 @@
 'use strict';
 
 module.exports = function() {
-	// @annotation key loadInjectors
+	// @annotation key loadShortcodes
 	// @annotation when after
 	// @annotation once
 
 	return [
-		app=>bolt.loadComponents(app)
+		app=>bolt.loadInjectors(app)
 	];
 };

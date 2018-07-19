@@ -6,11 +6,23 @@
  */
 
 const createControllerScope = require('./controller/scope');
-const injector = require('./controller/injectors');
 const testControllerAnnotationSecurity = require('./controller/securityTests');
 
 
+function injector(params, component, extraParams, method) {
+	const _method = (bolt.annotation.has(method, "controllerMethod") ?
+			bolt.annotation.get(method, "controllerMethod") :
+			method
+	);
 
+	const injectors = bolt.get(component, 'req.app.injectors', {});
+	const dbs = bolt.get(component, 'req.app.dbs', {});
+
+	return params.map(param=>{
+		if (injectors.hasOwnProperty(param)) return injectors[param](component, extraParams, _method);
+		if (dbs.hasOwnProperty(param)) return dbs[param];
+	});
+}
 
 /**
  * @module bolt/bolt
@@ -201,7 +213,7 @@ function  _addControllerRoutesToApplication() {
 		Object.keys(app.controllerRoutes).forEach(route=>{
 			app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
 		});
-		// Removed deep freeze as it was blocking cool stuff with proxy - need fix.
+		// @todo Removed deep freeze as it was blocking cool stuff with proxy - need fix.
 		//_freezeControllers(app);
 		_setAnnotations(app);
 	}, {id:'addControllerRoutesToApplication'});
@@ -284,7 +296,7 @@ async function _loadControllers(component, roots, importObj) {
  */
 async function loadControllers(component, roots, controllers=component.controllers) {
 	await bolt.emitThrough(()=>_loadControllers(component, roots, controllers), 'loadControllers', component);
-	return component;
+	return Promise.resolve(component);
 }
 
 module.exports = {
