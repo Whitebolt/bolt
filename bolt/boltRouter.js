@@ -41,8 +41,6 @@ function applyAndSend(router) {
 	const status = router.status || res.statusCode || 200;
 	const statusMessage = router.statusMessage || res.statusMessage;
 
-	if (!!req.doc) console.warn('Depreciated field of req.doc has been set, please use res.locals.doc instead.');
-
 	function send(content={}) {
 		let data;
 		if (router.sendFields) {
