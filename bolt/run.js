@@ -149,7 +149,8 @@ function _runApp(app) {
 			bolt.makeArray(app.locals.modules).forEach((module, n)=>console.log(module.name, module.version));
 
 			bolt.emit('appRunning', config.name, process.hrtime(global.startTime));
-			resolve(app);
+
+			return resolve(app);
 		});
 
 		server.keepAliveTimeout = 60000 * 2;

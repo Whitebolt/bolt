@@ -21,21 +21,27 @@ function compile(event) {
 	}
 }
 
-function saveToCache(fileName, transpiledContent) {
+function saveToCache(fileName, transpiledContent, originalFileName) {
 	const cacheDir = path.join(boltRootDir, 'cache', 'jsx');
 	const cacheFileName = path.join(cacheDir, fileName);
 
-	setImmediate(async ()=>{
-		await bolt.makeDirectory(cacheDir);
-		write(cacheFileName, transpiledContent);
-	});
+	return new Promise(async (resolve, reject)=>setImmediate(async ()=>{
+		try {
+			await bolt.makeDirectory(cacheDir);
+			await write(cacheFileName, transpiledContent);
+			bolt.__transpiled.set(originalFileName, cacheFileName);
+			resolve(cacheFileName);
+		} catch(err) {
+			return reject(err);
+		}
+	}));
 }
 
 function transpile(event) {
 	if (Buffer.isBuffer(event.config.content)) event.content = event.config.content.toString();
 
 	try {
-		const transpiledFileName = (bolt.__transpiled.has(event.target) ?
+		const transpiledFileName = Promise.resolve(bolt.__transpiled.has(event.target) ?
 			bolt.__transpiled.get(event.target) :
 			event.target
 		);
@@ -62,7 +68,11 @@ function transpile(event) {
 				filename: event.target
 			}).code;
 
-			saveToCache(`cache${event.target.replace(xPathSep, '-')}.js`, event.config.content);
+			bolt.__transpiled.set(event.target, saveToCache(
+				`cache${event.target.replace(xPathSep, '-')}.js`,
+				event.config.content,
+				event.target
+			));
 		}
 	} catch(error) {
 		console.error(error || event.config.content.toString());

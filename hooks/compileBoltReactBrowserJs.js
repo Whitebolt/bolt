@@ -28,9 +28,16 @@ module.exports = function(){
 		const exportEventType = 'exportReactComponentToBrowser';
 		const requireMap = [];
 
+		const transpiled = await Promise.all(bolt.chain(files)
+			.map(async (target)=>(
+				(bolt.__transpiled.has(target)) ?
+					[await Promise.resolve(bolt.__transpiled.get(target)), target]:
+					[target, target]
+			))
+			.value()
+		);
 
-		const names = bolt.chain(files)
-			.map(target=>((bolt.__transpiled.has(target)) ? [bolt.__transpiled.get(target), target]: [target, target]))
+		const names = bolt.chain(transpiled)
 			.map(([target, orginalTarget])=>{
 				const exports = require(target);
 				if (bolt.annotation.get(exports, 'browser-export') !== false) {
