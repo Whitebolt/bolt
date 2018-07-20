@@ -25,6 +25,8 @@ const consts = {
 	xIsInt: /^[0-9]+$/,
 	xIsRequireId: /^require\./,
 	xSubstitutions: /\$\{(.*?)\}/g,
+	xSubstitutionsAt: /\@\{(.*?)\}/g,
+	xTemplateIdAt: /\@\{/g,
 	chars: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split(''),
 	xStackFindProxy: /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/,
 	xCasted: /\:\:(.*)/,

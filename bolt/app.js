@@ -5,9 +5,9 @@
  * @module bolt/bolt
  */
 
-const ejs = require('@simpo/ejs');
 const path = require('path');
 const chalk = require('chalk');
+const {xTemplateIdAt} = bolt.consts;
 const {loadBoltModules} = loadLibModule('loaders');
 
 /**
@@ -15,15 +15,6 @@ const {loadBoltModules} = loadLibModule('loaders');
  *  @see {https://github.com/Whitebolt/ejs/blob/master/lib/ejs.js}
  */
 
-/**
- * @type {external:ejsOptions}
- */
-const ejsOptions = Object.freeze({
-	strict: true,
-	localsName: ['params'],
-	awaitPromises: true,
-	_with: false
-});
 
 /**
  * Take a config object and register log events according to the the criteria
@@ -35,39 +26,23 @@ const ejsOptions = Object.freeze({
  * @returns {Function}          Unreg function.
  */
 function _registerLogEvent(config) {
-	let description = ejs.compile(config.description, ejsOptions);
-	let property = config.property?ejs.compile(config.property, ejsOptions):undefined;
+	const _config = JSON.stringify(config).replace(xTemplateIdAt, '${');
+	const channel = '/logging';
 
 	return bolt.on(config.event, (...params) => {
-		let level = config.level || 3; // Placed here so level can be changed in-flight.
-		const channel = '/logging';
+		const level = config.level || 3; // Placed here so level can be changed in-flight.
+		const messageData = JSON.parse(bolt.substituteEs6(_config, {params}));
 
-		let promises = [
-			description(params).then(txt=>bolt.entityDecode(txt)),
-			(config.property ? property(params) : Promise.resolve(params[0]))
-				.then(txt=>bolt.entityDecode(txt))
-		];
-
-		Promise.all(promises).then(([description, property])=>{
-			let message = {
-				level,
-				type: config.action || config.event,
-				description,
-				property,
-				style: {
-					property: {
-						colour: config.propertyColour || 'yellow'
-					},
-					type: {
-						colour: config.typeColour || 'green'
-					},
-					description: {
-						colour: config.descriptionColour || 'white'
-					}
-				}
-			};
-
-			bolt.publish(channel, message);
+		return bolt.publish(channel, {
+			level,
+			type: config.action || config.event,
+			description: messageData.description,
+			property: messageData.property || params[0],
+			style: {
+				property: {colour: config.propertyColour || 'yellow'},
+				type: {colour: config.typeColour || 'green'},
+				description: {colour: config.descriptionColour || 'white'}
+			}
 		});
 	});
 }
@@ -81,9 +56,9 @@ function _registerLogEvent(config) {
 function initLogging(app) {
 	app.locals.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
 	_initConsoleLogging(app.locals.logLevel, message=>{
-		const pc = message.data.style.property.colour || 'yellow';
-		const tc = ((message.data.style.type.colour || 'green') + 'Bright').replace('BrightBright', 'Bright');
-		const mc = message.data.style.description.colour || 'white';
+		const pc = bolt.get(message, 'data.style.property.colour', 'yellow');
+		const tc = ((bolt.get(message, 'data.style.type.colour', 'green')) + 'Bright').replace('BrightBright', 'Bright');
+		const mc = bolt.get(message, 'data.style.description.colour', 'white');
 
 		const _message = `[${chalk[tc](message.data.type)}] ${chalk[mc].bold(message.data.description)} ${chalk[pc].italic(message.data.property)}`;
 		console.log(_message)

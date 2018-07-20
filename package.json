@@ -198,13 +198,13 @@
       {
         "event": "configFileLoaded",
         "action": "load",
-        "property": "<%= params[0]; %>",
+        "property": "@{params[0]}",
         "description": "config"
       },
       {
         "event": "configLoaded",
         "action": "init",
-        "property": "<%= Date().toLocaleString(); %>",
+        "property": "@{Date().toLocaleString()}",
         "description": "server",
         "propertyColour": "green"
       },
@@ -224,13 +224,13 @@
         "typeColour": "red",
         "propertyColour": "red",
         "description": "failed bolt module",
-        "property": "<%= params[0] %>"
+        "property": "@{params[0]}"
       },
       {
         "event": "mongoConnected",
         "action": "connect",
         "description": "MongoDb database",
-        "property": "<%= params[0].databaseName %>",
+        "property": "@{params[0].databaseName}",
         "propertyColour": "cyan"
       },
       {
@@ -242,15 +242,15 @@
       {
         "event": "firingControllerMethod",
         "action": "controller",
-        "description": "firing controller method <%= params[0] %> for",
-        "property": "<%= params[1] %>",
+        "description": "firing controller method @{params[0]} for",
+        "property": "@{params[1]}",
         "level": 4
       },
       {
         "event": "runningCronTask",
         "action": "cron",
         "description": "run cron task",
-        "property": "<%= params[0] %>",
+        "property": "@{params[0]}",
         "typeColour": "yellow",
         "propertyColour": "magenta"
       },
@@ -258,37 +258,37 @@
         "event": "createdPidFile",
         "action": "system",
         "description": "created pid file",
-        "property": "<%= params[0] %>",
+        "property": "@{params[0]}",
         "level": 2,
         "propertyColour": "green"
       },
       {
         "event": "addAnnotationParser",
         "action": "load",
-        "description": "annotation <%= params[1] %>",
-        "property": "<%= params[0] %>",
+        "description": "annotation @{params[1]}",
+        "property": "@{params[0]}",
         "level": 3
       },
       {
         "event": "removedPidFile",
         "action": "system",
         "description": "removed pid file",
-        "property": "<%= params[0] %>",
+        "property": "@{params[0]}",
         "level": 2,
         "propertyColour": "green"
       },
       {
         "event": "firingView",
         "action": "view",
-        "description": "firing view <%= params[0] %> for",
-        "property": "<%= params[1] %>",
+        "description": "firing view @{params} for",
+        "property": "@{params[1]}",
         "level": 4
       },
       {
         "event": "gulpLog",
         "action": "gulp",
-        "description": "<%= params[0] %>",
-        "property": "<%= params[1] %>",
+        "description": "@{params[0]}",
+        "property": "@{params[1]}",
         "typeColour": "yellow",
         "propertyColour": "magenta",
         "level": 3
@@ -296,8 +296,8 @@
       {
         "event": "gulpLogGulpfileInfo",
         "action": "gulp",
-        "description": "<%= params[0] %>",
-        "property": "<%= params[1] %>",
+        "description": "@{params[0]}",
+        "property": "@{params[1]}",
         "typeColour": "yellow",
         "propertyColour": "magenta",
         "level": 2
@@ -305,8 +305,8 @@
       {
         "event": "firingTemplate",
         "action": "template",
-        "description": "firing template <%= params[0] %> for",
-        "property": "<%= params[1] %>",
+        "description": "firing template @{params[0]} for",
+        "property": "@{params[1]}",
         "level": 4
       },
       {
@@ -317,13 +317,13 @@
       {
         "event": "loadedModule",
         "action": "module loaded",
-        "description": "<%= params[1] %>ms (<%= params[2] %>)",
+        "description": "@{params[1]}ms (@{params[2]})",
         "level": 1
       },
       {
         "event": "verySlowLoadedModule",
         "action": "slow module",
-        "description": "<%= params[1] %>ms (<%= params[2] %>)",
+        "description": "@{params[1]}ms (@{params[2]})",
         "level": 3,
         "typeColour": "red",
         "propertyColour": "yellow",
@@ -332,7 +332,7 @@
       {
         "event": "slowLoadedModule",
         "action": "slow module",
-        "description": "<%= params[1] %>ms (<%= params[2] %>)",
+        "description": "@{params[1]}ms (@{params[2]})",
         "level": 3,
         "typeColour": "yellow",
         "propertyColour": "yellow",
@@ -341,12 +341,12 @@
       {
         "event": "appRunning",
         "action": "running",
-        "description": "<%= params[1][0] %>.<%= params[1][1].toString().substr(0,3) %>s"
+        "description": "@{params[1][0]}.@{params[1][1].toString().substr(0,3)}s"
       },
       {
         "event": "sqlQuery",
         "action": "sql",
-        "property": "<%= params[0] %>",
+        "property": "@{params[0]}",
         "propertyColour": "blue",
         "description": "database query",
         "level": 2
@@ -354,15 +354,15 @@
       {
         "event": "sqlQueryResults",
         "action": "database result",
-        "property": "<%= params[0] %>",
+        "property": "@{params[0]}",
         "propertyColour": "blue",
-        "description": "<%= params[1] %> rows",
+        "description": "@{params[1]} rows",
         "level": 2
       },
       {
         "event": "sqlQueryNoResults",
         "action": "database result",
-        "property": "<%= params[0] %>",
+        "property": "@{params[0]}",
         "propertyColour": "blue",
         "typeColour": "yellow",
         "description": "zero rows",
@@ -371,32 +371,32 @@
       {
         "event": "exportBoltToBrowserGlobal",
         "action": "export",
-        "property": "<%= params[0].target %>",
+        "property": "@{params[0].target}",
         "description": "bolt browser export"
       },
       {
         "event": "exportReactComponentToBrowser",
         "action": "export",
-        "property": "<%= params[0].target %>",
-        "description": "ReactBolt.<%= params[0].name %>"
+        "property": "@{params[0].target}",
+        "description": "ReactBolt.@{params[0].name}"
       },
       {
         "event": "exportReduxTypesToBrowser",
         "action": "export",
-        "property": "<%= params[0].target %>",
-        "description": "ReduxBolt.types.<%= params[0].name %>"
+        "property": "@{params[0].target}",
+        "description": "ReduxBolt.types.@{params[0].name}"
       },
       {
         "event": "exportReduxReducersToBrowser",
         "action": "export",
-        "property": "<%= params[0].target %>",
-        "description": "ReduxBolt.reducers.<%= params[0].name %>"
+        "property": "@{params[0].target}",
+        "description": "ReduxBolt.reducers.@{params[0].name}"
       },
       {
         "event": "exportReduxActionCreatorsToBrowser",
         "action": "export",
-        "property": "<%= params[0].target %>",
-        "description": "ReduxBolt.actionCreators.<%= params[0].name %>"
+        "property": "@{params[0].target}",
+        "description": "ReduxBolt.actionCreators.@{params[0].name}"
       },
       {
         "event": "loadedRouter",
@@ -442,15 +442,15 @@
       {
         "event": "appListening",
         "action": "listen",
-        "description": "Bolt Server on <%= params[0] %>",
-        "property": "<%= params[1].join(', ') %>",
+        "description": "Bolt Server on @{params[0]}",
+        "property": "@{params[1].join(', ')}",
         "propertyColour": "green"
       },
       {
         "event": "afterRunApp",
         "action": "loaded",
         "description": "Bolt Server",
-        "property": "<%= Date().toLocaleString(); %>",
+        "property": "@{Date().toLocaleString()}",
         "propertyColour": "green"
       }
     ],

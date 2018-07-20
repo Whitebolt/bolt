@@ -102,19 +102,30 @@ function lopGen(text, seperator='/') {
 	};
 }
 
-function substituteCSP(txt, obj=(bolt.isObject(txt)?txt:{})) {
-	if (bolt.isObject(txt)) return JSON.parse(substituteCSP(JSON.stringify(txt), obj));
+function substituteCSP(txt, obj=(bolt.isObject(txt)?txt:{}), matcher=xSubstitutions) {
+	if (bolt.isObject(txt)) return JSON.parse(substituteCSP(JSON.stringify(txt), obj, matcher));
 
 	let match;
 	let count = 0;
-	while (match = xSubstitutions.exec(txt)) {
+	while (match = matcher.exec(txt)) {
 		if (bolt.has(obj, match[1])) {
 			txt = txt.replace(match[0], bolt.get(obj, match[1]));
 			count++;
 		}
 	}
 
-	return ((count>0)?substituteCSP(txt, obj):txt);
+	return ((count>0)?substituteCSP(txt, obj, matcher):txt);
+}
+
+function substituteEs6(txt, obj={}) {
+	try {
+		return (new Function(...[
+			...Object.keys(obj),
+			'return `' + txt + '`;'
+		]))(...Object.keys(obj).map(key=>obj[key]));
+	} catch (error) {
+		return txt;
+	}
 }
 
 function upperCamelCase(value) {
@@ -125,5 +136,5 @@ function upperCamelCase(value) {
 
 module.exports = {
 	replaceLast, randomString, splitAndTrim, dateFormat, replaceSequence, runTemplate, lop, lopGen,
-	substituteCSP, upperCamelCase
+	substituteCSP, upperCamelCase, substituteEs6
 };
