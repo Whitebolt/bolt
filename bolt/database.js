@@ -72,16 +72,15 @@ function _importInterfaces(interfaces, exports) {
  * @public
  * @returns {Promise.<Object>}    The object to export.
  */
-function _exports() {
-	return require.import('./database/interfaces/', {
+async function _exports() {
+	const interfaces = await require.import('./database/interfaces/', {
 		merge:true,
 		basedir:__dirname,
 		parent: __filename
-	}).then(interfaces=>{
-		let exports = {loadDatabases: loadDatabases.bind({}, interfaces)};
-		_importInterfaces(interfaces, exports);
-		return Object.assign(exports, collectionLogic);
 	});
+	const exports = {loadDatabases: loadDatabases.bind({}, interfaces)};
+	_importInterfaces(interfaces, exports);
+	return Object.assign(exports, collectionLogic);
 }
 
 module.exports = _exports();
