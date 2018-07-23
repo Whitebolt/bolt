@@ -141,6 +141,11 @@ class ControllerInstructions {
 	}
 }
 
+function injectorReflect(items, component, extraParams, method) {
+	const injectors = bolt.get(component, 'req.app.injectors', {});
+	return bolt.toObjectMap(items, item=>[item, injectors[item](component, extraParams, method)]);
+}
+
 function controllerInstruction(instructions, path) {
 	if (!instructions.has(path)) instructions.set(path, new ControllerInstructions());
 	return instructions.get(path);
@@ -159,7 +164,8 @@ function controllerInstructions(req) {
 
 
 function instructions(component) {
-	return controllerInstructions(injectors.req(component));
+	const {req} = injectorReflect(['req'], component);
+	return controllerInstructions(req(component));
 }
 
 module.exports = instructions;
