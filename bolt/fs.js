@@ -1,19 +1,18 @@
 'use strict';
 // @annotation zone server
 
+
 const {xTrailingSlash} = bolt.consts;
 const promisify = require('util').promisify || Promise.promisify;
 const path = require('path');
 const fs = {...require('fs')};
 
+
 if (Object.getOwnPropertyDescriptor(fs, 'promises')) Object.defineProperty(fs, 'promises', {
 	get() {return fs.promises}
 });
 
-const fileMemoizeResolver = path=>{
-	if (!settings) settings = require('./settings');
-	return xTrailingSlash.replace(path, '');
-};
+const fileMemoizeResolver = path=>xTrailingSlash.replace(path, '');
 
 
 const {stat, statSync} = createStatMethods();

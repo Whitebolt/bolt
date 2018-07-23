@@ -1,7 +1,14 @@
 'use strict';
 
+const isFunction = require('lodash.isfunction');
+const isObject = require('lodash.isobject');
+const omit = require('lodash.omit');
+
 const _defaultResolver = first=>first;
 
+function objectLength(obj) {
+	return Object.keys(obj).length;
+}
 
 function _memoize(memoized, cache=new Map()) {
 	memoized.cache = cache;
@@ -9,13 +16,13 @@ function _memoize(memoized, cache=new Map()) {
 }
 
 function memoize(fn, options={}) {
-	const {resolver=_defaultResolver, cache=new Map()} = (bolt.isFunction(options) ? {resolver:options} : options);
+	const {resolver=_defaultResolver, cache=new Map()} = (isFunction(options) ? {resolver:options} : options);
 
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
-		if (!!fnOptions && bolt.isObject(fnOptions) && !fnOptions.noCache) {
-			const _fnOptions = bolt.omit(params.pop(), ['noCache']);
-			if (bolt.objectLength(_fnOptions) > 1) return fn(...params, bolt.omit(_fnOptions, ['noCache']));
+		if (!!fnOptions && isObject(fnOptions) && !fnOptions.noCache) {
+			const _fnOptions = omit(params.pop(), ['noCache']);
+			if (objectLength(_fnOptions) > 1) return fn(...params, omit(_fnOptions, ['noCache']));
 			return fn(...params);
 		}
 
@@ -39,14 +46,14 @@ function memoize(fn, options={}) {
 }
 
 function memoizeNode(fn, options={}) {
-	const {resolver=_defaultResolver, cache=new Map()} = (bolt.isFunction(options) ? {resolver:options} : options);
+	const {resolver=_defaultResolver, cache=new Map()} = (isFunction(options) ? {resolver:options} : options);
 
 	function memoized(...params) {
 		const cb = params.pop();
 		const fnOptions = params[params.length-1];
-		if (!!fnOptions && bolt.isObject(fnOptions) && !fnOptions.noCache) {
-			const _fnOptions = bolt.omit(params.pop(), ['noCache']);
-			if (bolt.objectLength(_fnOptions) > 1) return fn(...params, bolt.omit(_fnOptions, ['noCache']), cb);
+		if (!!fnOptions && isObject(fnOptions) && !fnOptions.noCache) {
+			const _fnOptions = omit(params.pop(), ['noCache']);
+			if (objectLength(_fnOptions) > 1) return fn(...params, omit(_fnOptions, ['noCache']), cb);
 			return fn(...params, cb);
 		}
 
@@ -61,13 +68,13 @@ function memoizeNode(fn, options={}) {
 }
 
 function memoizePromise(fn, options={}) {
-	const {resolver=_defaultResolver, cache=new Map()} = (bolt.isFunction(options) ? {resolver:options} : options);
+	const {resolver=_defaultResolver, cache=new Map()} = (isFunction(options) ? {resolver:options} : options);
 
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
-		if (!!fnOptions && bolt.isObject(fnOptions) && !fnOptions.noCache) {
-			const _fnOptions = bolt.omit(params.pop(), ['noCache']);
-			if (bolt.objectLength(_fnOptions) > 1) return fn(...params, bolt.omit(_fnOptions, ['noCache']));
+		if (!!fnOptions && isObject(fnOptions) && !fnOptions.noCache) {
+			const _fnOptions = omit(params.pop(), ['noCache']);
+			if (objectLength(_fnOptions) > 1) return fn(...params, omit(_fnOptions, ['noCache']));
 			return fn(...params);
 		}
 

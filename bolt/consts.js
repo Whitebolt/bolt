@@ -1,5 +1,5 @@
 'use strict';
-// @annotation zone server gulp manager
+// @annotation zone server gulp manager browser
 
 const {memoizeRegExp} = require('./memoize');
 
@@ -31,10 +31,13 @@ const consts = {
 	xStackFindProxy: /[\S\s]+ Proxy\.([^\s]+) \((.*?)\:/,
 	xCasted: /\:\:(.*)/,
 	xDollarDigit: /\$\d+/g,
-	xDoubleQuotes: /\"/g
+	xDoubleQuotes: /\"/g,
+	isBrowser: (function(){try {return !!window;} catch (err) {return false;}})()
 };
-
 
 module.exports = {
 	consts
 };
+
+// @todo Need a better way than this hack!
+if (consts.isBrowser) window.bolt = Object.assign(window.bolt || {}, module.exports);

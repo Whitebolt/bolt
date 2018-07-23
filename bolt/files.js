@@ -34,6 +34,14 @@ async function fileExists(filePath) {
 	return false;
 }
 
+function fileExistsSync(filePath) {
+	try {
+		if (bolt.isDirectorySync(filePath)) return true;
+		if (bolt.isFileSync(filePath)) return true;
+	} catch(err) {}
+	return false;
+}
+
 function _startsWithUpperCase(txt) {
 	return (txt[0] === txt[0].toUpperCase());
 }
@@ -225,6 +233,7 @@ async function grant(dir, uid, gid) {
 module.exports = {
 	directoriesInDirectory,
 	fileExists,
+	fileExistsSync,
 	filesInDirectory,
 	fs,
 	getCallerFileName,

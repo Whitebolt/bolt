@@ -83,6 +83,9 @@
     "joi": "^13.0.2",
     "lodash": "^4.17.4",
     "lodash-cli": "^4.17.4",
+    "lodash.isfunction": "^3.0.9",
+    "lodash.isobject": "^3.0.2",
+    "lodash.omit": "^4.5.0",
     "magic-string": "^0.25.0",
     "md5": "^2.2.1",
     "mime": "^2.3.1",
@@ -160,7 +163,7 @@
         "react",
         "react-dom",
         "redux",
-        "@simpo/websocket-express"
+        "@simpo/websocket-express:websockets-express"
       ]
     },
     "serverConfigPath": "/etc/bolt",
@@ -308,6 +311,13 @@
         "description": "firing template @{params[0]} for",
         "property": "@{params[1]}",
         "level": 4
+      },
+      {
+        "event": "mountFilesystem",
+        "action": "mount",
+        "description": "@{params[1]}",
+        "property": "for: @{params[0]}",
+        "level": 3
       },
       {
         "event": "loadedHook",
