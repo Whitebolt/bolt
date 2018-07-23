@@ -163,9 +163,9 @@ function controllerInstructions(req) {
 }
 
 
-function instructions(component) {
-	const {req} = injectorReflect(['req'], component);
-	return controllerInstructions(req(component));
+function instructions(component, extraParams, method) {
+	const {req} = injectorReflect(['req'], component, extraParams, method);
+	return controllerInstructions(req);
 }
 
 module.exports = instructions;

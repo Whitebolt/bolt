@@ -4,9 +4,7 @@
  * @module bolt/bolt
  */
 
-const Private = loadLibModule('Private');
-
-const $private = new Private();
+const $private = require('@simpo/private').getInstance();
 const {xStackFindProxy} = bolt.consts;
 const controllerContextError = (new bolt.ErrorFactory('ControllerContext')).error;
 
@@ -299,8 +297,7 @@ function createComponentScope(controller) {
  * @returns {Proxy}
  */
 function createControllerScope(controller, router, extraParams) {
-	let component = bolt.annotation.get(controller, 'parent');
-	let name = bolt.annotation.get(controller, 'name');
+	const [component, name] = bolt.annotation.get(controller, ['parent', 'name']);
 
 	if ($private.has(component.controllers[name], 'controllerScope')) return $private.get(component.controllers[name], 'controllerScope');
 	let scope = new Proxy(component.controllers[name], {

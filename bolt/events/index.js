@@ -2,12 +2,9 @@
 
 
 const EventEmitter =  require('events');
-const Private = loadLibModule('Private');
+const $private = require('@simpo/private').getInstance();
 const util = require('util');
 const setImmediatePromise = util.promisify(setImmediate);
-
-
-const $private = new Private();
 
 
 function makeArray(ary) {

@@ -693,16 +693,21 @@
     is-root "^1.0.0"
     lru-cache "^2.5.0"
 
-"@simpo/object-annotations@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@simpo/object-annotations/-/object-annotations-1.2.0.tgz#dbfe6887784a5d1416a294ed38dc1d97db0df955"
+"@simpo/object-annotations@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@simpo/object-annotations/-/object-annotations-1.3.0.tgz#7b434c8dc4e57003db09eb6296ca16e7f402c541"
   dependencies:
+    "@simpo/private" "^0.3.0"
     lodash.findindex "^4.6.0"
     lodash.isequal "^4.5.0"
     lodash.isobject "^3.0.2"
     lodash.isregexp "^4.0.1"
     lodash.isstring "^4.0.1"
     lodash.union "^4.6.0"
+
+"@simpo/private@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@simpo/private/-/private-0.3.0.tgz#0a0dcf39161011078b14acbbbd1ad4d0b70de03c"
 
 "@simpo/rollup-vinyl-adaptor@^1.26.0":
   version "1.26.0"
@@ -4957,11 +4962,12 @@ require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
 
-require-extra@^1.10.2:
-  version "1.10.2"
-  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.10.2.tgz#cbb45e66692e5f218972eac521ff5c298a7c5920"
+require-extra@^1.11.1:
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.11.1.tgz#737df006aa7846f62d07d8ec491ce389c98beca0"
   dependencies:
     "@babel/plugin-proposal-decorators" "^7.0.0-beta.35"
+    "@simpo/private" "^0.3.0"
     babel-polyfill "^6.26.0"
     callsite "^1.0.0"
     lodash "^4.17.5"
