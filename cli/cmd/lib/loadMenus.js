@@ -54,11 +54,22 @@ async function showLoadMenus(args) {
 		siteConfig.development = ((process.getuid && process.getuid() !== 0)?true:args.development) || siteConfig.development;
 		siteConfig.production = ((process.getuid && process.getuid() === 0)?true:args.production) || siteConfig.production;
 
-		const questions = siteConfig.questions.filter(question=>{
-			if (!question.profile) return true;
-			if (bolt.makeArray(question.profile).indexOf(args.profile) !== -1) return true;
-		});
+		const questions = siteConfig.questions.filter(question=>(
+			(!question.profile || (bolt.makeArray(question.profile).indexOf(args.profile) !== -1)) &&
+			!bolt.makeArray(question.choices).find(choice=>
+				(choice.hasOwnProperty('cmdOption') && args.hasOwnProperty(choice['cmdOption']))
+			)
+		));
+
 		const answers = await inquirer.prompt(questions);
+
+		siteConfig.questions.forEach(question=>{
+			const answer = bolt.makeArray(question.choices).find(choice=>
+				(choice.hasOwnProperty('cmdOption') && args.hasOwnProperty(choice['cmdOption']))
+			);
+			if (!!answer) bolt.set(answers, question.name, answer);
+		});
+
 		Object.keys(answers).forEach(propPath=>bolt.set(siteConfig, propPath, answers[propPath]));
 		delete siteConfig.questions;
 	}
