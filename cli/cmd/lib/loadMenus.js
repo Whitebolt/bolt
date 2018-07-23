@@ -67,7 +67,7 @@ async function showLoadMenus(args) {
 			const answer = bolt.makeArray(question.choices).find(choice=>
 				(choice.hasOwnProperty('cmdOption') && args.hasOwnProperty(choice['cmdOption']))
 			);
-			if (!!answer) bolt.set(answers, question.name, answer);
+			if (!!answer) bolt.set(answers, question.name, answer.value);
 		});
 
 		Object.keys(answers).forEach(propPath=>bolt.set(siteConfig, propPath, answers[propPath]));
