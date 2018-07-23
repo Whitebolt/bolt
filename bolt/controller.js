@@ -5,21 +5,28 @@
  * @module bolt/bolt
  */
 
+const _setRouteVisibilities = new Set(['public', 'viewOnly', 'protected']);
+const _importOptions = {
+	dirName: 'controllers',
+	eventName: 'loadedController',
+	importOptions: {
+		extensions:['.js']
+	}
+};
+
 const createControllerScope = require('./controller/scope');
 const testControllerAnnotationSecurity = require('./controller/securityTests');
 
 
 function injector(params, component, extraParams, method) {
-	const _method = (bolt.annotation.has(method, "controllerMethod") ?
-			bolt.annotation.get(method, "controllerMethod") :
-			method
-	);
-
-	const injectors = bolt.get(component, 'req.app.injectors', {});
-	const dbs = bolt.get(component, 'req.app.dbs', {});
+	const [controllerMethod, injectors, dbs] = [
+		bolt.annotation.get(method, "controllerMethod", method),
+		bolt.get(component, 'req.app.injectors', {}),
+		bolt.get(component, 'req.app.dbs', {})
+	];
 
 	return params.map(param=>{
-		if (injectors.hasOwnProperty(param)) return injectors[param](component, extraParams, _method);
+		if (injectors.hasOwnProperty(param)) return injectors[param](component, extraParams, controllerMethod);
 		if (dbs.hasOwnProperty(param)) return dbs[param];
 	});
 }
@@ -77,24 +84,26 @@ function _addAnnotationsToControllerMethods({component, sourceMethod, methodPath
  * @param {Object} config.controller              The parent controller.
  * @returns {Function}                            The method to fire for given controller method.
  */
-function _getControllerMethod(config) {
-	let {sourceMethod, controller} = config;
+function _getControllerMethod({sourceMethod, controller}) {
 	if (bolt.annotation.has(sourceMethod, 'controllerMethod')) return bolt.annotation.get(sourceMethod, 'controllerMethod');
 
-	let params = bolt.parseParameters(sourceMethod);
-	let method = (component, ...extraParams)=>{
-		if (!testControllerAnnotationSecurity(method, component)) return component;
-		bolt.emit('firingControllerMethod', bolt.annotation.get(method, 'methodPath'), bolt.getPathFromRequest(component.req));
-		let scope = createControllerScope(controller, component, extraParams);
-		return sourceMethod.apply(scope, injector(params, component, extraParams, sourceMethod));
+	const params = bolt.parseParameters(sourceMethod);
+	const controllerMethod = (component, ...extraParams)=>{
+		if (!testControllerAnnotationSecurity(sourceMethod, component)) return component;
+		bolt.emit('firingControllerMethod', bolt.annotation.get(sourceMethod, 'methodPath'), bolt.getPathFromRequest(component.req));
+		return sourceMethod.apply(
+			createControllerScope(controller, component, extraParams),
+			injector(params, component, extraParams, sourceMethod)
+		);
 	};
 
-	bolt.annotation.set(sourceMethod, 'controllerMethod', method);
-	bolt.annotation.set(method, 'sourceMethod', sourceMethod);
-	bolt.annotation.link(sourceMethod, method);
+	bolt.annotation.link(sourceMethod, controllerMethod);
+	bolt.annotation.setFrom(sourceMethod, {controllerMethod, sourceMethod});
 
-	return method;
+
+	return controllerMethod;
 }
+
 
 
 /**
@@ -107,13 +116,10 @@ function _getControllerMethod(config) {
  * @param {string} config.name             The method name.
  * @param {string} config.methodPath       The path to the method in the app.
  */
-function _setControllerRoutes(config) {
-	let {methodPath, app, method, name} = config;
-
-	let visibility = bolt.annotation.get(method, 'visibility', 'public');
-	if ((visibility === 'public') || (visibility === 'viewOnly') || (visibility === 'protected')) {
+function _setControllerRoutes({methodPath, app, method, name}) {
+	if (_setRouteVisibilities.has(bolt.annotation.get(method, 'visibility', 'public'))) {
 		_getMethodPaths(methodPath).forEach((methodPath, priority) => {
-			let _methodPath = methodPath.length?methodPath:'/';
+			const _methodPath = methodPath.length?methodPath:'/';
 			bolt.addDefaultObjects(app.controllerRoutes, _methodPath, true);
 
 			app.controllerRoutes[_methodPath].forEach(route=>{
@@ -136,14 +142,13 @@ function _setControllerRoutes(config) {
  * @returns {Object}                    All controller routes for application.
  */
 function _assignControllerRoutes(component, controller, controllerName) {
-	let app = bolt.getApp(component);
+	const app = bolt.getApp(component);
 	bolt.addDefaultObjects(app, "controllerRoutes");
 	_setComponentAndControllerAnnotations(component, controller, controllerName);
 
-	Object.keys(controller).forEach(name=>{
-		let sourceMethod = controller[name];
-		let methodPath = component.path + '/' + controllerName + '/' + name;
-		let method = _getControllerMethod({sourceMethod, controller});
+	bolt.forOwn(controller, (sourceMethod, name)=>{
+		const methodPath = `${component.path}/${controllerName}/${name}`;
+		const method = _getControllerMethod({sourceMethod, controller});
 		_addAnnotationsToControllerMethods({component, methodPath, sourceMethod});
 		_setControllerRoutes({methodPath, app, name, method});
 	});
@@ -155,34 +160,15 @@ function _assignControllerRoutes(component, controller, controllerName) {
  * Add annotations to controllers and components to allow linking between them and referencing of different
  * cascading controllers.
  *
- * @param {BoltComponent} component       The component to annotate.
- * @param {Object} controller             The controller to annotate.
- * @param {string} controllerName         The controller name.
+ * @param {BoltComponent} parent    The component to annotate.
+ * @param {Object} controller       The controller to annotate.
+ * @param {string} name         	The controller name.
  */
-function _setComponentAndControllerAnnotations(component, controller, controllerName) {
-	bolt.annotation.setFrom(controller, {
-		parent: component,
-		name: controllerName
-	});
-	if (!bolt.annotation.get(component, 'controllers')) bolt.annotation.set(component, 'controllers', new Map());
-	let componentControllers = bolt.annotation.get(component, 'controllers');
-	if (!componentControllers.has(controllerName)) componentControllers.set(controllerName, new Set());
-	componentControllers.get(controllerName).add(controller);
-}
-
-/**
- * Deep freeze controller methods and properties.
- *
- * @private
- * @param {BoltApplication|BoltComponent} app     Application or component to freeze controllers on.
- */
-function _freezeControllers(app) {
-	Object.keys(app.components || {}).forEach(componentName=>{
-		Object.keys(app.components[componentName].controllers).forEach(controllerName=>{
-			bolt.deepFreeze(app.components[componentName].controllers[controllerName]);
-			_freezeControllers(app.components[componentName]);
-		});
-	});
+function _setComponentAndControllerAnnotations(parent, controller, name) {
+	bolt.annotation.setFrom(controller, {parent, name});
+	const componentControllers = bolt.annotation.get(parent, 'controllers', new Map());
+	if (!componentControllers.has(name)) componentControllers.set(name, new Set());
+	componentControllers.get(name).add(controller);
 }
 
 /**
@@ -192,11 +178,10 @@ function _freezeControllers(app) {
  * @param {BoltApplication|BoltComponent} app     Application or component to set controller anotations on.
  */
 function _setAnnotations(app) {
-	Object.keys(app.components || {}).forEach(componentName=>{
-		Object.keys(app.components[componentName].controllers).forEach(controllerName=>{
-			bolt.annotation.set(app.components[componentName].controllers[controllerName], 'parent', app.components[componentName]);
-			bolt.annotation.set(app.components[componentName].controllers[controllerName], 'name', controllerName);
-			_setAnnotations(app.components[componentName]);
+	bolt.forOwn(bolt.get(app, 'components', {}), parent=>{
+		bolt.forOwn(bolt.get(parent, 'controllers', {}), (controller, name)=>{
+			bolt.annotation.setFrom(controller, {name, parent});
+			_setAnnotations(parent);
 		});
 	});
 }
@@ -210,9 +195,10 @@ function _setAnnotations(app) {
  */
 function  _addControllerRoutesToApplication() {
 	bolt.beforeOnce('runApp', app=>{
-		Object.keys(app.controllerRoutes).forEach(route=>{
-			app.controllerRoutes[route] = app.controllerRoutes[route].sort(bolt.prioritySorter);
+		bolt.forOwn(bolt.get(app, 'controllerRoutes', []), (methods, route, controllerRoutes)=>{
+			controllerRoutes[route] = controllerRoutes[route].sort(bolt.prioritySorter);
 		});
+
 		// @todo Removed deep freeze as it was blocking cool stuff with proxy - need fix.
 		//_freezeControllers(app);
 		_setAnnotations(app);
@@ -230,30 +216,18 @@ function  _addControllerRoutesToApplication() {
  * @returns {Array}                   The controller array as given in parameters.
  */
 function _addControllerRoutes(component, controllers) {
-	controllers.forEach(
-		controller=>{
-			return Object.keys(controller).forEach( controllerName=>{
-				_assignControllerRoutes(component, controller[controllerName], controllerName);
-			})
-		}
-	);
-
-	return controllers;
+	return bolt.forEachOwn(controllers, (controller, name)=>_assignControllerRoutes(component, controller, name));
 }
 
 /**
  * Set file paths as annotations on controller methods for later reference.
  *
  * @private
- * @param {string} filePath     The full file path.
- * @param {object} controller   The controller to set method file paths on.
+ * @param {string} filePath      The full file path.
+ * @param {object} controllers   The controllers to set method file paths on.
  */
-function _setControllerMethodFilePathAnnotation(filePath, controller) {
-	Object.keys(controller).forEach(controllerName=>
-		Object.keys(controller[controllerName]).forEach(methodName=>
-			bolt.annotation.set(controller[controllerName][methodName], 'filePath', filePath)
-		)
-	)
+function _setControllerMethodFilePathAnnotation(filePath, controllers) {
+	return bolt.forOwnOwn(controllers, controller=>bolt.annotation.set(controller, 'filePath', filePath));
 }
 
 /**
@@ -264,26 +238,19 @@ function _setControllerMethodFilePathAnnotation(filePath, controller) {
  * @private
  * @param {BoltComponent} component       Component object to import into.
  * @param {string|Array.<string>} roots   Root folder(s) to search for controllers.
- * @param {Object} importObject           Object to import into.
+ * @param {Object} controllers            Object to import into.
  * @returns {Promise.<BoltComponent>}     Promise resolving to the supplied component.
  */
-async function _loadControllers(component, roots, importObj) {
-	bolt.on('loadedController', filePath=>_setControllerMethodFilePathAnnotation(filePath, importObj));
+async function _loadControllers(component, roots, controllers) {
+	bolt.on('loadedController', filePath=>_setControllerMethodFilePathAnnotation(filePath, controllers));
 
-	let controllers = await bolt.importIntoObject({
-		roots,
-		importObj,
-		dirName:'controllers',
-		eventName:'loadedController',
-		importOptions: {
-			extensions:['.js']
-		}
-	});
-	_addControllerRoutes(component, controllers);
+	_addControllerRoutes(component, await bolt.importIntoObject({..._importOptions, roots, importObj:controllers}));
 	_addControllerRoutesToApplication();
 
-	return importObj;
+	return controllers;
 }
+
+
 
 /**
  * Search given folders for controllers and import into given component object,

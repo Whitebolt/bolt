@@ -504,7 +504,7 @@
       "controllerContext": {
         "NoProperty": {
           "type": "reference",
-          "message": "Property/Method ${name} does not exist for given controller."
+          "message": "Property/Method @{name} does not exist for given controller."
         },
         "AfterInitProperty": {
           "type": "range",
@@ -524,21 +524,21 @@
         },
         "NoController": {
           "type": "range",
-          "message": "Controller ${name} does not exist on given component."
+          "message": "Controller @{name} does not exist on given component."
         }
       },
       "ErrorFactory": {
         "IncorrectDomain": {
           "type": "syntax",
-          "message": "Error domain ${domain} does not exist."
+          "message": "Error domain @{domain} does not exist."
         },
         "IncorrectId": {
           "type": "syntax",
-          "message": "Error id ${id} does not exist in domain: ${domain}."
+          "message": "Error id @{id} does not exist in domain: ${domain}."
         },
         "IncorrectType": {
           "type": "syntax",
-          "message": "Error type ${errorType} does not exist for domain: ${domain}."
+          "message": "Error type @{errorType} does not exist for domain: ${domain}."
         }
       }
     }

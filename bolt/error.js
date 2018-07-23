@@ -2,6 +2,7 @@
 // @annotation zone server manager
 
 const errorClasses = new Map();
+const {xSubstitutionsAt} = bolt.consts || require('./consts');
 
 let errorConfig;
 bolt.on('configLoaded', config=>{
@@ -30,7 +31,7 @@ class ErrorFactory {
 
 		const message = {
 			...bolt.omit(errorConfig[this.domain][id], ['type']),
-			message: bolt.substituteCSP(errorConfig[this.domain][id].message, data)
+			message: bolt.substituteCSP(errorConfig[this.domain][id].message, data, xSubstitutionsAt)
 		};
 
 		return new errorClass((Object.keys(message).length > 1)?message:message.message);

@@ -154,8 +154,18 @@ function objectToArgsArray(obj, parent='', args=[]) {
 	return args;
 }
 
+function forOwnOwn(obj, iterator) {
+	bolt.forOwn(obj, value=>bolt.forOwn(value, iterator));
+	return obj;
+}
+
+function forEachOwn(ary, iterator) {
+	bolt.forEach(ary, value=>bolt.forOwn(value, iterator));
+	return ary;
+}
+
 
 module.exports = {
 	addDefaultObjects, toKeyValueArray, parseTemplatedJson, pickDeep, deepFreeze, substituteInObject,
-	cloneAndMerge, pickHas, objectLength, objectToArgsArray
+	cloneAndMerge, pickHas, objectLength, objectToArgsArray, forOwnOwn, forEachOwn
 };
