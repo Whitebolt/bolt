@@ -20,7 +20,7 @@ function memoize(fn, options={}) {
 
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
-		if (!!fnOptions && isObject(fnOptions) && !fnOptions.noCache) {
+		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
 			const _fnOptions = omit(params.pop(), ['noCache']);
 			if (objectLength(_fnOptions) > 1) return fn(...params, omit(_fnOptions, ['noCache']));
 			return fn(...params);
@@ -51,7 +51,7 @@ function memoizeNode(fn, options={}) {
 	function memoized(...params) {
 		const cb = params.pop();
 		const fnOptions = params[params.length-1];
-		if (!!fnOptions && isObject(fnOptions) && !fnOptions.noCache) {
+		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
 			const _fnOptions = omit(params.pop(), ['noCache']);
 			if (objectLength(_fnOptions) > 1) return fn(...params, omit(_fnOptions, ['noCache']), cb);
 			return fn(...params, cb);
@@ -72,7 +72,7 @@ function memoizePromise(fn, options={}) {
 
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
-		if (!!fnOptions && isObject(fnOptions) && !fnOptions.noCache) {
+		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
 			const _fnOptions = omit(params.pop(), ['noCache']);
 			if (objectLength(_fnOptions) > 1) return fn(...params, omit(_fnOptions, ['noCache']));
 			return fn(...params);
