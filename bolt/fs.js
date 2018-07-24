@@ -2,17 +2,17 @@
 // @annotation zone server
 
 
-const {xTrailingSlash} = bolt.consts;
 const promisify = require('util').promisify || Promise.promisify;
 const path = require('path');
 const fs = {...require('fs')};
+const trimEnd  = bolt.memoize(bolt.trimEnd);
 
 
 if (Object.getOwnPropertyDescriptor(fs, 'promises')) Object.defineProperty(fs, 'promises', {
 	get() {return fs.promises}
 });
 
-const fileMemoizeResolver = path=>xTrailingSlash.replace(path, '');
+const fileMemoizeResolver = _path=>trimEnd(_path, path.sep);
 
 
 const {stat, statSync} = createStatMethods();

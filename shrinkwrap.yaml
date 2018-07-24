@@ -80,7 +80,6 @@ dependencies:
   react: 16.4.1
   react-dom: 16.4.1
   redux: 4.0.0
-  require-extra: 1.11.1
   require-like: 0.1.2
   rollup: 0.62.0
   rollup-plugin-babel: 4.0.0-beta.7
@@ -1611,10 +1610,6 @@ packages:
     optional: true
     resolution:
       integrity: sha512-4TgWfe9SF+bUy5cCql8gWHqKNrviufNwSYxLjf2utB0pY4+bdcuFwMmY1hDB+67Gz/L1vmhFNhePAjJTFBtV+Q==
-  /callsite/1.0.0:
-    dev: false
-    resolution:
-      integrity: sha1-KAOY5dZkvXQDi28JBRU+borxvCA=
   /camelcase-keys/2.1.0:
     dependencies:
       camelcase: 2.1.1
@@ -5664,19 +5659,6 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-jGStX9MNqxyXbiNE/+f3kqam30I=
-  /require-extra/1.11.1:
-    dependencies:
-      '@babel/plugin-proposal-decorators': 7.0.0-beta.51
-      '@simpo/private': 0.3.0
-      babel-polyfill: 6.26.0
-      callsite: 1.0.0
-      lodash: 4.17.10
-      require-like: 0.1.2
-      resolve: 1.8.1
-      semver: 5.5.0
-    dev: false
-    resolution:
-      integrity: sha512-EoKGom7TC3x9r1f3uvwX5PKHMHt+B+RBYNnLUJ4Z/mcQFG4dZlrvo/DtRewG2G3gA759bbb4+KVj/atUAGhh4g==
   /require-like/0.1.2:
     dev: false
     resolution:
@@ -7057,7 +7039,7 @@ specifiers:
   react: ^16.4.1
   react-dom: ^16.4.1
   redux: ^4.0.0
-  require-extra: ^1.11.1
+  require-extra: ^1.11.3
   require-like: ^0.1.2
   rollup: ^0.62.0
   rollup-plugin-babel: ^4.0.0-beta.4

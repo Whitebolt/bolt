@@ -4962,9 +4962,9 @@ require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
 
-require-extra@^1.11.1:
-  version "1.11.1"
-  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.11.1.tgz#737df006aa7846f62d07d8ec491ce389c98beca0"
+require-extra@^1.11.3:
+  version "1.11.3"
+  resolved "https://registry.yarnpkg.com/require-extra/-/require-extra-1.11.3.tgz#17f45e8345c3c319f4610922467881c739800950"
   dependencies:
     "@babel/plugin-proposal-decorators" "^7.0.0-beta.35"
     "@simpo/private" "^0.3.0"
