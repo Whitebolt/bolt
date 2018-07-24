@@ -11,19 +11,18 @@ const cspReplace = 'window';
 
 function fn(
 	gulp, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve, rollupPluginCommonjs, rollupPluginJson,
-	settings, replaceWithSourcemaps, done, rollup, rollupVinylAdaptor
+	settings, replaceWithSourcemaps, done, rollup, rollupVinylAdaptor, babelResolveTransform
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};
 	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
-	const dest = path.join(config.boltRootDir, 'private', config.name, webPath);
-	const cacheDir = path.join(config.boltRootDir, 'cache', config.name);
+	const dest = path.join(config.boltRootDir, 'public', 'dynamic', config.name, webPath);
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
 			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
-			input: path.join(cacheDir, `${config.outputName}.js`),
+			input: path.join(config.cacheDir, `${config.outputName}.js`),
 			plugins: [
 				rollupNodeResolve({
 					...bolt.get(config, 'browserExport.nodeResolve', {}),
@@ -40,8 +39,8 @@ function fn(
 					sourceMaps: true,
 					presets: bolt.get(config, 'browserExport.babel.presets', []),
 					plugins: [
+						babelResolveTransform(bolt.pick(config, ['root'])),
 						'@babel/plugin-external-helpers',
-						['@babel/plugin-proposal-class-properties', {loose:true}],
 						...bolt.get(config, 'browserExport.babel.plugins', [])
 					]
 				})
@@ -53,7 +52,7 @@ function fn(
 			sourcemap: true
 		}
 	})
-		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir, id:cacheId, waiting, done}))
+		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir:config.cacheDir, id:cacheId, waiting, done}))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(rename(path=>{path.dirname = '';}))
 		.pipe(replaceWithSourcemaps(xBreakingInCSPGetGlobal, cspReplace))

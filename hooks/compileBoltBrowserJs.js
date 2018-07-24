@@ -2,6 +2,7 @@
 
 const path = require('path');
 const write = require('util').promisify(require('fs').writeFile);
+
 const filesId = '__modules';
 
 
@@ -18,7 +19,7 @@ module.exports = function(app) {
 		if (!bolt[filesId]) return;
 		let contents = '';
 		const name = 'bolt';
-		const cacheDir = path.join(boltRootDir, 'cache', app.locals.name);
+		const cacheDir = bolt.getCacheDir(app);
 		const outputFilename = path.join(cacheDir, `${name}.js`);
 		const files = [...bolt[filesId]];
 		const exportedLookup = new Set();
@@ -88,10 +89,6 @@ module.exports = function(app) {
 		await bolt.makeDirectory(cacheDir);
 		await write(outputFilename, contents);
 
-		bolt.runGulp('bolt', app, [
-			`--outputName=${name}`,
-			`--contents=${contents}`,
-			`--boltRootDir=${boltRootDir}`
-		]);
+		bolt.emit('boltBrowserCompiled', {app, name, filesId});
 	});
 };

@@ -14,6 +14,7 @@ if (Object.getOwnPropertyDescriptor(_fs, 'promises')) {
 }
 const util = require('util');
 const path = require('path');
+const os = require('os');
 const fs = {};
 const exec = util.promisify(require('child_process').exec);
 
@@ -201,7 +202,19 @@ async function makeDirectory(dir) {
 	await bolt.mapAsync(ancestors, async (dir)=>{
 		try {
 			if (!(await fileExists(dir))) await fs.mkdir(dir);
-		} catch(error) {}
+		} catch(err) {}
+	});
+}
+
+function makeDirectorySync(dir) {
+	const ancestors = _getAncestors(dir);
+
+	bolt.map(ancestors, dir=>{
+		try {
+			if (!(fileExistsSync(dir))) fs.mkdirSync(dir);
+		} catch(err) {
+			console.log(err);
+		}
 	});
 }
 
@@ -230,6 +243,14 @@ async function grant(dir, uid, gid) {
 	});
 }
 
+function getCacheDir(app) {
+	return path.join(
+		os.tmpdir(),
+		'bolt',
+		(bolt.isString(app)?app:bolt.get(app, 'locals.name', 'unknown'))
+	);
+}
+
 module.exports = {
 	directoriesInDirectory,
 	fileExists,
@@ -240,5 +261,7 @@ module.exports = {
 	getRoot,
 	grant,
 	isPathRelativeTo,
-	makeDirectory
+	makeDirectory,
+	makeDirectorySync,
+	getCacheDir
 };

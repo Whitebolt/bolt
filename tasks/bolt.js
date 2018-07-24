@@ -2,7 +2,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 const gulpBoltBrowser = require('../lib/gulpBoltBrowser');
 
 const cacheId = 'gulpBolt';
@@ -10,18 +9,17 @@ const cacheId = 'gulpBolt';
 
 function fn(
 	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
-	rollupPluginCommonjs, settings, done, rollup, rollupPluginJson
+	rollupPluginCommonjs, settings, done, rollup, rollupPluginJson, babelResolveTransform
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};
 	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
-	const dest = path.join(config.boltRootDir, 'private', config.name, webPath);
-	const cacheDir = path.join(config.boltRootDir, 'cache', config.name);
+	const dest = path.join(config.boltRootDir, 'public', 'dynamic', config.name, webPath);
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
-			input: path.join(cacheDir, `${config.outputName}.js`),
+			input: path.join(config.cacheDir, `${config.outputName}.js`),
 			external: ['text-encoding'],
 			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
 			plugins: [
@@ -35,6 +33,7 @@ function fn(
 					externalHelpers: true,
 					sourceMaps: true,
 					plugins: [
+						babelResolveTransform(bolt.pick(config, ['root'])),
 						'@babel/plugin-external-helpers',
 						...bolt.get(config, 'browserExport.babel.plugins', [])
 					]
@@ -52,7 +51,7 @@ function fn(
 			console.error(err);
 			done();
 		})
-		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir, id:cacheId, waiting, done}))
+		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir:config.cacheDir, id:cacheId, waiting, done}))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(rename(path=>{path.dirname = '';}))
 		.pipe(gulpBoltBrowser())

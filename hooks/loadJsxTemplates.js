@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const xPathSep = new RegExp(`\\${path.sep}`, 'g');
 const statCompileScript = fs.statSync(require.resolve('./compileJsxTemplates.js'));
@@ -9,7 +10,7 @@ const stateCompileHere = fs.statSync(__filename);
 
 
 function checkCache(event) {
-	const cacheDir = path.join(boltRootDir, 'cache', 'jsx');
+	const cacheDir = bolt.getCacheDir('jsx');
 	const cacheFileName = path.join(cacheDir, `cache${event.target.replace(xPathSep, '-')}.js`);
 
 	try {

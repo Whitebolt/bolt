@@ -41,8 +41,8 @@ function runGulp(taskName, {locals}, args=[]) {
 
 	let gulpTaskName = 'Unknown';
 	let gulpTaskPath = '';
-
 	let current = '';
+
 	gulp.stdout.on('data',data=>{
 		current += data.toString();
 		if (xNewLine.test(current)) {
@@ -80,12 +80,13 @@ function runGulp(taskName, {locals}, args=[]) {
 
 	gulp.stderr.on('data', data=>console.error('Gulp Error: ', data.toString()));
 
-	gulp.on('close', code=>{
+	return new Promise((resolve, reject)=>gulp.on('close', code=>{
 		const timeTaken = process.hrtime(startTime);
 		let message = `Done in ${timeTaken[0]}.${timeTaken[1].toString().substr(0,3)}s`;
 		if (code > 0) message += ` Exited with code ${code}`;
-		bolt.emit('gulpLog', gulpTaskName, message)
-	});
+		bolt.emit('gulpLog', gulpTaskName, message);
+		return (code>0)?reject(code):resolve(code);
+	}));
 }
 
 function getRollupBundleCache({cacheDir, id}) {

@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const os = require('os');
 const serve = require('serve-static');
 const defaultOptions = {
 	index:false
@@ -15,8 +16,13 @@ const defaultOptions = {
 function init(app) {
 	// @annotation priority 10
 
-	const publicDirs = [path.join('private', app.locals.name||'unknown'), 'public', 'upload'];
+	const publicDirs = [
+		path.join('public', 'dynamic', app.locals.name||'unknown'),
+		path.join('public', 'static'),
+		path.join('public', 'upload')
+	];
 	const exportedModules = new Set();
+
 
 	bolt.chain(bolt.get(app, 'locals.root', []))
 		.map(root=>publicDirs.map(publicDir=>{

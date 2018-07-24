@@ -209,6 +209,9 @@ function getModule(paramName, cwd=process.cwd(), inject={}) {
 					return require(moduleId);
 				} catch(err) {}
 			}
+			try {
+				return require(path.join(settings.boltRootDir, 'lib', paramName));
+			} catch(err) {}
 			return require(bolt.kebabCase(paramName));
 		} catch(err) {
 			console.error(err);

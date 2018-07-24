@@ -2,6 +2,7 @@
 
 const path = require('path');
 const babel = require('@babel/core');
+const os = require('os');
 const write = require('util').promisify(require('fs').writeFile);
 
 const xPathSep = new RegExp(`\\${path.sep}`, 'g');
@@ -22,7 +23,7 @@ function compile(event) {
 }
 
 function saveToCache(fileName, transpiledContent, originalFileName) {
-	const cacheDir = path.join(boltRootDir, 'cache', 'jsx');
+	const cacheDir = bolt.getCacheDir('jsx');
 	const cacheFileName = path.join(cacheDir, fileName);
 
 	return new Promise(async (resolve, reject)=>setImmediate(async ()=>{

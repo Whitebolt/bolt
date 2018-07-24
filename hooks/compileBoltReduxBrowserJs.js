@@ -1,7 +1,7 @@
 'use strict';
 
-const {clearCache} = loadLibModule('build');
 const path = require('path');
+
 const reduxType = ['types', 'actionCreators', 'reducers'];
 const filesId = '__redux';
 const write = require('util').promisify(require('fs').writeFile);
@@ -51,7 +51,7 @@ module.exports = function(){
 	return app=>setImmediate(async ()=>{
 		if (!bolt[filesId]) return;
 		const name = 'ReduxBolt';
-		const cacheDir = path.join(boltRootDir, 'cache', app.locals.name);
+		const cacheDir = bolt.getCacheDir(app);
 		const outputFilename = path.join(cacheDir, `${name}.js`);
 		let contents = 'import regeneratorRuntime from "@babel/runtime/regenerator";';
 		contents += reduxType.map(type=>{
@@ -73,11 +73,6 @@ module.exports = function(){
 		await bolt.makeDirectory(cacheDir);
 		await write(outputFilename, contents);
 
-		bolt.runGulp('redux', app, [
-			`--outputName=${name}`,
-			`--contents=${contents}`,
-			`--boltRootDir=${boltRootDir}`
-		]);
-		clearCache(filesId);
+		bolt.emit('reduxBoltBrowserCompiled', {app, name, filesId});
 	});
 };
