@@ -41,14 +41,19 @@ function processSettings(obj, parent, parentProp) {
 function initSettings() {
 	const cmdArgvs = require('yargs').argv;
 	const cmdArgvSettings = {};
-	if (cmdArgvs && cmdArgvs.settings) {
-		processSettings(Object.assign(cmdArgvSettings, cmdArgvs.settings));
-		delete cmdArgvs.settings;
+
+	if (cmdArgvs) {
+		if (!!cmdArgvs.settings) {
+			processSettings(Object.assign(cmdArgvSettings, cmdArgvs.settings));
+			delete cmdArgvs.settings;
+		}
+		if (!!cmdArgvs.settingsBase64) {
+			Object.assign(cmdArgvSettings, JSON.parse(Buffer.from(cmdArgvs.settingsBase64, 'base64').toString('utf-8')));
+			delete cmdArgvs.settingsBase64;
+		}
 	}
 
 	boltLoad(cmdArgvSettings.boltGulpModules);
-
-	//console.log(Object.keys(bolt).sort().join('\n'));
 
 	const settings = Object.assign(
 		global.settings || {}, {
@@ -60,6 +65,8 @@ function initSettings() {
 		cmdArgvSettings
 	);
 	settings.boltRootDir = settings.boltRootDir || settings.cwd;
+
+	console.log(settings);
 
 	return settings;
 }

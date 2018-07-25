@@ -20,16 +20,18 @@ function runGulp(taskName, {locals}, args=[]) {
 	locals.boltGulpModules = [...bolt.__modules]
 		.filter(target=>(bolt.annotation.get(require(target), 'zone') || new Set()).has('gulp'));
 	const boltConfigPropsDeleteWhenLive = new Set(bolt.makeArray(locals.boltConfigPropsDeleteWhenLive));
-	const gulpConfig = Object.assign(...bolt.chain(locals)
+	const gulpConfig = Buffer.from(JSON.stringify(Object.assign(...bolt.chain(locals)
 		.keys()
 		.filter(key=>!boltConfigPropsDeleteWhenLive.has(key))
 		.map(key=>{
 			return {[key]:locals[key]};
 		})
 		.value()
-	);
+	))).toString('base64');
 
-	const flags = [taskName, ...args, ...bolt.objectToArgsArray(gulpConfig, 'settings')];
+
+
+	const flags = [taskName, ...args, `--settingsBase64=${gulpConfig}`];
 	const gulp = child.spawn('gulp', flags, {cmd: boltRootDir});
 	//console.log(`gulp ${flags.join(' ')}`);
 
