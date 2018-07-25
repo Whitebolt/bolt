@@ -92,10 +92,10 @@ async function _launchNginx(siteName, siteConfig, nginxTemplates, nginxConfig=si
 	const siteAvailable = nginxConfig.sitesAvailable + siteName;
 	const siteEnabled = nginxConfig.sitesEnabled + siteName;
 
-	await bolt.fs.writeFile(
+	await bolt.writeFile(
 		siteAvailable,
 		nginxTemplates[nginxConfig.template],
-		{flags:'w', encoding:'utf-8'}
+		{flags:'w', encoding:'utf-8', createDirectories:true}
 	);
 	await _symlinker(siteAvailable, siteEnabled);
 	await nginx.reload();

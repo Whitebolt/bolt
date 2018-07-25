@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const write = require('util').promisify(require('fs').writeFile);
 
 const filesId = '__react';
 
@@ -108,8 +107,7 @@ module.exports = function(){
 
 		contents += `export default {${names.join(',')}}`;
 
-		await bolt.makeDirectory(cacheDir);
-		await write(outputFilename, contents);
+		await bolt.writeFile(outputFilename, contents);
 
 		bolt.emit('reactBoltBrowserCompiled', {app, name, filesId, requireMap});
 	});

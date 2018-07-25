@@ -67,9 +67,10 @@ process.on('message', message=>{
 	if (message.type === 'config') appLauncher(message.data);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-	console.error('Unhandled Rejection at: Promise', promise, 'reason:', reason);
-});
+process.on(
+	'unhandledRejection',
+	(reason, promise)=>console.error('Unhandled Rejection at: Promise', promise, 'reason:', reason)
+);
 
 
 if (!module.parent && !process.env.pm_uptime) pm2Controller();

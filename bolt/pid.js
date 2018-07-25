@@ -6,11 +6,8 @@ const path = require('path');
 const exec = util.promisify(require('child_process').exec);
 
 
-process.on('warning', e => console.warn(e.stack));
-process.on('uncaughtException', error=>{
-	console.error('uncaughtException', error);
-	//return controller.remove.bind(controller, true);
-});
+process.on('warning', warning=> console.warn(warning.stack));
+process.on('uncaughtException', err=>console.error('uncaughtException', err));
 
 function exitHandler(controller) {
 	process.on('exit', controller.remove.bind(controller, true));
@@ -30,8 +27,7 @@ class Pid_Controller {
 
 	async create() {
 		try {
-			await bolt.makeDirectory(path.dirname(this.pidFile));
-			await bolt.fs.writeFile(this.pidFile, new Buffer(`${this.id}\n`), {flag: 'wx'});
+			await bolt.fs.writeFile(this.pidFile, new Buffer(`${this.id}\n`), {flag: 'wx', createDirectories:true});
 			bolt.emit('createdPidFile', this.pidFile);
 		} catch(error) {
 			console.log(`Failed to create pid file ${this.pidFile}.`);

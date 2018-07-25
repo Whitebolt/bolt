@@ -1,5 +1,5 @@
 'use strict';
-// @annotation zone server
+// @annotation zone server gulp
 
 
 const promisify = require('util').promisify || Promise.promisify;
@@ -20,6 +20,8 @@ const {lstat, lstatSync} = createLstatMethods();
 const {isDirectory, isDirectorySync} = createIsDirectoryMethods();
 const {isFile, isFileSync} = createIsFileMethods();
 const {readdir, readdirSyc} = createReadDirMethods();
+const {writeFile, writeFileSync} = createWriteFileMethods();
+const {openFile, openFileSync} = createOpenMethods();
 
 
 function createStatMethods() {
@@ -131,8 +133,60 @@ function createReadDirMethods() {
 	return {readdir, readdirSync};
 }
 
+function createWriteFileMethods() {
+	const writeFilePromise = !!fs.promises?fs.promises.writeFile:promisify(fs.writeFile);
+	const writePromise = !!fs.promises?fs.promises.write:promisify(fs.write);
+	const writeFile = async (file, data, ...params)=>{
+		const cb = (bolt.isFunction(bolt.nth(params, -1)) ? params.pop() : undefined);
+		const options = {...(bolt.isObject(bolt.nth(params, -1)) ? params.pop() : {})};
+
+		if (!!options.createDirectories) await bolt.makeDirectory(path.dirname(file));
+		if (!!options.json && bolt.isObject(data)) data = JSON.stringify(data);
+
+		if (bolt.isNumber(params[0])) {
+			if (!!cb) return fs.write(file, data, ...[...params, cb]);
+			return writePromise(file, data, ...params);
+		} else {
+			if (!!cb) return fs.writeFile(file, data, bolt.omit(options, ['createDirectories']), cb);
+			return writeFilePromise(file, data, bolt.omit(options, ['createDirectories']));
+		}
+
+	};
+	const writeFileSync = (file, data, ...params)=>{
+		const options = {...(bolt.isObject(bolt.nth(params, -1)) ? params.pop() : {})};
+		if (!!options.createDirectories) bolt.makeDirectorySync(path.dirname(file));
+
+		if (bolt.isNumber(params[0])) return fs.writeSync(file, data, ...params);
+		return fs.writeFileSync(file, data, bolt.omit(options, ['createDirectories']));
+	};
+
+	return {writeFile, writeFileSync};
+}
+
+function createOpenMethods() {
+	const openPromise = !!fs.promises?fs.promises.open:promisify(fs.open);
+
+	const openFile = async (_path, flags, ...params)=>{
+		const cb = (bolt.isFunction(bolt.nth(params, -1)) ? params.pop() : undefined);
+		const options = {...(bolt.isObject(bolt.nth(params, -1)) ? params.pop() : {})};
+
+		if (!!options.createDirectories) await bolt.makeDirectory(path.dirname(_path));
+
+		if (!!cb) return fs.open(_path, flags, ...[...params, cb]);
+		return openPromise(_path, flags);
+	};
+
+	const openFileSync = (_path, flags, ...params)=>{
+		const options = {...(bolt.isObject(bolt.nth(params, -1)) ? params.pop() : {})};
+		if (!!options.createDirectories) bolt.makeDirectorySync(path.dirname(_path));
+		return fs.openSync(_path, flags, ...params);
+	};
+
+	return {openFile, openFileSync};
+}
 
 
 module.exports = {
-	stat, statSync, lstat, lstatSync, isDirectory, isDirectorySync, isFile, isFileSync, readdir, readdirSyc
+	stat, statSync, lstat, lstatSync, isDirectory, isDirectorySync, isFile, isFileSync, readdir, readdirSyc,
+	writeFile, writeFileSync, openFile, openFileSync
 };

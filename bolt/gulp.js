@@ -2,8 +2,8 @@
 // @annotation zone server gulp
 
 const child = require('child_process');
-const write = require('util').promisify(require('fs').writeFile);
 const path = require('path');
+
 
 const {
 	xParseGulpLog,
@@ -29,15 +29,9 @@ function runGulp(taskName, {locals}, args=[]) {
 		.value()
 	);
 
-	const gulp = child.spawn(
-		'gulp',
-		[
-			taskName,
-			...args,
-			...bolt.objectToArgsArray(gulpConfig, 'settings')
-		],
-		{cmd: boltRootDir}
-	);
+	const flags = [taskName, ...args, ...bolt.objectToArgsArray(gulpConfig, 'settings')];
+	const gulp = child.spawn('gulp', flags, {cmd: boltRootDir});
+	//console.log(`gulp ${flags.join(' ')}`);
 
 	let gulpTaskName = 'Unknown';
 	let gulpTaskPath = '';
@@ -92,17 +86,14 @@ function runGulp(taskName, {locals}, args=[]) {
 function getRollupBundleCache({cacheDir, id}) {
 	try {
 		return require(path.join(cacheDir, `${id}.json`));
-	} catch(err) {
-	}
+	} catch(err) {}
+
+	return {};
 }
 
 async function saveRollupBundleCache({bundle, cacheDir, id, waiting, done}) {
 	try {
-		await bolt.makeDirectory(cacheDir);
-		await write(
-			path.join(cacheDir, `${id}.json`),
-			JSON.stringify(bundle)
-		);
+		await bolt.writeFile(path.join(cacheDir, `${id}.json`), bundle, {createDirectories:true, json:true})
 	} catch(err) {
 		console.error(err);
 	}

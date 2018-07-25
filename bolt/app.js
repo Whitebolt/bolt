@@ -88,11 +88,10 @@ function _initConsoleLogging(level, listener) {
  * @private
  * @param {string} logPath    Path to log to.
  */
-function _initAccessLogging(logPath) {
+async function _initAccessLogging(logPath) {
 	if (logPath) {
-		bolt.makeDirectory(path.dirname(logPath)).then(()=>bolt.fs.open(logPath, 'a').then(fd=>{
-			bolt.subscribe('/logging/access', (options, message)=>bolt.fs.write(fd, message));
-		}));
+		const fd = await bolt.openFile(logPath, 'a', {createDirectories:true});
+		bolt.subscribe('/logging/access', (options, message)=>bolt.writeFile(fd, message));
 	}
 }
 

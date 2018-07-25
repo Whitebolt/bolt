@@ -4,7 +4,6 @@ const path = require('path');
 
 const reduxType = ['types', 'actionCreators', 'reducers'];
 const filesId = '__redux';
-const write = require('util').promisify(require('fs').writeFile);
 
 bolt.ExportToBrowserReduxBoltEvent = class ExportToBrowserReduxBoltEvent extends bolt.Event {};
 
@@ -70,8 +69,7 @@ module.exports = function(){
 
 		contents += `export default {${[...reduxType, ...extras].join(',')}};`;
 
-		await bolt.makeDirectory(cacheDir);
-		await write(outputFilename, contents);
+		await bolt.writeFile(outputFilename, contents, {createDirectories:true});
 
 		bolt.emit('reduxBoltBrowserCompiled', {app, name, filesId});
 	});

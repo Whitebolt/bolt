@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const write = require('util').promisify(require('fs').writeFile);
 
 const filesId = '__modules';
 
@@ -86,8 +85,7 @@ module.exports = function(app) {
 		contents += `bolt.VERSION = {lodash:bolt.VERSION, bolt:"${app.locals.version}"}\n`;
 		contents += `export default bolt;`;
 
-		await bolt.makeDirectory(cacheDir);
-		await write(outputFilename, contents);
+		await bolt.writeFile(outputFilename, contents, {createDirectories:true});
 
 		bolt.emit('boltBrowserCompiled', {app, name, filesId});
 	});

@@ -3,7 +3,6 @@
 const path = require('path');
 const babel = require('@babel/core');
 const os = require('os');
-const write = require('util').promisify(require('fs').writeFile);
 
 const xPathSep = new RegExp(`\\${path.sep}`, 'g');
 const xJs = /\.js$/;
@@ -28,8 +27,7 @@ function saveToCache(fileName, transpiledContent, originalFileName) {
 
 	return new Promise(async (resolve, reject)=>setImmediate(async ()=>{
 		try {
-			await bolt.makeDirectory(cacheDir);
-			await write(cacheFileName, transpiledContent);
+			await bolt.writeFile(cacheFileName, transpiledContent, {createDirectories:true});
 			bolt.__transpiled.set(originalFileName, cacheFileName);
 			resolve(cacheFileName);
 		} catch(err) {

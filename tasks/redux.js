@@ -2,7 +2,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const rollupMemoryPlugin = require('../lib/rollupMemoryPlugin');
 const cacheId = 'gulpBolt';
 
 const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
@@ -16,13 +15,15 @@ function fn(
 	const webPath = 'lib';
 	const waiting = {current:2};
 	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
+	const source = path.join(config.cacheDir, `${config.outputName}.js`);
 	const dest = path.join(config.boltRootDir, 'public', 'dynamic', config.name, webPath);
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
-			//cache: bolt.getRollupBundleCache({cacheDir, id:cacheId}),
-			input: path.join(config.cacheDir, `${config.outputName}.js`),
+			// @todo: Cache fails because of commonjs-plugin stuff in cache (I think)
+			///cache: bolt.getRollupBundleCache({cacheDir:config.cacheDir, id:cacheId}),
+			input: source,
 			plugins: [
 				rollupNodeResolve({
 					...bolt.get(config, 'browserExport.nodeResolve', {}),
@@ -53,6 +54,11 @@ function fn(
 		}
 	})
 		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir:config.cacheDir, id:cacheId, waiting, done}))
+		.on('warn', warning=>console.warn(warning))
+		.on('error', err=>{
+			console.error(err);
+			done();
+		})
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(rename(path=>{path.dirname = '';}))
 		.pipe(replaceWithSourcemaps(xBreakingInCSPGetGlobal, cspReplace))
