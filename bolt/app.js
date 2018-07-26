@@ -6,7 +6,7 @@
  */
 
 const path = require('path');
-const chalk = require('chalk');
+const colour = require('turbocolor');
 const {xTemplateIdAt} = bolt.consts;
 const {loadBoltModules} = loadLibModule('loaders');
 
@@ -57,10 +57,10 @@ function initLogging(app) {
 	app.locals.eventConsoleLogging.forEach(config=>_registerLogEvent(config));
 	_initConsoleLogging(app.locals.logLevel, message=>{
 		const pc = bolt.get(message, 'data.style.property.colour', 'yellow');
-		const tc = ((bolt.get(message, 'data.style.type.colour', 'green')) + 'Bright').replace('BrightBright', 'Bright');
+		const tc = bolt.get(message, 'data.style.type.colour', 'green')
 		const mc = bolt.get(message, 'data.style.description.colour', 'white');
 
-		const _message = `[${chalk[tc](message.data.type)}] ${chalk[mc].bold(message.data.description)} ${chalk[pc].italic(message.data.property)}`;
+		const _message = `[${colour[tc](message.data.type)}] ${colour[mc].bold(message.data.description)} ${colour[pc].italic(message.data.property)}`;
 		console.log(_message)
 	});
 	_initAccessLogging(app.locals.accessLog);

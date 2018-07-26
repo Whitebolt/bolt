@@ -50,7 +50,6 @@
     "bcrypt": "^2.0.0",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
-    "chalk": "^2.4.0",
     "chownr": "^1.0.1",
     "connect-mongo": "^2.0.0",
     "dateformat": "^3.0.2",
@@ -116,6 +115,7 @@
     "shortcode-insert": "^1.0.2",
     "through2": "^2.0.3",
     "topic-subscribe": "^0.10.4",
+    "turbocolor": "^2.4.1",
     "x-xss-protection": "^1.1.0",
     "yargs": "^11.1.0"
   },

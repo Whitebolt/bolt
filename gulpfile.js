@@ -4,7 +4,7 @@
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
-const chalk = require('chalk');
+const colour = require('turbocolor');
 const requireLike = require('require-like');
 
 const xIsJsFile = /\.js$/i;
@@ -289,7 +289,7 @@ function getTimeNowString() {
 function createTask(taskId) {
 	const task = tasks[taskId];
 	const taskFunc = function (done) {
-		console.log(`[${chalk.gray(getTimeNowString())}] Found task '${chalk.cyan(taskId)}' in ${chalk.magenta(task.fn.path)}`);
+		console.log(`[${colour.gray(getTimeNowString())}] Found task '${colour.cyan(taskId)}' in ${colour.magenta(task.fn.path)}`);
 		const cwd = task.cwd || task.fn.cwd || process.cwd();
 		const _settings = Object.assign({}, settings, loadConfig(cwd), {cwd});
 		const stream = task.fn(...getInjection(task.fn, cwd, {gulp,done,bolt,settings:_settings,rollupVinylAdaptor:require('@simpo/rollup-vinyl-adaptor')}));

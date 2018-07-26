@@ -18,7 +18,7 @@ dependencies:
   '@simpo/express-mysql-session': 1.2.4
   '@simpo/linux-user': 0.1.0
   '@simpo/object-annotations': 1.3.0
-  '@simpo/rollup-vinyl-adaptor': 1.26.0
+  '@simpo/rollup-vinyl-adaptor': 1.26.1
   '@simpo/rrule': 2.2.0
   '@simpo/websocket-express': 1.4.0
   babel-plugin-syntax-async-functions: 7.0.0-beta.0
@@ -26,7 +26,6 @@ dependencies:
   bcrypt: 2.0.1
   bluebird: 3.5.1
   body-parser: 1.18.3
-  chalk: 2.4.1
   chownr: 1.0.1
   connect-mongo: 2.0.1
   dateformat: 3.0.3
@@ -80,8 +79,9 @@ dependencies:
   react: 16.4.1
   react-dom: 16.4.1
   redux: 4.0.0
+  require-extra: 1.11.3
   require-like: 0.1.2
-  rollup: 0.62.0
+  rollup: 0.63.4
   rollup-plugin-babel: 4.0.0-beta.7
   rollup-plugin-commonjs: 9.1.3
   rollup-plugin-json: 3.0.0
@@ -91,6 +91,7 @@ dependencies:
   shortcode-insert: 1.0.2
   through2: 2.0.3
   topic-subscribe: 0.10.4
+  turbocolor: 2.4.1
   x-xss-protection: 1.1.0
   yargs: 11.1.0
 devDependencies:
@@ -910,7 +911,7 @@ packages:
     dev: false
     resolution:
       integrity: sha512-8F0XS9OIUH0SNjxTf6dZKkvyeOWJ8GH2/RvB94cL8U6Kp89QjQrmRb0EMo73+5iiDaATNonv9FaVGwpd9JE+0Q==
-  /@simpo/rollup-vinyl-adaptor/1.26.0:
+  /@simpo/rollup-vinyl-adaptor/1.26.1:
     dependencies:
       lodash.isobject: 3.0.2
       lodash.isstring: 4.0.1
@@ -918,7 +919,7 @@ packages:
       vinyl: 2.2.0
     dev: false
     resolution:
-      integrity: sha512-vVMXLszcMvL/sFGqVUpKKWmUzPdSldx6Na4NLtcXk+deQTIQyincE8DimW+F3SoCpaStH/W29rCc65aoTY702w==
+      integrity: sha512-C7H0dKqf/aM1W0dDB7jpaBwocyVybxObk34kLtquvYA3Tu2I8TM2AM6x/1t4KSziTfpKIZMDydpDchmEkN3bcQ==
   /@simpo/rrule/2.2.0:
     dev: false
     resolution:
@@ -949,10 +950,10 @@ packages:
     optional: true
     resolution:
       integrity: sha1-fyrX7FX5FEgvybHsS7GuYCjUYGY=
-  /@types/node/10.5.2:
+  /@types/node/10.5.3:
     dev: false
     resolution:
-      integrity: sha512-m9zXmifkZsMHZBOyxZWilMwmTlpC8x5Ty360JKTiXvlXZfBWYpsg9ZZvP/Ye+iZUh+Q+MxDLjItVTWIsfwz+8Q==
+      integrity: sha512-jQ1p+SyF/z8ygPxfSPKZKMWazlCgTBSyIaC1UCUvkLHDdxdmPQtQFk02X4WFM31Z1BKMAS3MSAK0cRP2c92n6Q==
   /@types/node/6.0.66:
     dev: false
     optional: true
@@ -1610,6 +1611,10 @@ packages:
     optional: true
     resolution:
       integrity: sha512-4TgWfe9SF+bUy5cCql8gWHqKNrviufNwSYxLjf2utB0pY4+bdcuFwMmY1hDB+67Gz/L1vmhFNhePAjJTFBtV+Q==
+  /callsite/1.0.0:
+    dev: false
+    resolution:
+      integrity: sha1-KAOY5dZkvXQDi28JBRU+borxvCA=
   /camelcase-keys/2.1.0:
     dependencies:
       camelcase: 2.1.1
@@ -5659,6 +5664,19 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-jGStX9MNqxyXbiNE/+f3kqam30I=
+  /require-extra/1.11.3:
+    dependencies:
+      '@babel/plugin-proposal-decorators': 7.0.0-beta.51
+      '@simpo/private': 0.3.0
+      babel-polyfill: 6.26.0
+      callsite: 1.0.0
+      lodash: 4.17.10
+      require-like: 0.1.2
+      resolve: 1.8.1
+      semver: 5.5.0
+    dev: false
+    resolution:
+      integrity: sha512-u7bhyfCofhWNTBozXc8QH0SVuxizoD21z6+hpSe64nPnF1ZMCug0S0GbgaiRwPQsQCYCBpMdMhG/t8O7FA0XZg==
   /require-like/0.1.2:
     dev: false
     resolution:
@@ -5796,14 +5814,14 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-n/vHRX4GhMIyGZEQRANcSFVtvz99bSRbNMuoC33ar9f4CViqffyF9WklLb2mxIQ6I/uFf7wDEpc66bXBFE7FvA==
-  /rollup/0.62.0:
+  /rollup/0.63.4:
     dependencies:
       '@types/estree': 0.0.39
-      '@types/node': 10.5.2
+      '@types/node': 10.5.3
     dev: false
     hasBin: true
     resolution:
-      integrity: sha512-mZS0aIGfYzuJySJD78znu9/hCJsNfBzg4lDuZGMj0hFVcYHt2evNRHv8aqiu9/w6z6Qn8AQoVl4iyEjDmisGeA==
+      integrity: sha512-IGTH7u0P6bmu7cXL0g11UDYTR9WKku70cYlqVyOYdqLoQopBGmCbGC3SMeheqHymnehHe/5yf6BJ6BEoxQBVTQ==
   /run-async/2.3.0:
     dependencies:
       is-promise: 2.1.0
@@ -6450,6 +6468,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-4krF8scpejhaOgqzBEcGM7yDIEfi0/8+8zDRZhNZZ2kjmHJ4hv3zCbQWxoJGz1iw5U0Jl0nma13xzHXcncMavQ==
+  /turbocolor/2.4.1:
+    dev: false
+    resolution:
+      integrity: sha512-JYyhyxz9nGkOM2cjL97kXGy5lMRl5u9h8BUXUcKuN76asP3IVJruGXZtKH9/NwZU1yBFpCcBmT56O2SoFlNU3Q==
   /tv4/1.3.0:
     dev: false
     engines:
@@ -6972,7 +6994,7 @@ specifiers:
   '@simpo/express-mysql-session': ^1.2.4
   '@simpo/linux-user': ^0.1.0
   '@simpo/object-annotations': ^1.3.0
-  '@simpo/rollup-vinyl-adaptor': ^1.26.0
+  '@simpo/rollup-vinyl-adaptor': ^1.26.1
   '@simpo/rrule': ^2.2.0
   '@simpo/websocket-express': ^1.4.0
   babel-plugin-syntax-async-functions: ^7.0.0-beta.0
@@ -6981,7 +7003,6 @@ specifiers:
   bluebird: ^3.5.1
   body-parser: ^1.18.2
   chai: ^4.1.2
-  chalk: ^2.4.0
   chownr: ^1.0.1
   connect-mongo: ^2.0.0
   dateformat: ^3.0.2
@@ -7041,7 +7062,7 @@ specifiers:
   redux: ^4.0.0
   require-extra: ^1.11.3
   require-like: ^0.1.2
-  rollup: ^0.62.0
+  rollup: ^0.63.4
   rollup-plugin-babel: ^4.0.0-beta.4
   rollup-plugin-commonjs: ^9.1.3
   rollup-plugin-json: ^3.0.0
@@ -7051,5 +7072,6 @@ specifiers:
   shortcode-insert: ^1.0.2
   through2: ^2.0.3
   topic-subscribe: ^0.10.4
+  turbocolor: ^2.4.1
   x-xss-protection: ^1.1.0
   yargs: ^11.1.0

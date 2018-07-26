@@ -6,7 +6,7 @@
  */
 
 const util = require('util');
-const chalk = require('chalk');
+const colour = require('turbocolor');
 const figlet =  util.promisify(require('figlet'));
 const {upgrade} = require('@simpo/websocket-express');
 const exec = util.promisify(require('child_process').exec);
@@ -103,11 +103,11 @@ async function _createWelcome(config) {
 
 	welcome = welcome.toString().split('\n').map(line=>{
 		if (wLineLength < line.length) wLineLength = line.length;
-		return chalk.blue.bold(line);
+		return colour.blue.bold(line);
 	});
 	version = version.toString().split('\n').map(line=>{
 		if (vLineLength < line.length) vLineLength = line.length;
-		return chalk.green.bold(line);
+		return colour.green.bold(line);
 	});
 
 	let welcomeMessage = '';
