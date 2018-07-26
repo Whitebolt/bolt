@@ -66,8 +66,6 @@ function initSettings() {
 	);
 	settings.boltRootDir = settings.boltRootDir || settings.cwd;
 
-	console.log(settings);
-
 	return settings;
 }
 
@@ -300,8 +298,8 @@ function createTask(taskId) {
 			if (stream.then) stream.then(done);
 		}
 	};
-	taskFunc.displayName = taskId;
-	const deps = [...task.deps, taskFunc];
+	taskFunc.displayName = `$child:${taskId}`;
+	const deps = (!!task.deps.length ? [gulp.parallel([...task.deps]), taskFunc] : [taskFunc]);
 
 	return gulp.series(deps);
 }

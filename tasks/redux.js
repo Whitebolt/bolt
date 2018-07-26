@@ -17,12 +17,12 @@ function fn(
 	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
 	const source = path.join(config.cacheDir, `${config.outputName}.js`);
 	const dest = path.join(config.boltRootDir, 'public', 'dynamic', config.name, webPath);
+	const cache = bolt.getRollupBundleCache({cacheDir:config.cacheDir, id:cacheId});
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
-			// @todo: Cache fails because of commonjs-plugin stuff in cache (I think)
-			///cache: bolt.getRollupBundleCache({cacheDir:config.cacheDir, id:cacheId}),
+			cache,
 			input: source,
 			plugins: [
 				rollupNodeResolve({

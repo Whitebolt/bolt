@@ -9,7 +9,7 @@ const cspReplace = 'window';
 const cacheId = 'gulpReact';
 
 
-function fn(
+async function fn(
 	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
 	rollupPluginCommonjs, rollupPluginJson, settings, replaceWithSourcemaps, header, done,
 	rollup, rollupPluginSourcemaps, babelResolveTransform
@@ -19,13 +19,13 @@ function fn(
 	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
 	const source = path.join(config.cacheDir, `${config.outputName}.js`);
 	const dest = path.join(config.boltRootDir, 'public', 'dynamic', config.name, webPath);
+	const cache = bolt.getRollupBundleCache({cacheDir:config.cacheDir, id:cacheId});
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
 			input: source,
-			// @todo: Cache fails because of commonjs-plugin stuff in cache (I think)
-			//cache: bolt.getRollupBundleCache({cacheDir:config.cacheDir, id:cacheId}),
+			cache,
 			plugins: [
 				rollupNodeResolve({
 					...bolt.get(config, 'browserExport.nodeResolve', {}),
@@ -74,7 +74,10 @@ function fn(
 		.pipe(rename(path=>{path.extname = '.min.js';}))
 		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))
-		.on('end', ()=>bolt.waitCurrentEnd({waiting, done}));
+		.on('end', ()=>{
+			console.log('ARRIVED');
+			bolt.waitCurrentEnd({waiting, done})
+		});
 }
 
 module.exports = fn;

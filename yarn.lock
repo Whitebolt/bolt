@@ -709,9 +709,9 @@
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@simpo/private/-/private-0.3.0.tgz#0a0dcf39161011078b14acbbbd1ad4d0b70de03c"
 
-"@simpo/rollup-vinyl-adaptor@^1.26.0":
-  version "1.26.0"
-  resolved "https://registry.yarnpkg.com/@simpo/rollup-vinyl-adaptor/-/rollup-vinyl-adaptor-1.26.0.tgz#536cc47da6d796e7436af40b2093b7c99574f00e"
+"@simpo/rollup-vinyl-adaptor@^1.26.1":
+  version "1.26.1"
+  resolved "https://registry.yarnpkg.com/@simpo/rollup-vinyl-adaptor/-/rollup-vinyl-adaptor-1.26.1.tgz#d7382e5bd4561e221f1ca18059096cc12f489456"
   dependencies:
     lodash.isobject "^3.0.2"
     lodash.isstring "^4.0.1"
@@ -5094,9 +5094,9 @@ rollup@^0.49.2:
   version "0.49.3"
   resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.49.3.tgz#4cce32643dd8cf2154c69ff0e43470067db0adbf"
 
-rollup@^0.62.0:
-  version "0.62.0"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.62.0.tgz#4ca8b3c9582195dc9341ff8a1375f58319b95bfc"
+rollup@^0.63.4:
+  version "0.63.4"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.63.4.tgz#cb58bf6c2a6c38542cae250684c962799ad7c00c"
   dependencies:
     "@types/estree" "0.0.39"
     "@types/node" "*"
