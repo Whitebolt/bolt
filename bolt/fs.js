@@ -5,7 +5,7 @@
 const promisify = require('util').promisify || Promise.promisify;
 const path = require('path');
 const fs = {...require('fs')};
-const trimEnd  = bolt.memoize(bolt.trimEnd);
+const trimEnd  = bolt.memoize2(bolt.trimEnd);
 
 
 if (Object.getOwnPropertyDescriptor(fs, 'promises')) Object.defineProperty(fs, 'promises', {
@@ -26,9 +26,9 @@ const {openFile, openFileSync} = createOpenMethods();
 
 function createStatMethods() {
 	const cache = bolt.getStore('require.statCache');
-	const _stat = bolt.memoizeNode(fs.stat, {cache, resolver:fileMemoizeResolver});
-	const statSync = bolt.memoize(fs.statSync, {cache, resolver:fileMemoizeResolver});
-	const statPromise = bolt.memoizePromise(!!fs.promises?fs.promises.stat:promisify(fs.stat), {cache, resolver:fileMemoizeResolver});
+	const _stat = bolt.memoize2(fs.stat, {cache, resolver:fileMemoizeResolver, type:'node-callback'});
+	const statSync = bolt.memoize2(fs.statSync, {cache, resolver:fileMemoizeResolver});
+	const statPromise = bolt.memoize2(!!fs.promises?fs.promises.stat:promisify(fs.stat), {cache, resolver:fileMemoizeResolver, type:'promise'});
 	const stat = (file, cb)=>(!cb?statPromise(file):_stat(file, cb));
 
 	return {stat, statSync};
@@ -38,16 +38,16 @@ function createLstatMethods() {
 	const cache = bolt.getStore('require.statCache');
 	const statCache = bolt.getStore('require.lStatCache');
 
-	const _lstat = bolt.memoizeNode((file, cb)=>fs.lstat(file, (err, stat)=>{
+	const _lstat = bolt.memoize2((file, cb)=>fs.lstat(file, (err, stat)=>{
 		if (!err && !stat.isSymbolicLink() && !!statCache) statCache.set(file, [null, stat]);
 		return cb(err, stat);
-	}), {cache, resolver:fileMemoizeResolver});
-	const lstatSync = bolt.memoize(file=>{
+	}), {cache, resolver:fileMemoizeResolver, type:'node-callback'});
+	const lstatSync = bolt.memoize2(file=>{
 		const stat = fs.lstatSync;
 		if (!stat.isSymbolicLink() && !!statCache) statCache.set(file, [null, stat]);
 		return stat;
 	}, {cache, resolver:fileMemoizeResolver});
-	const lstatPromise = bolt.memoizePromise(!!fs.promises?fs.promises.lstat:promisify(fs.lstat), {cache, resolver:fileMemoizeResolver});
+	const lstatPromise = bolt.memoize2(!!fs.promises?fs.promises.lstat:promisify(fs.lstat), {cache, resolver:fileMemoizeResolver, type:'promise'});
 	const lstat = (file, cb)=>(!cb?lstatPromise(file):_lstat(file, cb));
 
 	return {lstat, lstatSync};
@@ -68,13 +68,13 @@ function createIsFileMethods() {
 		return cb(err);
 	});
 
-	const _isFile = bolt.memoizeNode((file, cb)=>{
+	const _isFile = bolt.memoize2((file, cb)=>{
 		const parent = path.dirname(file);
 		if (parent === path) return doStat(file, cb);
 		return _testParentDirectory(parent, doStat, file, cb);
 	}, {cache, resolver:fileMemoizeResolver});
 
-	const isFileSync = bolt.memoize(file=>{
+	const isFileSync = bolt.memoize2(file=>{
 		try {
 			const parent = path.dirname(file);
 			if ((parent !== file) && !isDirectorySync(parent)) return false;
@@ -84,8 +84,8 @@ function createIsFileMethods() {
 			if (err && (err.code === 'ENOENT' || err.code === 'ENOTDIR')) return false;
 			throw err;
 		}
-	}, {cache, resolver:fileMemoizeResolver});
-	const isFilePromise = bolt.memoizePromise(promisify(_isFile), {cache, resolver:fileMemoizeResolver});
+	}, {cache, resolver:fileMemoizeResolver, type:'node-callback'});
+	const isFilePromise = bolt.memoize2(promisify(_isFile), {cache, resolver:fileMemoizeResolver, type:'promise'});
 	const isFile = (file, cb)=>(!cb?isFilePromise(file):_isFile(file, cb));
 
 	return {isFile, isFileSync};
@@ -100,13 +100,13 @@ function createIsDirectoryMethods() {
 		return cb(err);
 	});
 
-	const _isDirectory = bolt.memoizeNode((dir, cb)=>{
+	const _isDirectory = bolt.memoize2((dir, cb)=>{
 		const parent = path.dirname(dir);
 		if (parent === dir) return doStat(dir, cb);
 		return _testParentDirectory(parent, doStat, dir, cb);
-	}, {cache, resolver:fileMemoizeResolver});
+	}, {cache, resolver:fileMemoizeResolver, type:'node-callback'});
 
-	const isDirectorySync = bolt.memoize(dir=>{
+	const isDirectorySync = bolt.memoize2(dir=>{
 		try {
 			const parent = path.dirname(dir);
 			if ((parent !== dir) && !isDirectorySync(parent)) return false;
@@ -117,7 +117,7 @@ function createIsDirectoryMethods() {
 			throw err;
 		}
 	}, {cache, resolver:fileMemoizeResolver});
-	const isDirectoryPromise = bolt.memoizePromise(promisify(_isDirectory), {cache, resolver:fileMemoizeResolver});
+	const isDirectoryPromise = bolt.memoize2(promisify(_isDirectory), {cache, resolver:fileMemoizeResolver, type:'promise'});
 	const isDirectory = (dir, cb)=>(!cb?isDirectoryPromise(dir):_isDirectory(dir, cb));
 
 	return {isDirectory, isDirectorySync};
@@ -125,9 +125,9 @@ function createIsDirectoryMethods() {
 
 function createReadDirMethods() {
 	const cache = bolt.getStore('require.readDirCache');
-	const _readdir = bolt.memoizeNode(fs.readdir, {cache});
-	const readdirSync = bolt.memoize(fs.readdirSync, {cache});
-	const readdirPromise = bolt.memoizePromise(!!fs.promises?fs.promises.readdir:promisify(fs.readdir), {cache});
+	const _readdir = bolt.memoize2(fs.readdir, {cache, type:'node-callback'});
+	const readdirSync = bolt.memoize2(fs.readdirSync, {cache});
+	const readdirPromise = bolt.memoize2(!!fs.promises?fs.promises.readdir:promisify(fs.readdir), {cache, type:'promise'});
 	const readdir = (file, cb)=>(!cb?readdirPromise(file):_readdir(file, cb));
 
 	return {readdir, readdirSync};

@@ -1,14 +1,14 @@
 'use strict';
 // @annotation zone server gulp
 
-const isFunction = require('lodash.isfunction');
-const isObject = require('lodash.isobject');
-const omit = require('lodash.omit');
+const {isFunction, isObject, omit}  = bolt;
 
 const FAIL = Symbol('FAIL');
-const _defaultResolver = first=>first;
-const _defaultResolver2 = (first, second)=>[first, second];
-const _defaultResolver3 = (first,second,third)=>[first, second, third];
+const defaultResolvers = [
+	first=>first,
+	(first, second)=>[first, second],
+	(first,second,third)=>[first, second, third]
+];
 
 
 function objectLength(obj) {
@@ -44,20 +44,34 @@ function setCache(lookupId, value, cache, cacheParams=1) {
 
 function parseOptions(options={}) {
 	const {
-		resolver=_defaultResolver,
+		resolver=defaultResolvers[0],
 		cache=new Map(),
 		noCache=()=>false,
-		cacheParams=1
+		cacheParams=1,
+		type='function'
 		} = (isFunction(options) ? {resolver:options} : options);
 
-	if ((cacheParams < 2) || (resolver !== _defaultResolver)) return {resolver, cache, noCache, cacheParams};
-	if ((cacheParams === 2) && (resolver === _defaultResolver)) return {resolver:_defaultResolver2, cache, noCache, cacheParams};
-	if ((cacheParams > 2) && (resolver === _defaultResolver)) return {resolver:_defaultResolver3, cache, noCache, cacheParams};
+	return {
+		resolver:(((cacheParams > 1) && (resolver === defaultResolvers[0])) ?
+			defaultResolvers[cacheParams] || defaultResolvers[0] :
+				resolver
+		),
+		cache,
+		noCache,
+		cacheParams,
+		type
+	};
 }
 
-function memoize(fn, options) {
-	const {resolver, cache, noCache, cacheParams} = parseOptions(options);
 
+function memoize2(fn, options) {
+	const _options = parseOptions(options);
+	if (_options.type === 'function') return __memoize(fn, _options);
+	if (_options.type === 'promise') return __memoizePromise(fn, _options)
+	if (_options.type === 'node-callback') return __memoizeNode(fn, _options)
+}
+
+function __memoize(fn, {resolver, cache, noCache, cacheParams}) {
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
 		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
@@ -87,9 +101,7 @@ function memoize(fn, options) {
 	return _memoize(memoized, cache);
 }
 
-function memoizeNode(fn, options={}) {
-	const {resolver, cache, noCache, cacheParams} = parseOptions(options);
-
+function __memoizeNode(fn, {resolver, cache, noCache, cacheParams}) {
 	function memoized(...params) {
 		const cb = params.pop();
 		const fnOptions = params[params.length-1];
@@ -111,9 +123,7 @@ function memoizeNode(fn, options={}) {
 	return _memoize(memoized, cache);
 }
 
-function memoizePromise(fn, options={}) {
-	const {resolver, cache, noCache, cacheParams} = parseOptions(options);
-
+function __memoizePromise(fn, {resolver, cache, noCache, cacheParams}) {
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
 		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
@@ -151,7 +161,7 @@ function memoizeRegExp(rx) {
 	}
 
 	const _rx = new RegExp(rx.source, rx.flags);
-	const memoizedTest = memoize(rx.test.bind(rx));
+	const memoizedTest = memoize2(rx.test.bind(rx));
 	const replaceCache = getCache('replaceCache');
 	const matchCache = getCache('matchCache');
 	const execCache = getCache('execCache');
@@ -164,13 +174,13 @@ function memoizeRegExp(rx) {
 
 		replace(value, replaceString, useCache=true) {
 			if (!useCache) return value.replace(rx, replaceString);
-			if (!replaceCache.has(value)) replaceCache.set(value, memoize(value.replace.bind(value), (rx, rs)=>rs));
+			if (!replaceCache.has(value)) replaceCache.set(value, memoize2(value.replace.bind(value), (rx, rs)=>rs));
 			return replaceCache.get(value)(rx, replaceString);
 		},
 
 		match(value, useCache=true) {
 			if (!useCache) return value.replace(rx, replaceString);
-			if (!matchCache.has(value)) matchCache.set(value, memoize(value.match.bind(value)));
+			if (!matchCache.has(value)) matchCache.set(value, memoize2(value.match.bind(value)));
 			return matchCache.get(value)(rx);
 		},
 
@@ -193,5 +203,5 @@ function memoizeRegExp(rx) {
 
 
 module.exports = {
-	memoize, memoizeNode, memoizePromise, memoizeRegExp
+	memoize2, memoizeRegExp
 };
