@@ -4,7 +4,7 @@
 const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
-const colour = require('turbocolor');
+const colour = require('@ccheever/crayon');
 const requireLike = require('require-like');
 
 const xIsJsFile = /\.js$/i;

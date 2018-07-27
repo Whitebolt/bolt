@@ -6,7 +6,7 @@
  */
 
 const util = require('util');
-const colour = require('turbocolor');
+const colour = require('@ccheever/crayon');
 const figlet =  util.promisify(require('figlet'));
 const {upgrade} = require('@simpo/websocket-express');
 const exec = util.promisify(require('child_process').exec);

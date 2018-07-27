@@ -6,7 +6,7 @@
  */
 
 const path = require('path');
-const colour = require('turbocolor');
+const colour = require('@ccheever/crayon');
 const {xTemplateIdAt} = bolt.consts;
 const {loadBoltModules} = loadLibModule('loaders');
 
