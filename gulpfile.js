@@ -5,7 +5,7 @@ const fs = require('fs');
 const gulp = require('gulp');
 const path = require('path');
 const colour = require('@ccheever/crayon');
-const requireLike = require('require-like');
+const requireX = require('require-extra');
 
 const xIsJsFile = /\.js$/i;
 const xRollupPluginTest = /^rollup[A-Z0-9]/;
@@ -13,6 +13,24 @@ const xIsDigit = /^\d+$/;
 
 const settings = initSettings();
 const tasks = createTasks(settings.root);
+
+const resolvers = [
+	(paramName, cwd, inject)=>{
+		if (inject.hasOwnProperty(paramName) && !bolt.isString(inject[paramName])) return inject[paramName];
+	},
+	(paramName, cwd, inject)=>requireX.sync(((inject.hasOwnProperty(paramName) && bolt.isString(inject[paramName])) ?
+		inject[paramName] :
+		`gulp-${bolt.kebabCase(paramName)}`
+	)),
+	paramName=>{
+		if (xRollupPluginTest.test(paramName)) {
+			return requireX.sync(bolt.kebabCase(paramName).replace('rollup-','rollup-plugin-'));
+		}
+	},
+	paramName=>requireX.sync(path.join(settings.boltRootDir, 'lib', paramName)),
+	paramName=>requireX.sync(bolt.kebabCase(paramName)),
+	paramName=>requireX.sync(paramName)
+];
 
 
 function boltLoad(modules) {
@@ -65,6 +83,8 @@ function initSettings() {
 		cmdArgvSettings
 	);
 	settings.boltRootDir = settings.boltRootDir || settings.cwd;
+
+	requireX.set('roots', settings.root);
 
 	return settings;
 }
@@ -130,7 +150,7 @@ function tree(root, cwd=root, structure={}) {
 				structure[file] = tree(filePath, cwd);
 			} else if (stats.isFile() && xIsJsFile.test(file)) {
 				try {
-					structure[file] = Object.assign(require(filePath), {cwd, path:filePath});
+					structure[file] = Object.assign(requireX.sync(filePath), {cwd, path:filePath});
 				} catch(err) {
 					console.log(`Could not load task in: ${filePath}`);
 					console.error(err);
@@ -192,37 +212,21 @@ function getInjection(func, cwd=process.cwd(), inject={}) {
  */
 function getModule(paramName, cwd=process.cwd(), inject={}) {
 	if (Array.isArray(paramName)) return paramName.map(paramName=>getModule(paramName, inject));
+	if (paramName === 'getModule') return moduleId=>getModule(moduleId, cwd, inject);
 	if (paramName in (inject.settings.injectionMapper || {})) {
 		paramName = (inject.settings.injectionMapper || {})[paramName];
 	}
-	if (inject.hasOwnProperty(paramName) && !bolt.isString(inject[paramName])) return inject[paramName];
 
-	const moduleId = (
-		(inject.hasOwnProperty(paramName) && bolt.isString(inject[paramName])) ?
-		inject[paramName] :
-		`gulp-${bolt.kebabCase(paramName)}`
-	);
-	const require = requireLike(path.join(cwd, 'gulpfile.js'));
-
-	try {
-		return require(moduleId);
-	} catch(err) {
+	let resolved;
+	const found = resolvers.find((resolver, n)=>{
 		try {
-			if (xRollupPluginTest.test(paramName)) {
-				try {
-					const moduleId = bolt.kebabCase(paramName).replace('rollup-','rollup-plugin-');
-					return require(moduleId);
-				} catch(err) {}
-			}
-			try {
-				return require(path.join(settings.boltRootDir, 'lib', paramName));
-			} catch(err) {}
-			return require(bolt.kebabCase(paramName));
-		} catch(err) {
-			console.error(err);
-			throw new RangeError(`Could not inject module for ${paramName}, did you forget to 'npm install' / 'yarn add' the given module.`)
-		}
-	}
+			resolved = resolver(paramName, cwd, inject);
+			return !!resolved;
+		} catch(err) {}
+	});
+	if (!!found) return resolved;
+
+	throw new RangeError(`Could not inject module for ${paramName}, did you forget to 'npm install' / 'yarn add' the given module.`);
 }
 
 /**
@@ -291,8 +295,15 @@ function createTask(taskId) {
 	const taskFunc = function (done) {
 		console.log(`[${colour.gray(getTimeNowString())}] Found task '${colour.cyan(taskId)}' in ${colour.magenta(task.fn.path)}`);
 		const cwd = task.cwd || task.fn.cwd || process.cwd();
-		const _settings = Object.assign({}, settings, loadConfig(cwd), {cwd});
-		const stream = task.fn(...getInjection(task.fn, cwd, {gulp,done,bolt,settings:_settings,rollupVinylAdaptor:require('@simpo/rollup-vinyl-adaptor')}));
+		const stream = task.fn(...getInjection(task.fn, cwd, {
+			gulp,
+			done,
+			bolt,
+			settings:bolt.substituteInObject(
+				Object.assign({}, settings, loadConfig(cwd, 'config'), loadConfig(cwd), {cwd})
+			),
+			rollupVinylAdaptor:require('@simpo/rollup-vinyl-adaptor')
+		}));
 		if (stream) {
 			if (stream.on) stream.on('end', done);
 			if (stream.then) stream.then(done);

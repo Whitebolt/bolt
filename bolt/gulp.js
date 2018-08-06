@@ -15,6 +15,8 @@ const {
 	xNewLine
 } = bolt.consts;
 
+//const cache = bolt.getStore('gulp.runCache');
+
 function runGulp(taskName, {locals}, args=[]) {
 	const startTime = process.hrtime();
 	locals.boltGulpModules = [...bolt.__modules]
@@ -33,7 +35,7 @@ function runGulp(taskName, {locals}, args=[]) {
 
 	const flags = [taskName, ...args, `--settingsBase64=${gulpConfig}`];
 	const gulp = child.spawn('gulp', flags, {cmd: boltRootDir});
-	//console.log(`gulp ${flags.join(' ')}`);
+	//cache.set(taskName, {flags, cmd:boltRootDir});
 
 	let gulpTaskName = 'Unknown';
 	let gulpTaskPath = '';

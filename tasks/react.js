@@ -74,10 +74,7 @@ async function fn(
 		.pipe(rename(path=>{path.extname = '.min.js';}))
 		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))
-		.on('end', ()=>{
-			console.log('ARRIVED');
-			bolt.waitCurrentEnd({waiting, done})
-		});
+		.on('end', ()=>bolt.waitCurrentEnd({waiting, done}));
 }
 
 module.exports = fn;
