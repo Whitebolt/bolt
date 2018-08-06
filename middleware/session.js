@@ -1,6 +1,7 @@
 'use strict';
 
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 
 /**
  * Create the session object using mongo store. Duplicate session to websocket routes.
@@ -27,6 +28,12 @@ function init(app) {
 		resave: true,
 		saveUninitialized: true
 	});
+
+	app.use(cookieParser(app.locals.secret, {
+		httpOnly: true,
+		secure: true,
+		maxAge: app.locals.sessionLength || 60 * 60 * 1000
+	}));
 
 	app.use(sessionMiddleware, (req, res, next)=>{
 		if (req.session) {

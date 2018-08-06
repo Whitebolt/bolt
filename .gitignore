@@ -9,6 +9,7 @@ log/
 .config/
 private/
 cache/
+.npmrc
 
 #Allow localhost testing
 server.crt
