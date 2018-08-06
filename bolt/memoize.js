@@ -1,7 +1,9 @@
 'use strict';
 // @annotation zone server gulp
 
-const {isFunction, isObject, omit}  = bolt;
+const isFunction = require('lodash.isfunction');
+const isObject = require('lodash.isobject');
+const omit = require('lodash.omit');
 
 const FAIL = Symbol('FAIL');
 const defaultResolvers = [
