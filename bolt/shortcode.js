@@ -14,13 +14,15 @@ const parser = require('shortcode-insert')();
  * @returns {Promise}                  Promise resolving when all shortcode parsing done.
  */
 function parseShortcodes(component, doc, properties=[]) {
-	return Promise.all(properties.map(property=>{
-		if (doc.hasOwnProperty(property)) {
-			return parser.parse(doc[property], component).then(txt=>{
-				doc[property] = txt;
-			});
-		}
-	}));
+	return Promise.all(bolt.chain(properties)
+		.flatten()
+		.map(async (property)=>{
+			if (bolt.has(doc, property)) {
+				bolt.set(doc, property, await parser.parse(bolt.get(doc, property), component));
+			}
+		})
+		.value()
+	);
 }
 
 /**
