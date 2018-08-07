@@ -11,7 +11,6 @@ module.exports = function() {
 
 		bolt.runGulp('react', app, [
 			`--outputName=${name}`,
-			`--boltRootDir=${boltRootDir}`,
 			`--cacheDir=${cacheDir}`,
 			...bolt.objectToArgsArray(requireMap, 'settings.reactBoltMap')
 		]);

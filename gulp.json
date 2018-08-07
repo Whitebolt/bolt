@@ -1,0 +1,41 @@
+{
+  "augment": {
+    "inject": {
+      "rollupVinylAdaptor":"@simpo/rollup-vinyl-adaptor"
+    }
+  },
+  "nodeResolve": {
+    "jsnext": true,
+    "main": true,
+    "extensions": [
+      ".js",
+      ".json"
+    ],
+    "browser": true
+  },
+  "babel": {
+    "generatorOpts": {
+      "compact": true,
+      "quotes": "double",
+      "sourceMaps": true
+    },
+    "presets": [
+      [
+        "@babel/env",
+        {
+          "modules": false,
+          "targets": {
+            "chrome": 30
+          },
+          "useBuiltIns": false,
+          "forceAllTransforms": true
+        }
+      ]
+    ],
+    "plugins": [
+      "syntax-async-functions",
+      "@babel/transform-regenerator",
+      "@babel/plugin-proposal-object-rest-spread"
+    ]
+  }
+}

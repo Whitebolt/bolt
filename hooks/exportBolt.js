@@ -9,7 +9,6 @@ module.exports = function() {
 
 		bolt.runGulp('bolt', app, [
 			`--outputName=${name}`,
-			`--boltRootDir=${boltRootDir}`,
 			`--cacheDir=${cacheDir}`
 		]);
 	});

@@ -1,7 +1,5 @@
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
 const cacheId = 'gulpBolt';
 
 const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
@@ -9,51 +7,50 @@ const cspReplace = 'window';
 
 
 function fn(
-	gulp, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve, rollupPluginCommonjs, rollupPluginJson,
-	settings, replaceWithSourcemaps, done, rollup, rollupVinylAdaptor, babelResolveTransform
+	gulp, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve, rollupCommonjs, rollupJson, settings,
+	replaceWithSourcemaps, done, rollup, rollupVinylAdaptor, babelResolveTransform, path
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};
-	const config = {...settings, ...(require(path.join(settings.cwd, 'package.json')).config || {})};
-	const source = path.join(config.cacheDir, `${config.outputName}.js`);
-	const dest = path.join(config.boltRootDir, 'public', 'dynamic', config.name, webPath);
-	const cache = bolt.getRollupBundleCache({cacheDir:config.cacheDir, id:cacheId});
+	const source = path.join(settings.cacheDir, `${settings.outputName}.js`);
+	const dest = path.join(settings.boltRootDir, 'public', 'dynamic', settings.appName, webPath);
+	const cache = bolt.getRollupBundleCache({cacheDir:settings.cacheDir, id:cacheId});
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
-			cache,
+			//cache,
 			input: source,
 			plugins: [
 				rollupNodeResolve({
-					...bolt.get(config, 'browserExport.nodeResolve', {}),
+					...bolt.get(settings, 'nodeResolve', {}),
 					extensions:[
 						'.jsx',
-						...bolt.get(config, 'browserExport.nodeResolve.extensions', [])
+						...bolt.get(settings, 'nodeResolve.extensions', [])
 					]
 				}),
-				rollupPluginCommonjs(),
-				rollupPluginJson(),
+				rollupCommonjs(),
+				rollupJson(),
 				rollupBabel({
-					generatorOpts: bolt.get(config, 'browserExport.babel.generatorOpts', {}),
+					generatorOpts: bolt.get(settings, 'babel.generatorOpts', {}),
 					externalHelpers: true,
 					sourceMaps: true,
-					presets: bolt.get(config, 'browserExport.babel.presets', []),
+					presets: bolt.get(settings, 'babel.presets', []),
 					plugins: [
-						babelResolveTransform(bolt.pick(config, ['root'])),
+						babelResolveTransform(bolt.pick(settings, ['root'])),
 						'@babel/plugin-external-helpers',
-						...bolt.get(config, 'browserExport.babel.plugins', [])
+						...bolt.get(settings, 'babel.plugins', [])
 					]
 				})
 			]
 		},
 		output: {
 			format: 'iife',
-			name: config.outputName,
+			name: settings.outputName,
 			sourcemap: true
 		}
 	})
-		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir:config.cacheDir, id:cacheId, waiting, done}))
+		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir:settings.cacheDir, id:cacheId, waiting, done}))
 		.on('warn', warning=>console.warn(warning))
 		.on('error', err=>{
 			console.error(err);

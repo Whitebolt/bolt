@@ -15,7 +15,8 @@ async function gulp(args) {
 		initLogging({locals});
 		await bolt.emitAfter('initialiseApp', locals, {locals});
 
-		runGulp(args.task, {locals}, [`--boltRootDir=${boltRootDir}`]);
+
+		runGulp(args.task, {locals}, [`--boltRootDir=${boltRootDir} --verbose`]);
 	}
 }
 

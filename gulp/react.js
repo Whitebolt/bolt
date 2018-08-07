@@ -1,48 +1,53 @@
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
-const gulpBoltBrowser = require('../lib/gulpBoltBrowser');
-
-const cacheId = 'gulpBolt';
+const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
+const cspReplace = 'window';
+const cacheId = 'gulpReact';
 
 
-function fn(
-	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve,
-	rollupPluginCommonjs, settings, done, rollup, rollupPluginJson, babelResolveTransform
+async function fn(
+	gulp, rollupVinylAdaptor, sourcemaps, ignore, uglifyEs, rename, rollupBabel, rollupNodeResolve, rollupCommonjs,
+	rollupJson, settings, replaceWithSourcemaps, header, done, rollup, rollupSourcemaps, babelResolveTransform,
+	rollupReactBoltPlugin, path
 ) {
 	const webPath = 'lib';
 	const waiting = {current:2};
-	const source = path.join(settings.cacheDir, `${settings.outputName}.js`)
-	const dest = path.join(settings.boltRootDir, 'public', 'dynamic', settings.name, webPath);
+	const source = path.join(settings.cacheDir, `${settings.outputName}.js`);
+	const dest = path.join(settings.boltRootDir, 'public', 'dynamic', settings.appName, webPath);
 	const cache = bolt.getRollupBundleCache({cacheDir:settings.cacheDir, id:cacheId});
+
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
 			input: source,
-			external: ['text-encoding'],
 			//cache,
 			plugins: [
-				rollupNodeResolve(bolt.get(settings, 'browserExport.nodeResolve', {})),
-				rollupPluginCommonjs({}),
-				rollupPluginJson(),
+				rollupNodeResolve({
+					...bolt.get(settings, 'nodeResolve', {}),
+					extensions:[
+						'.jsx',
+						...bolt.get(settings, 'nodeResolve.extensions', [])
+					]
+				}),
+				rollupCommonjs({}),
+				rollupJson(),
 				rollupBabel({
-					exclude: 'node_modules/**',
-					generatorOpts: bolt.get(settings, 'browserExport.babel.generatorOpts', {}),
-					presets: bolt.get(settings, 'browserExport.babel.presets', []),
+					generatorOpts: bolt.get(settings, 'babel.generatorOpts', {}),
+					presets: bolt.get(settings, 'babel.presets', []),
 					externalHelpers: true,
 					sourceMaps: true,
 					plugins: [
 						babelResolveTransform(bolt.pick(settings, ['root'])),
 						'@babel/plugin-external-helpers',
-						...bolt.get(settings, 'browserExport.babel.plugins', [])
+						...bolt.get(settings, 'babel.plugins', [])
 					]
-				})
+				}),
+				rollupReactBoltPlugin(settings),
+				rollupSourcemaps()
 			]
 		},
 		output: {
-			globals: {'text-encoding':'window'},
 			format: 'iife',
 			name: settings.outputName,
 			sourcemap: true
@@ -56,7 +61,8 @@ function fn(
 		})
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(rename(path=>{path.dirname = '';}))
-		.pipe(gulpBoltBrowser())
+		.pipe(header(`window.${settings.outputName} = {DEBUG:true};`))
+		.pipe(replaceWithSourcemaps(xBreakingInCSPGetGlobal, cspReplace))
 		.pipe(sourcemaps.write('./', {sourceMappingURLPrefix:`/${webPath}`}))
 		.pipe(gulp.dest(dest))
 		.pipe(ignore.exclude('*.map'))

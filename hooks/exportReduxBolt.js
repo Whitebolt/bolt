@@ -11,7 +11,6 @@ module.exports = function() {
 
 		bolt.runGulp('redux', app, [
 			`--outputName=${name}`,
-			`--boltRootDir=${boltRootDir}`,
 			`--cacheDir=${cacheDir}`
 		]);
 
