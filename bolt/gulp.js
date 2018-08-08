@@ -46,18 +46,22 @@ function getGulpSpawnFlags(locals, args, taskName) {
 	return flags;
 }
 
-function parseLogLine(data) {
+const parseLogLine = bolt.memoize(function parseLogLine(data) {
 	const [full, date, info] = data.match(xParseGulpLog) || [];
 	return [date, info];
-}
+});
 
 function parseLogInfo(info, rx) {
 	const [fullMatch, taskId, taskPath] = info.toString().match(rx) || [];
 	return [taskId, taskPath];
 }
 
-function handleLogLine(data, task) {
+function handleLogLine(data, task, last) {
 	const [date, info] = parseLogLine(data);
+	if (last && !date && !info) { // Sometimes you have just the date with info to follow.
+		task.currentLine = data.trim() + ' ';
+		return;
+	}
 	if (xGulpFinishedAfter.test(info)) return;
 	if (!date || !info) return console.error(data);
 
@@ -78,7 +82,12 @@ function handleLogLine(data, task) {
 function onData(task) {
 	return data=>{
 		task.currentLine += data.toString();
+		const [date, info] = parseLogLine(task.currentLine);
 		if (!xNewLine.test(task.currentLine)) return;
+		if (!!date && (!!info && (info.trim() === ''))) { // Sometimes you have just the date with info to follow.
+			task.currentLine = task.currentLine.trim() + ' ';
+			return;
+		}
 
 		data = task.currentLine;
 		task.currentLine = '';
@@ -86,7 +95,7 @@ function onData(task) {
 		bolt.chain(data.toString().split('\n'))
 			.map(data=>data.replace(xAnsi, '').trim())
 			.filter(data=>(data !== ''))
-			.forEach(data=>handleLogLine(data, task))
+			.forEach((data, n, ary)=>handleLogLine(data, task, (n===(ary.length-1))))
 			.value();
 	};
 }
@@ -100,6 +109,7 @@ function onError() {
 function onClose(task, resolve, reject) {
 	return code=>{
 		const timeTaken = process.hrtime(task.startTime);
+		parseLogLine.cache.clear();
 		let message = `Done in ${timeTaken[0]}.${timeTaken[1].toString().substr(0,3)}s`;
 		if (code > 0) message += ` Exited with code ${code}`;
 		bolt.emit('gulpLog', task.name, message);
