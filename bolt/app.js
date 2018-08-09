@@ -31,19 +31,20 @@ function _registerLogEvent(config) {
 
 	return bolt.on(config.event, (...params) => {
 		const level = config.level || 3; // Placed here so level can be changed in-flight.
-		const messageData = JSON.parse(bolt.substituteEs6(_config, {params}));
-
-		return bolt.publish(channel, {
-			level,
-			type: config.action || config.event,
-			description: messageData.description,
-			property: messageData.property || params[0],
-			style: {
-				property: {colour: config.propertyColour || 'yellow'},
-				type: {colour: config.typeColour || 'green'},
-				description: {colour: config.descriptionColour || 'white'}
-			}
-		});
+		try {
+			const messageData = JSON.parse(bolt.substituteEs6(_config, {params}));
+			return bolt.publish(channel, {
+				level,
+				type: config.action || config.event,
+				description: messageData.description,
+				property: messageData.property || params[0],
+				style: {
+					property: {colour: config.propertyColour || 'yellow'},
+					type: {colour: config.typeColour || 'green'},
+					description: {colour: config.descriptionColour || 'white'}
+				}
+			});
+		} catch(err) {}
 	});
 }
 
