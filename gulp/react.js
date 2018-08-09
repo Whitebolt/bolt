@@ -25,10 +25,7 @@ async function fn(
 			plugins: [
 				rollupNodeResolve({
 					...bolt.get(settings, 'nodeResolve', {}),
-					extensions:[
-						'.jsx',
-						...bolt.get(settings, 'nodeResolve.extensions', [])
-					]
+					extensions:bolt.uniq(['.jsx', ...bolt.get(settings, 'nodeResolve.extensions', [])])
 				}),
 				rollupCommonjs({}),
 				rollupJson(),

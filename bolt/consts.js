@@ -4,6 +4,8 @@
 const {memoizeRegExp} = require('./memoize');
 
 const consts = {
+	xNull: /\0/,
+	xIsJs: /\.js$/,
 	xSpaces: /\s+/,
 	xNewLine: /\n/,
 	xTrailingSlash: memoizeRegExp(/\/$/),

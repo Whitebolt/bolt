@@ -23,14 +23,16 @@ function getBabelPlugins(plugins, require) {
 	return bolt.chain(bolt.makeArray(plugins))
 		.map(id=>{
 			const isArray = Array.isArray(id);
-			if (!isArray && !bolt.isString(id)) return id
+			if (!isArray && !bolt.isString(id)) return id;
 			const _id = isArray?id[0]:id;
+			if (!bolt.isString(_id)) return id;
 			if (log.has(_id)) return;
 			log.add(_id);
 			const plugin = require(reformatBabelPluginId(_id));
 			if (!isArray) return plugin;
-			id[0] = plugin;
-			return id;
+			const __id = [...id];
+			__id[0] = plugin;
+			return __id;
 		})
 		.filter(id=>!!id)
 		.value();
@@ -46,6 +48,9 @@ get('resolvers')
 	})
 	.add(
 		({param, require, cwd})=>require(path.join(cwd,'lib',param))
+	)
+	.add(
+		({param})=>require(path.join(__dirname,'lib',param))
 	);
 
 augment({'show-task-path':true});
