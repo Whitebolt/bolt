@@ -36,6 +36,8 @@ function _makeArrayConvertFunction(ary) {
  * @returns {Array}                                                 New array or supplied parameter returned.
  */
 function makeArray(ary, convertFunction=_makeArrayConvertFunction) {
+	// @annotation chain
+
 	return (Array.isArray(ary) ? ary : convertFunction(ary));
 }
 
