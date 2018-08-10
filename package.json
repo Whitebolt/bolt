@@ -163,6 +163,15 @@
       "sitesAvailable": "/etc/nginx/sites-available/",
       "sitesEnabled": "/etc/nginx/sites-enabled/"
     },
+    "scriptServe": {
+      "react": {
+        "path": "node_modules/react",
+        "modes": {
+          "development": "umd/react.development.chrome.56.js",
+          "production": "umd/react.production.min.js"
+        }
+      }
+    },
     "nodeModulesServe": {
       "path": "/${directories.lib}",
       "modules": [

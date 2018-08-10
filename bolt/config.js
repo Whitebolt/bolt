@@ -158,6 +158,9 @@ const _configMergeOverrides = {
 	nodeModulesServe: (objValue, srcValue, key, object, source)=>{
 		return {...objValue, [source.__packagePath]:srcValue};
 	},
+	scriptServe: (objValue, srcValue, key, object, source)=>{
+		return {...objValue, [source.__packagePath]:srcValue};
+	},
 
 	/**
 	 * Merge eventConsoleLogging arrays together avoid duplicates and merging of
