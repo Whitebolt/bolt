@@ -41,7 +41,7 @@ const tests = {
     } else if (component.req.isWebSocket) {
       type = 'websocket';
     }
-    return !value.find(test=>(test === type));
+    return ![...value.values()].find(test=>(test === type));
   },
   'schema': (value, component)=>{
     if (!(component && component.req && component.req.app && component.req.body && component.req.app.schemas)) return false;
