@@ -18,10 +18,13 @@ const _defaultFalse = [
 	null, undefined
 ];
 
+function indexOfEquiv(ary, value) {
+	return ary.findIndex(_value=>bolt.isEqual(value, _value));
+}
 
 function toBool(value, defaultTrueValues=_defaultTrue, defaultFalseValues=_defaultFalse) {
-	if (~bolt.indexOfEquiv(defaultFalseValues, value)) return false;
-	if (~bolt.indexOfEquiv(defaultTrueValues, value)) return true;
+	if (~indexOfEquiv(defaultFalseValues, value)) return false;
+	if (~indexOfEquiv(defaultTrueValues, value)) return true;
 	return value;
 }
 

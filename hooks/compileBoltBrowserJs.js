@@ -7,6 +7,10 @@ const filesId = '__modules';
 
 bolt.ExportToBrowserBoltEvent = class ExportToBrowserBoltEvent extends bolt.Event {};
 
+function doMixin(fn) {
+	return (bolt.isFunction(fn) && (!bolt.annotation.has(fn, 'mixin') || bolt.annotation.get(fn, 'mixin')));
+}
+
 
 module.exports = function(app) {
 	// @annotation key loadRootHooks
@@ -34,6 +38,7 @@ module.exports = function(app) {
 						exportEventType,
 						new bolt.ExportToBrowserBoltEvent({exportEventType, target, sync:false})
 					);
+
 					if (target !== 'lodash') return {
 						target,
 						exportedNames:Object.keys(exports).filter(key=>{
@@ -42,7 +47,7 @@ module.exports = function(app) {
 						}),
 						namedExports:Object.keys(exports)
 					};
-					contents += `import lodash from "lodash";`;
+					contents += `import lodash from "lodash";\n`;
 				}
 			})
 			.filter(name=>name)
@@ -63,9 +68,14 @@ module.exports = function(app) {
 				contents += `import {${exported.exportedNames.sort().join(',')}} from "${exported.target}";\n`;
 			})
 			.forEach((exports, n)=>{
-				if (n === 0) contents += `const bolt = lodash.runInContext();`;
-				exports.exportedNames.forEach(exportedName=>{ // @todo Make this less verbose!
-					contents += `bolt["${exportedName}"] = ${exportedName};\n`;
+				if (n === 0) contents += `const bolt = lodash.runInContext();\n`;
+				exports.exportedNames.forEach(exportedName=>{
+					if (doMixin(bolt[exportedName])) {
+						const chain = !!bolt.annotation.get(bolt[exportedName], 'chain');
+						contents += `bolt.mixin(bolt, {${exportedName}}, {chain: ${chain}});\n`;
+					} else {
+						contents += `bolt["${exportedName}"] = ${exportedName};\n`;
+					}
 				});
 			})
 			.value();
