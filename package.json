@@ -70,6 +70,7 @@
     "global-modules": "^1.0.0",
     "gulp-header": "^2.0.5",
     "gulp-ignore": "^2.0.2",
+    "gulp-noop": "^1.0.0",
     "gulp-regexp-sourcemaps": "^1.0.1",
     "gulp-rename": "^1.3.0",
     "gulp-replace-with-sourcemaps": "^0.7.1",
@@ -337,7 +338,7 @@
       {
         "event": "scriptServe",
         "action": "serve",
-        "description": "serving file",
+        "description": "serving file [@{params[1]}]",
         "property": "@{params[0]}",
         "level": 3,
         "typeColour": "yellow"
@@ -345,7 +346,7 @@
       {
         "event": "scriptServeCache",
         "action": "serve",
-        "description": "serving cached file",
+        "description": "serving cached file [@{params[1]}]",
         "property": "@{params[0]}",
         "level": 3
       },

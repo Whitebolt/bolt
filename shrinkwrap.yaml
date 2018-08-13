@@ -24,7 +24,6 @@ dependencies:
   '@simpo/rollup-vinyl-adaptor': 1.26.2
   '@simpo/rrule': 2.2.0
   '@simpo/websocket-express': 1.6.2
-  async-done: 1.3.1
   babel-plugin-syntax-async-functions: 7.0.0-beta.0
   babel-plugin-transform-async-generator-functions: 7.0.0-beta.3
   bcrypt: 2.0.1
@@ -47,6 +46,7 @@ dependencies:
   global-modules: 1.0.0
   gulp-header: 2.0.5
   gulp-ignore: 2.0.2
+  gulp-noop: 1.0.0
   gulp-regexp-sourcemaps: 1.0.1
   gulp-rename: 1.3.0
   gulp-replace-with-sourcemaps: 0.7.1
@@ -997,7 +997,7 @@ packages:
       integrity: sha1-VWJRm8eWPKyoq/fxKMrjtZTUHQY=
   /accepts/1.3.5:
     dependencies:
-      mime-types: 2.1.18
+      mime-types: 2.1.19
       negotiator: 0.6.1
     dev: false
     engines:
@@ -3301,6 +3301,14 @@ packages:
     optional: true
     resolution:
       integrity: sha1-6gRUhp5bSKFyNUW0cpFyu25yXHA=
+  /gulp-noop/1.0.0:
+    dependencies:
+      through2: 2.0.3
+    dev: false
+    engines:
+      node: '>=0.10'
+    resolution:
+      integrity: sha1-CCsRQkk1Es5cWrLh7D57tItXXHk=
   /gulp-regexp-sourcemaps/1.0.1:
     dependencies:
       regexp-sourcemaps: 1.0.1
@@ -4688,6 +4696,12 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha512-BHJ/EKruNIqJf/QahvxwQZXKygOQ256myeN/Ew+THcAa5q+PjyTTMMeNQC4DZw5AwfvelsUrA6B67NKMqXDbzQ==
+  /mime-db/1.35.0:
+    dev: false
+    engines:
+      node: '>= 0.6'
+    resolution:
+      integrity: sha512-JWT/IcCTsB0Io3AhWUMjRqucrHSPsSf2xKLaRldJVULioggvkJvggZ3VXNNSRkCddE6D+BUI4HEIZIA2OjwIvg==
   /mime-types/2.1.18:
     dependencies:
       mime-db: 1.33.0
@@ -4696,6 +4710,14 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha512-lc/aahn+t4/SWV/qcmumYjymLsWfN3ELhpmVuUFjgsORruuZPVSwAQryq+HHGvO/SI2KVX26bx+En+zhM8g8hQ==
+  /mime-types/2.1.19:
+    dependencies:
+      mime-db: 1.35.0
+    dev: false
+    engines:
+      node: '>= 0.6'
+    resolution:
+      integrity: sha512-P1tKYHVSZ6uFo26mtnve4HQFE3koh1UWVkp8YUC+ESBHe945xWSoXuHHiGarDqcEZ+whpCDnlNw5LON0kLo+sw==
   /mime/1.4.1:
     dev: false
     hasBin: true
@@ -7476,7 +7498,6 @@ specifiers:
   '@simpo/rollup-vinyl-adaptor': ^1.26.2
   '@simpo/rrule': ^2.2.0
   '@simpo/websocket-express': ^1.6.2
-  async-done: ^1.3.1
   babel-plugin-syntax-async-functions: ^7.0.0-beta.0
   babel-plugin-transform-async-generator-functions: ^7.0.0-beta.3
   bcrypt: ^2.0.0
@@ -7502,6 +7523,7 @@ specifiers:
   gulp-header: ^2.0.5
   gulp-ignore: ^2.0.2
   gulp-jsdoc3: ^2.0.0
+  gulp-noop: ^1.0.0
   gulp-regexp-sourcemaps: ^1.0.1
   gulp-rename: ^1.3.0
   gulp-replace-with-sourcemaps: ^0.7.1

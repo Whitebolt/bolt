@@ -2,6 +2,9 @@
 
 const {createReadStream} = require('fs');
 const {Readable} = require('stream');
+const {createGzip, createDeflate} = require('zlib');
+const noop = require("gulp-noop");
+
 const cache = new Map();
 
 
@@ -26,29 +29,48 @@ function awaitStream(stream) {
 	);
 }
 
-function sendCachedFile(filepath, res) {
-	bolt.emit('scriptServeCache', filepath);
-	const stream = new Readable();
-	stream._read = () => {}; // redundant? see update below
-	stream.push(cache.get(filepath));
-	stream.push(null);
+function sendCachedFile(filepath, res, encoding) {
+	bolt.emit('scriptServeCache', filepath, encoding);
+	const stream = createFileStream(filepath);
 	return awaitStream(stream.pipe(res)).then(()=>cache.get(filepath));
 }
 
-function sendFile(filepath, res) {
-	if (cache.has(filepath)) return sendCachedFile(filepath, res);
-
-	bolt.emit('scriptServe', filepath);
-	const result = [];
-	return awaitStream(createReadStream(filepath).on('data', data=>result.push(data)).pipe(res))
-		.then(()=>result.map(result=>result.toString()).join())
-		.then(result=>{
-			cache.set(filepath, result);
-			return result;
-		});
+function createFileStream(filepath) {
+	if (!cache.has(filepath)) return createReadStream(filepath);
+	const stream = new Readable();
+	stream._read = () => {}; // redundant? see update below
+	cache.get(filepath).forEach(data=>stream.push(data));
+	stream.push(null);
+	return stream;
 }
 
-async function index(values, res, config, query, done) {
+function sendFile(filepath, res, req) {
+	let encoding = req.acceptsEncodings(['gzip', 'deflate', 'identity']);
+	if (encoding === 'deflate' && !!req.acceptsEncodings(['gzip'])) encoding = req.acceptsEncodings(['gzip', 'identity']);
+
+	if ((encoding === 'gzip') || (encoding === 'deflate')) {
+		res.setHeader('Content-Encoding', encoding);
+		res.removeHeader('Content-Length');
+	}
+	const compressedPath = ((encoding === 'gzip')?`${filepath}.gz`:((encoding === 'deflate')?`${filepath}.gz`:filepath));
+	if (cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
+	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():noop));
+
+	bolt.emit('scriptServe', filepath, encoding);
+	const [result, compressed] = [[], []];
+	return awaitStream(createFileStream(filepath)
+		.on('data', data=>result.push(data))
+		.pipe(encoder)
+		.on('data', data=>{if (encoder !== noop) compressed.push(data);})
+		.pipe(res)
+	).then(()=>{
+		cache.set(filepath, result);
+		if (encoder !== noop) cache.set(compressedPath, compressed);
+		return result;
+	});
+}
+
+async function index(values, res, req, config, query, done) {
 	// @annotation accepts-connect get
 	// @annotation path-map /mode/id
 
@@ -67,15 +89,8 @@ async function index(values, res, config, query, done) {
 		const found = await bolt.isFile(mode.path);
 		if (found) {
 			res.set('Content-Type', mode.mimetype);
-			await sendFile(mode.path, res);
+			await sendFile(mode.path, res, req);
 			return done();
-
-
-			/*return res.sendFile(mode.path, {
-				headers: {
-					'Content-Type': mode.mimetype
-				}
-			});*/
 		}
 	}
 }
