@@ -163,11 +163,16 @@
       "sitesAvailable": "/etc/nginx/sites-available/",
       "sitesEnabled": "/etc/nginx/sites-enabled/"
     },
+    "modes": [
+      "debug",
+      "development",
+      "production"
+    ],
     "scriptServe": {
       "react": {
         "path": "node_modules/react",
         "modes": {
-          "development": "umd/react.development.chrome.56.js",
+          "development": "umd/react.development.js",
           "production": "umd/react.production.min.js"
         }
       }
@@ -328,6 +333,21 @@
         "description": "firing template @{params[0]} for",
         "property": "@{params[1]}",
         "level": 4
+      },
+      {
+        "event": "scriptServe",
+        "action": "serve",
+        "description": "serving file",
+        "property": "@{params[0]}",
+        "level": 3,
+        "typeColour": "yellow"
+      },
+      {
+        "event": "scriptServeCache",
+        "action": "serve",
+        "description": "serving cached file",
+        "property": "@{params[0]}",
+        "level": 3
       },
       {
         "event": "mountFilesystem",

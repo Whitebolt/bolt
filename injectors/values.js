@@ -15,17 +15,23 @@ function values(component, extraParams, method) {
 	const {path, query, body} = injectorReflect(['path', 'query', 'body'], component);
 	const _path = component.viaView?component.viaViewPath:path;
 	const pathObj = {};
-	const pathMap = (bolt.annotation.get(method, 'path-map') || '').split('/').filter(part=>part);
+	const pathMap = (bolt.annotation.get(method, 'path-map') || '').trim().split('/').filter(part=>part);
 
 	if (pathMap.length) {
 		const methodPath = getMethodPath(method);
-		const pathParts = _path.split('?').shift().replace(methodPath, '').split('/').filter(part=>part);
+		const pathParts = _path.split('?').shift().replace(methodPath, '').split('/').filter(part=>!!part);
 		pathParts.forEach((part, n)=>{
 			if (pathMap[n]) pathObj[pathMap[n]] = part;
 		})
 	}
 
-	return Object.assign({}, query || {}, bolt.getUrlQueryObject(_path) || {}, bolt.isObject(body)?body:{}, pathObj);
+	return Object.assign(
+		{__pathObj:pathObj},
+		pathObj,
+		query || {},
+		bolt.getUrlQueryObject(_path) || {},
+		bolt.isObject(body)?body:{}
+	);
 }
 
 module.exports = values;

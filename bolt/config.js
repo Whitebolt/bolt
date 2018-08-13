@@ -8,7 +8,8 @@
 
 const promisify = require('util').promisify || Promise.promisify;
 const freeport = promisify(require('find-free-port'));
-const path = require('path');
+const {normalize, join, delimiter, sep} = require('path');
+const mime = require('mime');
 
 const packageData = _getPackage(boltRootDir);
 const packageConfig = packageData.config || {};
@@ -39,8 +40,8 @@ function _parseEnvValue(value) {
  * @returns {string|array}    New array or original string.
  */
 function _parseEnvArray(value) {
-	return (value.indexOf(path.delimiter) !== -1 ?
-			value.split(path.delimiter).map(value=>value.trim()) :
+	return (value.indexOf(delimiter) !== -1 ?
+			value.split(delimiter).map(value=>value.trim()) :
 			value
 	);
 }
@@ -93,8 +94,8 @@ async function getRoots(...configs) {
 		.filter(root=>root)
 		.map(async (root)=>{
 			try {
-				const _root = await bolt.fs.realpath(path.normalize(root));
-				return `${_root}${path.sep}`;
+				const _root = await bolt.fs.realpath(normalize(root));
+				return `${_root}${sep}`;
 			} catch(err) {
 
 			}
@@ -158,8 +159,25 @@ const _configMergeOverrides = {
 	nodeModulesServe: (objValue, srcValue, key, object, source)=>{
 		return {...objValue, [source.__packagePath]:srcValue};
 	},
+
 	scriptServe: (objValue, srcValue, key, object, source)=>{
-		return {...objValue, [source.__packagePath]:srcValue};
+		const current = objValue || {};
+		const root = source.__packagePath || '';
+
+		bolt.forIn(srcValue, ({path='', modes={}}, id)=>{
+			const serverPath = join(root, path);
+
+			current[id] = current[id] || {};
+			bolt.forIn(modes, (modeDetails, mode)=>{
+				current[id][mode] = (bolt.isString(modeDetails)? {path: modeDetails} : modeDetails);
+				current[id][mode].path = join(serverPath, current[id][mode].path);
+				current[id][mode].mimetype = current[id][mode].mimetype || mime.getType(current[id][mode].path);
+			});
+
+			delete srcValue[id];
+		});
+
+		return current;
 	},
 
 	/**
@@ -268,7 +286,7 @@ function getConfigLoadPaths(serverConfigFile=(env.serverConfigFile || packageCon
  * @returns {BoltConfig}          The package object.
  */
 function getPackage(dirPath=boltRootDir, eventName) {
-	const pkgPath = path.join(dirPath, 'package.json');
+	const pkgPath = join(dirPath, 'package.json');
 	try {
 		const pkg = require(pkgPath);
 		if (eventName) bolt.chain(eventName.split(','))
