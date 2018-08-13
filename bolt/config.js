@@ -207,10 +207,13 @@ function _getConfig(config) {
 	packageConfigs.push(_packageConfigs);
 
 	const modules = [];
-	bolt.makeArray(config.root).forEach(root=>{
-		const {name, version} = bolt.pick(getPackage(root), ["name", "version"]);
-		if (name && version) modules.push({name, version});
-	});
+	bolt.chain(config.root)
+		.makeArray()
+		.forEach(root=>{
+			const {name, version} = bolt.pick(getPackage(root), ["name", "version"]);
+			if (name && version) modules.push({name, version});
+		})
+		.value();
 	packageConfigs.push({modules});
 
 	return bolt.mergeWith.apply(bolt, packageConfigs);
