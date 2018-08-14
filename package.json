@@ -170,6 +170,27 @@
       "production"
     ],
     "scriptServe": {
+      "bolt": {
+        "path": "public/dynamic/${name}/lib",
+        "modes": {
+          "development": "bolt.js",
+          "production": "bolt.min.js"
+        }
+      },
+      "react-bolt": {
+        "path": "public/dynamic/${name}/lib",
+        "modes": {
+          "development": "ReactBolt.js",
+          "production": "ReactBolt.min.js"
+        }
+      },
+      "redux-bolt": {
+        "path": "public/dynamic/${name}/lib",
+        "modes": {
+          "development": "ReduxBolt.js",
+          "production": "ReduxBolt.min.js"
+        }
+      },
       "react": {
         "path": "node_modules/react",
         "modes": {

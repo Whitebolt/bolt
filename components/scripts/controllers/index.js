@@ -8,7 +8,7 @@ const noop = require("gulp-noop");
 const cache = new Map();
 
 
-const getModes = bolt.memoize(function getModes(mode, modes, allowedModes) {
+const getModes = bolt.memoize2(function getModes(mode, modes, allowedModes) {
 	const modeIndex = allowedModes.indexOf(mode);
 	return bolt([
 		mode,
@@ -18,7 +18,7 @@ const getModes = bolt.memoize(function getModes(mode, modes, allowedModes) {
 		.filter(allowedMode=>modes.hasOwnProperty(allowedMode))
 		.map(allowedMode=>modes[allowedMode])
 		.value();
-});
+}, {cacheParams:2});
 
 function awaitStream(stream) {
 	return new Promise((resolve, reject)=>stream
@@ -29,8 +29,7 @@ function awaitStream(stream) {
 	);
 }
 
-function sendCachedFile(filepath, res, encoding) {
-	bolt.emit('scriptServeCache', filepath, encoding);
+function sendCachedFile(filepath, res) {
 	const stream = createFileStream(filepath);
 	return awaitStream(stream.pipe(res)).then(()=>cache.get(filepath));
 }
@@ -38,7 +37,7 @@ function sendCachedFile(filepath, res, encoding) {
 function createFileStream(filepath) {
 	if (!cache.has(filepath)) return createReadStream(filepath);
 	const stream = new Readable();
-	stream._read = () => {}; // redundant? see update below
+	stream._read = ()=>{};
 	cache.get(filepath).forEach(data=>stream.push(data));
 	stream.push(null);
 	return stream;
@@ -53,7 +52,10 @@ function sendFile(filepath, res, req) {
 		res.removeHeader('Content-Length');
 	}
 	const compressedPath = ((encoding === 'gzip')?`${filepath}.gz`:((encoding === 'deflate')?`${filepath}.gz`:filepath));
-	if (cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
+	if (cache.has(compressedPath)) {
+		bolt.emit('scriptServeCache', filepath, encoding);
+		return sendCachedFile(compressedPath, res);
+	}
 	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():noop));
 
 	bolt.emit('scriptServe', filepath, encoding);
