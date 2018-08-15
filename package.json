@@ -85,6 +85,7 @@
     "ical-date-parser": "^4.0.0",
     "iconv-lite": "^0.4.21",
     "ienoopen": "^1.0.0",
+    "iltorb": "^2.4.0",
     "inquirer": "^6.0.0",
     "joi": "^13.0.2",
     "lodash": "^4.17.4",

@@ -1,6 +1,7 @@
 'uses strict';
 
 const {createGzip, createDeflate} = require('zlib');
+const createBrotli = require('iltorb').compressStream;
 const noop = require("gulp-noop");
 
 
@@ -32,16 +33,18 @@ function sendCachedFile(filepath, res, encoding) {
 }
 
 function sendFile(filepath, res, req) {
-	let encoding = req.acceptsEncodings(['gzip', 'deflate', 'identity']);
+	let encoding = req.acceptsEncodings(['br', 'gzip', 'deflate', 'identity']);
 	if (encoding === 'deflate' && !!req.acceptsEncodings(['gzip'])) encoding = req.acceptsEncodings(['gzip', 'identity']);
+	if (encoding !== 'br' && !!req.acceptsEncodings(['br'])) encoding = req.acceptsEncodings(['br', 'identity']);
 
-	if ((encoding === 'gzip') || (encoding === 'deflate')) {
+	if ((encoding === 'gzip') || (encoding === 'deflate') || (encoding === 'br')) {
 		res.setHeader('Content-Encoding', encoding);
 		res.removeHeader('Content-Length');
 	}
-	const compressedPath = ((encoding === 'gzip')?`${filepath}.gz`:((encoding === 'deflate')?`${filepath}.gz`:filepath));
+
+	const compressedPath = ((encoding === 'identity')?`${filepath}`:((encoding === 'gzip')?`${filepath}.gz`:`${filepath}.${encoding}`));
 	if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
-	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():noop));
+	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():((encoding === 'br') ? createBrotli() : noop())));
 
 	bolt.emit('scriptServe', filepath, encoding);
 	const compressed = [];
