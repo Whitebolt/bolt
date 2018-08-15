@@ -89,6 +89,7 @@
     "joi": "^13.0.2",
     "lodash": "^4.17.4",
     "lodash-cli": "^4.17.4",
+    "lodash.camelcase": "^4.3.0",
     "lodash.isfunction": "^3.0.9",
     "lodash.isobject": "^3.0.2",
     "lodash.omit": "^4.5.0",

@@ -65,6 +65,7 @@ dependencies:
   joi: 13.4.0
   lodash: 4.17.10
   lodash-cli: 4.17.5
+  lodash.camelcase: 4.3.0
   lodash.isfunction: 3.0.9
   lodash.isobject: 3.0.2
   lodash.omit: 4.5.0
@@ -4309,6 +4310,10 @@ packages:
     dev: false
     resolution:
       integrity: sha1-+6HEUkwZ7ppfgTa0YJ8BfPTe1pI=
+  /lodash.camelcase/4.3.0:
+    dev: false
+    resolution:
+      integrity: sha1-soqmKIorn8ZRA1x3EfZathkDMaY=
   /lodash.clonedeep/4.5.0:
     dev: true
     resolution:
@@ -7542,6 +7547,7 @@ specifiers:
   joi: ^13.0.2
   lodash: ^4.17.4
   lodash-cli: ^4.17.4
+  lodash.camelcase: ^4.3.0
   lodash.isfunction: ^3.0.9
   lodash.isobject: ^3.0.2
   lodash.omit: ^4.5.0
