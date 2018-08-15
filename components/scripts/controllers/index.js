@@ -5,7 +5,7 @@ const createBrotli = require('iltorb').compressStream;
 const noop = require("gulp-noop");
 
 
-const getModes = bolt.memoize(function getModes(mode, modes, allowedModes) {
+const getModes = bolt.memoize2(function getModes(mode, modes, allowedModes) {
 	const modeIndex = allowedModes.indexOf(mode);
 	return bolt([
 		mode,
@@ -15,7 +15,7 @@ const getModes = bolt.memoize(function getModes(mode, modes, allowedModes) {
 		.filter(allowedMode=>modes.hasOwnProperty(allowedMode))
 		.map(allowedMode=>modes[allowedMode])
 		.value();
-});
+}, {cacheParams:2});
 
 function awaitStream(stream) {
 	return new Promise((resolve, reject)=>stream
@@ -44,7 +44,7 @@ function sendFile(filepath, res, req) {
 
 	const compressedPath = ((encoding === 'identity')?`${filepath}`:((encoding === 'gzip')?`${filepath}.gz`:`${filepath}.${encoding}`));
 	if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
-	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():((encoding === 'br') ? createBrotli() : noop())));
+	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():((encoding === 'br') ? createBrotli() : n)));
 
 	bolt.emit('scriptServe', filepath, encoding);
 	const compressed = [];

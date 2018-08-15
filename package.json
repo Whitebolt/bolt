@@ -172,11 +172,24 @@
       "production"
     ],
     "scriptServe": {
+      "bolt": {
+        "path": "public/dynamic/${name}/lib",
+        "modes": {
+          "development": "bolt.js",
+          "production": "bolt.min.min.js"
+        }
+      },
       "react": {
         "path": "node_modules/react",
         "modes": {
           "development": "umd/react.development.js",
           "production": "umd/react.production.min.js"
+        }
+      },
+      "bolt-loader": {
+        "path": "public/static/lib",
+        "modes": {
+          "production": "boltLoader.js"
         }
       }
     },
