@@ -1,11 +1,7 @@
 'uses strict';
 
-const {createReadStream} = require('fs');
-const {Readable} = require('stream');
 const {createGzip, createDeflate} = require('zlib');
 const noop = require("gulp-noop");
-
-const cache = new Map();
 
 
 const getModes = bolt.memoize(function getModes(mode, modes, allowedModes) {
@@ -31,17 +27,8 @@ function awaitStream(stream) {
 
 function sendCachedFile(filepath, res, encoding) {
 	bolt.emit('scriptServeCache', filepath, encoding);
-	const stream = createFileStream(filepath);
-	return awaitStream(stream.pipe(res)).then(()=>cache.get(filepath));
-}
-
-function createFileStream(filepath) {
-	if (!cache.has(filepath)) return createReadStream(filepath);
-	const stream = new Readable();
-	stream._read = () => {}; // redundant? see update below
-	cache.get(filepath).forEach(data=>stream.push(data));
-	stream.push(null);
-	return stream;
+	const stream = bolt.readFile(filepath, {stream:true});
+	return awaitStream(stream.pipe(res)).then(()=>bolt.readFile.cache.get(filepath));
 }
 
 function sendFile(filepath, res, req) {
@@ -53,20 +40,17 @@ function sendFile(filepath, res, req) {
 		res.removeHeader('Content-Length');
 	}
 	const compressedPath = ((encoding === 'gzip')?`${filepath}.gz`:((encoding === 'deflate')?`${filepath}.gz`:filepath));
-	if (cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
+	if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
 	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():noop));
 
 	bolt.emit('scriptServe', filepath, encoding);
-	const [result, compressed] = [[], []];
-	return awaitStream(createFileStream(filepath)
-		.on('data', data=>result.push(data))
-		.pipe(encoder)
-		.on('data', data=>{if (encoder !== noop) compressed.push(data);})
+	const compressed = [];
+	return awaitStream(bolt.readFile(filepath, {stream:true})
+		.pipe(encoder).on('data', data=>{if (encoder !== noop) compressed.push(data);})
 		.pipe(res)
 	).then(()=>{
-		cache.set(filepath, result);
-		if (encoder !== noop) cache.set(compressedPath, compressed);
-		return result;
+		if (encoder !== noop) bolt.readFile.cache.set(compressedPath, [null, compressed]);
+		return bolt.readFile.cache.get(filepath)[1];
 	});
 }
 

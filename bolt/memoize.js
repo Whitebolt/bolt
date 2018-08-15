@@ -5,7 +5,6 @@ const isFunction = require('lodash.isfunction');
 const isObject = require('lodash.isobject');
 const omit = require('lodash.omit');
 
-const FAIL = Symbol('FAIL');
 const defaultResolvers = [
 	first=>first,
 	(first, second)=>[first, second],
@@ -33,7 +32,7 @@ function getFromCache(lookupId, cache, cacheParams=1) {
 			if (('has' in cache2) && (cache2.has(lookupId[2]))) return cache2.get(lookupId[2]);
 		}
 	}
-	return FAIL;
+	return memoize2.FAIL;
 }
 
 function setCache(lookupId, value, cache, cacheParams=1) {
@@ -68,12 +67,14 @@ function parseOptions(options={}) {
 
 function memoize2(fn, options) {
 	const _options = parseOptions(options);
-	if (_options.type === 'function') return __memoize(fn, _options);
-	if (_options.type === 'promise') return __memoizePromise(fn, _options)
-	if (_options.type === 'node-callback') return __memoizeNode(fn, _options)
+	if (_options.type === 'function') return memoize2.function(fn, _options);
+	if (_options.type === 'promise') return memoize2.promise(fn, _options);
+	if (_options.type === 'node-callback') return memoize2.nodeCallback(fn, _options);
+	if (!!memoize2.stream && (_options.type === 'stream')) return memoize2.stream(fn, _options)
 }
+memoize2.FAIL = Symbol('FAIL');
 
-function __memoize(fn, {resolver, cache, noCache, cacheParams}) {
+memoize2.function = function memoize(fn, {resolver, cache, noCache, cacheParams}) {
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
 		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
@@ -85,7 +86,7 @@ function __memoize(fn, {resolver, cache, noCache, cacheParams}) {
 
 		const lookupId = resolver(...params);
 		const saved = getFromCache(lookupId, memoized.cache, cacheParams);
-		if (saved !== FAIL) {
+		if (saved !== memoize2.FAIL) {
 			const [err, data] = saved;
 			if (!err) return data;
 			throw err;
@@ -101,9 +102,9 @@ function __memoize(fn, {resolver, cache, noCache, cacheParams}) {
 		}
 	}
 	return _memoize(memoized, cache);
-}
+};
 
-function __memoizeNode(fn, {resolver, cache, noCache, cacheParams}) {
+memoize2.nodeCallback = function memoizeNode(fn, {resolver, cache, noCache, cacheParams}) {
 	function memoized(...params) {
 		const cb = params.pop();
 		const fnOptions = params[params.length-1];
@@ -116,16 +117,16 @@ function __memoizeNode(fn, {resolver, cache, noCache, cacheParams}) {
 
 		const lookupId = resolver(...params);
 		const saved = getFromCache(lookupId, memoized.cache, cacheParams);
-		if (saved !== FAIL) return cb(...saved);
+		if (saved !== memoize2.FAIL) return cb(...saved);
 		return fn(...params, (...result)=>{
 			setCache(lookupId, result, memoized.cache, cacheParams);
 			return cb(...result);
 		});
 	}
 	return _memoize(memoized, cache);
-}
+};
 
-function __memoizePromise(fn, {resolver, cache, noCache, cacheParams}) {
+memoize2.promise = function memoizePromise(fn, {resolver, cache, noCache, cacheParams}) {
 	function memoized(...params) {
 		const fnOptions = params[params.length-1];
 		if (!!fnOptions && isObject(fnOptions) && !!fnOptions.noCache) {
@@ -137,7 +138,7 @@ function __memoizePromise(fn, {resolver, cache, noCache, cacheParams}) {
 
 		const lookupId = resolver(...params);
 		const saved = getFromCache(lookupId, memoized.cache, cacheParams);
-		if (saved !== FAIL) {
+		if (saved !== memoize2.FAIL) {
 			const [err, ...data] = saved;
 			if (!!err) return Promise.reject(err);
 			return Promise.resolve(((data.length > 1) ? data : data[0]));
@@ -152,7 +153,7 @@ function __memoizePromise(fn, {resolver, cache, noCache, cacheParams}) {
 		});
 	}
 	return _memoize(memoized, cache);
-}
+};
 
 function memoizeRegExp(rx) {
 	const cache = new Map();

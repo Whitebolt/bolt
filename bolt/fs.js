@@ -22,6 +22,7 @@ const {isFile, isFileSync} = createIsFileMethods();
 const {readdir, readdirSyc} = createReadDirMethods();
 const {writeFile, writeFileSync} = createWriteFileMethods();
 const {openFile, openFileSync} = createOpenMethods();
+const {readFile, readFileSync} = createReadFileMethods();
 
 
 function createStatMethods() {
@@ -133,6 +134,52 @@ function createReadDirMethods() {
 	return {readdir, readdirSync};
 }
 
+function createReadFileMethods() {
+	const cache = bolt.getStore('require.readFileCache');
+
+	const _readFile = bolt.memoize2(fs.readFile, {cache, type:'node-callback'});
+	const _readFileSync = bolt.memoize2(fs.readFileSync, {cache});
+	const readFileStream = bolt.memoize2(fs.createReadStream, {cache, type:'stream'});
+	const readFilePromise = bolt.memoize2(!!fs.promises?fs.promises.readFile:promisify(fs.readFile), {cache, type:'promise'});
+
+	function mergeResult(result, encoding) {
+		if (!Array.isArray(result)) return ((encoding === null)?result:result.toString(encoding));
+		if (encoding === null) return Buffer.concat(result);
+		return Buffer.concat(result).toString(encoding);
+	}
+
+	function readFile(path, ...params) {
+		const cb = ((params.length > 1)?params[1]:(bolt.isFunction(params[0])?params[0]:undefined));
+		const last = bolt.nth(params, -1);
+		const {stream=false, ...options} = {...(
+			bolt.isObject(last) ?
+				params.pop() :
+				(bolt.isString(last) ? {encoding:last} : '')
+		)};
+		const encoding = options.encoding || null;
+		options.encoding = null;
+
+		if (!stream) return (!!cb?
+			_readFile(path, options, (err, result)=>{
+				if (!!err) return cb(err);
+				return cb(err, mergeResult(result, encoding));
+			}) : readFilePromise(path, options).then(result=>mergeResult(result, encoding))
+		);
+		return readFileStream(path, options);
+	}
+	readFile.cache = cache;
+
+	function readFileSync(path, options={}) {
+		const _options = (bolt.isString(options) ? {encoding:options} : options);
+		const encoding = _options.encoding || null;
+		_options.encoding = null;
+		return mergeResult(_readFileSync(path, options), encoding);
+	}
+	readFileSync.cache = cache;
+
+	return {readFile, readFileSync};
+}
+
 function createWriteFileMethods() {
 	const writeFilePromise = !!fs.promises?fs.promises.writeFile:promisify(fs.writeFile);
 	const writePromise = !!fs.promises?fs.promises.write:promisify(fs.write);
@@ -188,5 +235,5 @@ function createOpenMethods() {
 
 module.exports = {
 	stat, statSync, lstat, lstatSync, isDirectory, isDirectorySync, isFile, isFileSync, readdir, readdirSyc,
-	writeFile, writeFileSync, openFile, openFileSync
+	writeFile, writeFileSync, openFile, openFileSync, readFile, readFileSync
 };
