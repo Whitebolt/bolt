@@ -26,6 +26,10 @@ function makePromise(func) {
 	};
 }
 
+function isPromise(value) {
+	return bolt.isObject(value) && bolt.isFunction(value.then);
+}
+
 module.exports = {
-	mapAsync, makePromise
+	mapAsync, makePromise, isPromise
 };

@@ -5,18 +5,6 @@ const createBrotli = require('iltorb').compressStream;
 const noop = require("gulp-noop");
 
 
-const getModes = bolt.memoize2(function getModes(mode, modes, allowedModes) {
-	const modeIndex = allowedModes.indexOf(mode);
-	return bolt([
-		mode,
-		...allowedModes.slice(0, modeIndex).reverse(),
-		...allowedModes.slice(modeIndex+1)
-	])
-		.filter(allowedMode=>modes.hasOwnProperty(allowedMode))
-		.map(allowedMode=>modes[allowedMode])
-		.value();
-}, {cacheParams:2});
-
 function awaitStream(stream) {
 	return new Promise((resolve, reject)=>stream
 		.on('error', err=>reject(err))
@@ -67,18 +55,11 @@ async function index(values, res, req, config, query, done) {
 		if (!query.mode) values.mode = allowedModes[allowedModes.length-1];
 	}
 	const modes = bolt.get(config, `scriptServe['${values.id}']`, {});
-	const possibleModes = getModes(values.mode, modes, allowedModes);
-
-	let index = -1;
-	const length = ((possibleModes == null) ? 0 : possibleModes.length);
-	while(++index < length) {
-		const mode = possibleModes[index];
-		const found = await bolt.isFile(mode.path);
-		if (found) {
-			res.set('Content-Type', mode.mimetype);
-			await sendFile(mode.path, res, req);
-			return done();
-		}
+	const script = await bolt.scriptServer.getScript({allowedModes, modes, mode:values.mode});
+	if (!!script) {
+		res.set('Content-Type', script.mimetype);
+		await sendFile(script.path, res, req);
+		return done();
 	}
 }
 
