@@ -1,6 +1,8 @@
 'use strict';
 // @annotation zone server
 
+const {basename} = require('path');
+
 const getModes = bolt.memoize2(function getModes(mode, modes, allowedModes) {
 	const modeIndex = allowedModes.indexOf(mode);
 	return bolt([
@@ -18,7 +20,8 @@ async function getScript({
 	id,
 	mode='production',
 	allowedModes=bolt.get(config, 'modes', []),
-	modes=bolt.get(config, `scriptServe['${id}']`, {})
+	modes=bolt.get(config, `scriptServe['${id}']`, {}),
+	filename
 }) {
 	const possibleModes = getModes(mode, modes, allowedModes);
 
@@ -26,7 +29,10 @@ async function getScript({
 	const length = ((possibleModes == null) ? 0 : possibleModes.length);
 	while(++index < length) {
 		const script = possibleModes[index];
-		const found = await bolt.isFile(script.path);
+		const found = await (!!filename ?
+			bolt.isFile(script.resources[filename] || script.path) :
+			bolt.isFile(script.path)
+		);
 		if (found) return script;
 	}
 }
@@ -52,6 +58,15 @@ async function getScriptDeps({
 	return bolt(all).flattenDeep().uniq().value();
 }
 
+function getLoaderScript(script) {
+	return {
+		filename: basename(script.path),
+		id: script.id,
+		async: (script.hasOwnProperty('async')?script.async:false),
+		defer: (script.hasOwnProperty('defer')?script.defer:true)
+	};
+}
+
 async function _getScriptLoaderData({config, scripts=[], mode}) {
 	const all = await Promise.all(bolt(scripts)
 		.makeArray()
@@ -59,16 +74,11 @@ async function _getScriptLoaderData({config, scripts=[], mode}) {
 			const deps = await Promise.all((await getScriptDeps({config, mode, id:script.id}))
 				.map(async (dep)=>{
 					const id = (bolt.isString(dep)?dep:dep.id);
-					const script = await getScript({config, mode, id});
-					return {
-						id,
-						async: (script.hasOwnProperty('async')?script.async:false),
-						defer: (script.hasOwnProperty('defer')?script.defer:true)
-					};
+					return getLoaderScript({...await getScript({config, mode, id}), id});
 				})
 			);
 
-			return [...deps, script];
+			return [...deps, getLoaderScript({...await getScript({config, mode, id:script.id}), id:script.id})];
 		})
 		.value()
 	);

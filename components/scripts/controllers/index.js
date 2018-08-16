@@ -45,20 +45,23 @@ function sendFile(filepath, res, req) {
 	});
 }
 
-async function index(values, res, req, config, query, done) {
+async function index(values, res, req, config, done) {
 	// @annotation accepts-connect get
-	// @annotation path-map /mode/id
+	// @annotation path-map /mode/id/filename
 
 	const allowedModes = bolt.get(config, 'modes', []);
-	if (bolt.objectLength(values.__pathObj) === 1) {
-		if (!values.id) values.id = values.__pathObj.mode;
-		if (!query.mode) values.mode = allowedModes[allowedModes.length-1];
+	if (bolt.objectLength(values.__pathObj) === 2) {
+		if (!values.filename) {
+			values.id = values.__pathObj.mode;
+			values.filename = values.__pathObj.id;
+		}
 	}
 	const modes = bolt.get(config, `scriptServe['${values.id}']`, {});
-	const script = await bolt.scriptServer.getScript({allowedModes, modes, mode:values.mode});
+	const script = await bolt.scriptServer.getScript({allowedModes, modes, mode:values.mode, filename:values.filename});
 	if (!!script) {
 		res.set('Content-Type', script.mimetype);
-		await sendFile(script.path, res, req);
+		const filepath = bolt.get(script, `resources['${values.filename}']`, script.path);
+		await sendFile(filepath, res, req);
 		return done();
 	}
 }

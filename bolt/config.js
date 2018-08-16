@@ -8,7 +8,7 @@
 
 const promisify = require('util').promisify || Promise.promisify;
 const freeport = promisify(require('find-free-port'));
-const {normalize, join, delimiter, sep} = require('path');
+const {normalize, join, delimiter, sep, basename} = require('path');
 const mime = require('mime');
 
 const packageData = _getPackage(boltRootDir);
@@ -164,7 +164,7 @@ const _configMergeOverrides = {
 		const current = objValue || {};
 		const root = source.__packagePath || '';
 
-		bolt.forIn(srcValue, ({path='', modes={}, deps=[]}, id)=>{
+		bolt.forIn(srcValue, ({path='', modes={}, deps=[], resources=[]}, id)=>{
 			const serverPath = join(root, path);
 
 			current[id] = current[id] || {};
@@ -173,6 +173,9 @@ const _configMergeOverrides = {
 				current[id][mode].path = join(serverPath, current[id][mode].path);
 				current[id][mode].mimetype = current[id][mode].mimetype || mime.getType(current[id][mode].path);
 				current[id][mode].deps = deps;
+				current[id][mode].resources = Object.assign({}, ...resources.map(other=>{
+					return {[basename(other)]:join(serverPath, other)};
+				}))
 			});
 
 			delete srcValue[id];

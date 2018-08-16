@@ -18,7 +18,7 @@
 
 	function createScriptElement(details, mode) {
 		var script = global.document.createElement("script");
-		script.src = "/scripts/" + mode + "/" + details.id;
+		script.src = "/scripts/" + mode + "/" + details.id + "/" + details.filename;
 		script.defer = (details.hasOwnProperty("defer") ? details.defer : true);
 		script.async = (details.hasOwnProperty("async") ? details.async : false);
 
