@@ -164,7 +164,7 @@ const _configMergeOverrides = {
 		const current = objValue || {};
 		const root = source.__packagePath || '';
 
-		bolt.forIn(srcValue, ({path='', modes={}}, id)=>{
+		bolt.forIn(srcValue, ({path='', modes={}, deps=[]}, id)=>{
 			const serverPath = join(root, path);
 
 			current[id] = current[id] || {};
@@ -172,6 +172,7 @@ const _configMergeOverrides = {
 				current[id][mode] = (bolt.isString(modeDetails)? {path: modeDetails} : modeDetails);
 				current[id][mode].path = join(serverPath, current[id][mode].path);
 				current[id][mode].mimetype = current[id][mode].mimetype || mime.getType(current[id][mode].path);
+				current[id][mode].deps = deps;
 			});
 
 			delete srcValue[id];
