@@ -20,7 +20,7 @@ function parseOptions(options={}) {
 		noCache=()=>false,
 		cacheParams=1,
 		type='function'
-		} = (isFunction(options) ? {resolver:options} : options);
+	} = (isFunction(options) ? {resolver:options} : options);
 
 	return {
 		resolver:(((cacheParams > 1) && (resolver === defaultResolvers[0])) ?

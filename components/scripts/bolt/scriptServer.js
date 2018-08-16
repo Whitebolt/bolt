@@ -45,14 +45,14 @@ async function getScriptDeps({
 	const current = await _getDeps({config, mode, id, allowedModes, modes});
 	const all = await Promise.all(bolt(current)
 		.makeArray()
-		.map(async (id)=>[id, ...(await getScriptDeps({config, mode, id, allowedModes}))])
+		.map(async (id)=>[...(await getScriptDeps({config, mode, id, allowedModes})), id])
 		.value()
 	);
 
 	return bolt(all).flattenDeep().uniq().value();
 }
 
-async function getScriptLoaderData({config, scripts=[], mode}) {
+async function _getScriptLoaderData({config, scripts=[], mode}) {
 	const all = await Promise.all(bolt(scripts)
 		.makeArray()
 		.map(async (script)=>{
@@ -75,6 +75,12 @@ async function getScriptLoaderData({config, scripts=[], mode}) {
 
 	return bolt(all).flattenDeep().value();
 }
+
+const getScriptLoaderData = bolt.memoize2(_getScriptLoaderData, {
+	type:'promise',
+	cacheParams:2,
+	resolver:({mode, scripts})=>[mode, scripts]
+});
 
 module.exports = {
 	scriptServer: {
