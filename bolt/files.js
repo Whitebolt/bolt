@@ -247,7 +247,7 @@ function getCacheDir(app) {
 	return path.join(
 		os.tmpdir(),
 		'bolt',
-		(bolt.isString(app)?app:bolt.get(app, 'locals.name', 'unknown'))
+		(bolt.isString(app)?app:bolt.get(app, 'locals.name', bolt.get(app, 'locals.appName', 'unknown')))
 	);
 }
 

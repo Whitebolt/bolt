@@ -3,6 +3,7 @@
 const {createGzip, createDeflate} = require('zlib');
 const createBrotli = require('iltorb').compressStream;
 const noop = require("gulp-noop");
+const {join} = require('path');
 
 
 function awaitStream(stream) {
@@ -20,7 +21,7 @@ function sendCachedFile(filepath, res, encoding) {
 	return awaitStream(stream.pipe(res)).then(()=>bolt.readFile.cache.get(filepath));
 }
 
-function sendFile(filepath, res, req) {
+async function sendFile(filepath, res, req) {
 	let encoding = req.acceptsEncodings(['br', 'gzip', 'deflate', 'identity']);
 	if (encoding === 'deflate' && !!req.acceptsEncodings(['gzip'])) encoding = req.acceptsEncodings(['gzip', 'identity']);
 	if (encoding !== 'br' && !!req.acceptsEncodings(['br'])) encoding = req.acceptsEncodings(['br', 'identity']);
@@ -32,6 +33,15 @@ function sendFile(filepath, res, req) {
 
 	const compressedPath = ((encoding === 'identity')?`${filepath}`:((encoding === 'gzip')?`${filepath}.gz`:`${filepath}.${encoding}`));
 	if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
+	const cachePath = join(bolt.getCacheDir(req.app), compressedPath);
+	if ((await bolt.isFile(cachePath)) && (await bolt.isFile(filepath))) {
+		if ((await bolt.stat(cachePath)).mtimeMs > (await bolt.stat(filepath)).mtimeMs) {
+			const [err, content] = await sendCachedFile(cachePath, res, encoding);
+			bolt.readFile.cache.set(compressedPath, [err, content]);
+			return content;
+		}
+	}
+
 	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():((encoding === 'br') ? createBrotli() : n)));
 
 	bolt.emit('scriptServe', filepath, encoding);
@@ -40,7 +50,10 @@ function sendFile(filepath, res, req) {
 		.pipe(encoder).on('data', data=>{if (encoder !== noop) compressed.push(data);})
 		.pipe(res)
 	).then(()=>{
-		if (encoder !== noop) bolt.readFile.cache.set(compressedPath, [null, compressed]);
+		if (encoder !== noop) {
+			bolt.readFile.cache.set(compressedPath, [null, compressed]);
+			bolt.writeFile(cachePath, Buffer.concat(compressed), {createDirectories:true})
+		}
 		return bolt.readFile.cache.get(filepath)[1];
 	});
 }
