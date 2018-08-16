@@ -212,10 +212,42 @@
           "production": "umd/react.production.min.js"
         }
       },
+      "react-dom": {
+        "path": "node_modules/react-dom",
+        "modes": {
+          "development": "umd/react-dom.development.js",
+          "production": "umd/react-dom.production.min.js"
+        }
+      },
+      "redux": {
+        "path": "node_modules/redux/dist",
+        "modes": {
+          "development": "redux.js",
+          "production": "redux.min.js"
+        }
+      },
+      "prop-types": {
+        "path": "node_modules/prop-types",
+        "modes": {
+          "development": "prop-types.js",
+          "production": "prop-types.min.js"
+        }
+      },
       "bolt-loader": {
         "path": "public/static/lib",
         "modes": {
           "production": "boltLoader.js"
+        }
+      },
+      "websockets-express": {
+        "path": "node_modules/@simpo/websocket-express/umd",
+        "resources": [
+          "websocket-express.development.js.map",
+          "websocket-express.development.min.js.map"
+        ],
+        "modes": {
+          "development":"websocket-express.development.js",
+          "production":"websocket-expressproduction.min.js"
         }
       }
     },

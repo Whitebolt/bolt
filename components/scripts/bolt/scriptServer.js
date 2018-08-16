@@ -59,12 +59,14 @@ async function getScriptDeps({
 }
 
 function getLoaderScript(script) {
-	return {
-		filename: basename(script.path),
-		id: script.id,
-		async: (script.hasOwnProperty('async')?script.async:false),
-		defer: (script.hasOwnProperty('defer')?script.defer:true)
-	};
+	try {
+		return {
+			filename: basename(script.path),
+			id: script.id,
+			async: (script.hasOwnProperty('async')?script.async:false),
+			defer: (script.hasOwnProperty('defer')?script.defer:true)
+		};
+	} catch(err) {}
 }
 
 async function _getScriptLoaderData({config, scripts=[], mode}) {
@@ -83,7 +85,17 @@ async function _getScriptLoaderData({config, scripts=[], mode}) {
 		.value()
 	);
 
-	return bolt(all).flattenDeep().value();
+	const deps = new Set();
+	return bolt(all)
+		.flattenDeep()
+		.filter(item=>{
+			if (!item) return false;
+			const lookup = `${item.id}/${item.filename}`;
+			if (deps.has(lookup)) return false;
+			deps.add(lookup);
+			return true;
+		})
+		.value();
 }
 
 const getScriptLoaderData = bolt.memoize2(_getScriptLoaderData, {
