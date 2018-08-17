@@ -16,9 +16,19 @@
 		return config;
 	}
 
+	function addQueryParam(url, key, value) {
+		try {
+			return url + (~url.indexOf("?")?"&":"?") + key + "=" + value.toString().trim();
+		} catch(err) {
+			return url;
+		}
+
+	}
+
 	function createScriptElement(details, mode) {
 		var script = global.document.createElement("script");
 		script.src = "/scripts/" + mode + "/" + details.id + "/" + details.filename;
+		if (details.hasOwnProperty("cacheId")) script.src = addQueryParam(script.src, "cacheId", details.cacheId);
 		script.defer = (details.hasOwnProperty("defer") ? details.defer : true);
 		script.async = (details.hasOwnProperty("async") ? details.async : false);
 

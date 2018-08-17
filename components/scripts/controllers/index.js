@@ -26,6 +26,7 @@ async function sendFile(filepath, res, req) {
 	if (encoding === 'deflate' && !!req.acceptsEncodings(['gzip'])) encoding = req.acceptsEncodings(['gzip', 'identity']);
 	if (encoding !== 'br' && !!req.acceptsEncodings(['br'])) encoding = req.acceptsEncodings(['br', 'identity']);
 
+	res.setHeader('Cache-Control', 'max-age=31556926');
 	if ((encoding === 'gzip') || (encoding === 'deflate') || (encoding === 'br')) {
 		res.setHeader('Content-Encoding', encoding);
 		res.removeHeader('Content-Length');

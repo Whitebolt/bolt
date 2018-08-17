@@ -58,11 +58,12 @@ async function getScriptDeps({
 	return bolt(all).flattenDeep().uniq().value();
 }
 
-function getLoaderScript(script) {
+async function getLoaderScript(script) {
 	try {
 		return {
 			filename: basename(script.path),
 			id: script.id,
+			cacheId: parseInt((await bolt.stat(script.path)).mtimeMs, 10),
 			async: (script.hasOwnProperty('async')?script.async:false),
 			defer: (script.hasOwnProperty('defer')?script.defer:true)
 		};
@@ -76,11 +77,13 @@ async function _getScriptLoaderData({config, scripts=[], mode}) {
 			const deps = await Promise.all((await getScriptDeps({config, mode, id:script.id}))
 				.map(async (dep)=>{
 					const id = (bolt.isString(dep)?dep:dep.id);
-					return getLoaderScript({...await getScript({config, mode, id}), id});
+					const script = {...(await getScript({config, mode, id})), id};
+					return await getLoaderScript(script);
 				})
 			);
 
-			return [...deps, getLoaderScript({...await getScript({config, mode, id:script.id}), id:script.id})];
+			const _script = {...(await getScript({config, mode, id:script.id})), id:script.id};
+			return [...deps, await getLoaderScript(_script)];
 		})
 		.value()
 	);
