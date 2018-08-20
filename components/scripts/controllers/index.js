@@ -4,6 +4,7 @@ const {createGzip, createDeflate} = require('zlib');
 const createBrotli = require('iltorb').compressStream;
 const noop = require("gulp-noop");
 const {join} = require('path');
+const mime = require('mime');
 
 
 function awaitStream(stream) {
@@ -73,9 +74,14 @@ async function index(values, res, req, config, done) {
 	const modes = bolt.get(config, `scriptServe['${values.id}']`, {});
 	const script = await bolt.scriptServer.getScript({allowedModes, modes, mode:values.mode, filename:values.filename});
 	if (!!script) {
-		res.set('Content-Type', script.mimetype);
-		const filepath = bolt.get(script, `resources['${values.filename}']`, script.path);
-		await sendFile(filepath, res, req);
+		if (bolt.has(script, `resources['${values.filename}']`)) {
+			const filepath = bolt.get(script, `resources['${values.filename}']`, script.path);
+			res.set('Content-Type', mime.getType(filepath));
+			await sendFile(filepath, res, req);
+		} else {
+			res.set('Content-Type', script.mimetype);
+			await sendFile(script.path, res, req);
+		}
 		return done();
 	}
 }
