@@ -239,6 +239,12 @@
           "production": "boltLoader.js"
         }
       },
+      "bson": {
+        "path": "public/static/lib",
+        "modes": {
+          "production": "bson.js"
+        }
+      },
       "websockets-express": {
         "path": "node_modules/@simpo/websocket-express/umd",
         "resources": [

@@ -3,6 +3,7 @@
 const xBreakingInCSPGetGlobal = /Function\(["']return this["']\)\(\)/g;
 const cspReplace = 'window';
 const cacheId = 'gulpReact';
+const xNodeModules = /\/node_modules\//;
 
 
 async function fn(
@@ -15,13 +16,22 @@ async function fn(
 	const source = path.join(settings.cacheDir, `${settings.outputName}.js`);
 	const dest = path.join(settings.boltRootDir, 'public', 'dynamic', settings.appName, webPath);
 	const cache = bolt.getRollupBundleCache({cacheDir:settings.cacheDir, id:cacheId});
-
+	const globals = {
+		"lodash": "bolt",
+		"prop-types": "PropTypes",
+		"redux": "Redux",
+		"react": "React",
+		"react-dom": "ReactDOM"
+	};
 
 	rollupVinylAdaptor({
 		rollup,
 		input: {
 			input: source,
 			//cache,
+			external: function(id, parent, isResolved) {
+				if (id in globals) return true;
+			},
 			plugins: [
 				rollupNodeResolve({
 					...bolt.get(settings, 'nodeResolve', {}),
@@ -38,7 +48,8 @@ async function fn(
 						babelResolveTransform(bolt.pick(settings, ['root'])),
 						'@babel/plugin-external-helpers',
 						...bolt.get(settings, 'babel.plugins', [])
-					]
+					],
+					ignore: [xNodeModules]
 				}),
 				rollupReactBoltPlugin(settings),
 				rollupSourcemaps()
@@ -47,7 +58,12 @@ async function fn(
 		output: {
 			format: 'iife',
 			name: settings.outputName,
-			sourcemap: true
+			sourcemap: true,
+			globals: function (id) {
+				if (id in globals) return globals[id];
+				console.log(id);
+				return id;
+			}
 		}
 	})
 		.on('bundle', bundle=>bolt.saveRollupBundleCache({bundle, cacheDir:settings.cacheDir, id:cacheId, waiting, done}))

@@ -40,7 +40,7 @@ module.exports = function(){
 				const exports = require(target);
 				if (bolt.annotation.get(exports, 'browser-export') !== false) {
 					if (!!exports.default) {
-						const name = exports.default.name || getExportNameFromFileName(orginalTarget);
+						const name = exports.default.displayName || exports.default.name || getExportNameFromFileName(orginalTarget);
 						contents += `import ${name} from "${target}";\n`;
 						bolt.emit(exportEventType, new bolt.ExportToBrowserReactBoltEvent({
 							exportEventType,
