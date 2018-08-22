@@ -1,5 +1,6 @@
 (function(global) {
 	var loaded = {};
+	var loading = {};
 	var onDeps = {};
 
 	function makeArray(ary) {
@@ -30,6 +31,7 @@
 
 	function createScriptElement(details, onDepsCb) {
 		var script = global.document.createElement("script");
+		if (!loading[details.id]) loading[details.id] = false;
 
 		script.src = details.browserPath;
 		if (details.hasOwnProperty("cacheId")) script.src = addQueryParam(script.src, "cacheId", details.cacheId);
@@ -69,11 +71,22 @@
 	if (!!head) {
 		makeArray(config.scripts).forEach(function(details) {
 			loaded[details.id] = false;
-			createScriptElement(details, function(script) {
-				console.log("Adding", details.id);
-				details.added = Date.now();
-				head.appendChild(script);
+			var script = createScriptElement(details, function(script) {
+				if (!loading[details.id]) {
+					loading[details.id] = true;
+					console.log("Adding", details.id);
+					details.added = Date.now();
+					head.appendChild(script);
+				}
 			});
+			if (!loaded[details.id] && !loading[details.id]) {
+				var preload = global.document.createElement("link");
+				preload.rel = "preload";
+				preload.as = "script";
+				preload.href = script.src;
+				console.log("Pre-loading", details.id);
+				head.appendChild(preload);
+			}
 		});
 	}
 })(window);
