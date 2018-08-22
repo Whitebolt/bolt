@@ -22,12 +22,12 @@ function sendCachedFile(filepath, res, encoding) {
 	return awaitStream(stream.pipe(res)).then(()=>bolt.readFile.cache.get(filepath));
 }
 
-async function sendFile(filepath, res, req) {
+async function sendFile(filepath, res, req, query) {
 	let encoding = req.acceptsEncodings(['br', 'gzip', 'deflate', 'identity']);
 	if (encoding === 'deflate' && !!req.acceptsEncodings(['gzip'])) encoding = req.acceptsEncodings(['gzip', 'identity']);
 	if (encoding !== 'br' && !!req.acceptsEncodings(['br'])) encoding = req.acceptsEncodings(['br', 'identity']);
 
-	res.setHeader('Cache-Control', 'max-age=31556926');
+	if (!!query.cacheId) res.setHeader('Cache-Control', 'max-age=31556926');
 	if ((encoding === 'gzip') || (encoding === 'deflate') || (encoding === 'br')) {
 		res.setHeader('Content-Encoding', encoding);
 		res.removeHeader('Content-Length');
@@ -60,7 +60,7 @@ async function sendFile(filepath, res, req) {
 	});
 }
 
-async function index(values, res, req, config, done) {
+async function index(values, res, req, config, done, query) {
 	// @annotation accepts-connect get
 	// @annotation path-map /mode/id/filename
 
@@ -77,10 +77,10 @@ async function index(values, res, req, config, done) {
 		if (bolt.has(script, `resources['${values.filename}']`)) {
 			const filepath = bolt.get(script, `resources['${values.filename}']`, script.path);
 			res.set('Content-Type', mime.getType(filepath));
-			await sendFile(filepath, res, req);
+			await sendFile(filepath, res, req, query);
 		} else {
 			res.set('Content-Type', script.mimetype);
-			await sendFile(script.path, res, req);
+			await sendFile(script.path, res, req, query);
 		}
 		return done();
 	}

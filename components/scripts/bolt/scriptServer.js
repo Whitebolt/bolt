@@ -21,19 +21,23 @@ async function getScript({
 	mode='production',
 	allowedModes=bolt.get(config, 'modes', []),
 	modes=bolt.get(config, `scriptServe['${id}']`, {}),
-	filename
+	filename,
+	deps=[]
 }) {
 	const possibleModes = getModes(mode, modes, allowedModes);
 
 	let index = -1;
 	const length = ((possibleModes == null) ? 0 : possibleModes.length);
 	while(++index < length) {
-		const script = possibleModes[index];
+		const script = {...possibleModes[index]};
 		const found = await (!!filename ?
 			bolt.isFile(script.resources[filename] || script.path) :
 			bolt.isFile(script.path)
 		);
-		if (found) return script;
+		if (found) {
+			script.deps = bolt.uniq([...bolt.makeArray(script.deps), ...bolt.makeArray(deps)]);
+			return script;
+		}
 	}
 }
 
@@ -58,16 +62,21 @@ async function getScriptDeps({
 	return bolt(all).flattenDeep().uniq().value();
 }
 
-async function getLoaderScript(script) {
+async function getLoaderScript(script, mode) {
 	try {
-		return {
+		const _script = {
 			filename: basename(script.path),
 			id: script.id,
 			cacheId: parseInt((await bolt.stat(script.path)).mtimeMs, 10),
-			async: (script.hasOwnProperty('async')?script.async:false),
-			defer: (script.hasOwnProperty('defer')?script.defer:true)
+			async: (script.hasOwnProperty('async')?script.async:true),
+			defer: (script.hasOwnProperty('defer')?script.defer:false),
+			deps: bolt.makeArray(script.deps)
 		};
-	} catch(err) {}
+		_script.browserPath = `/scripts/${mode || script.mode}/${script.id}/${_script.filename}`;
+		return _script;
+	} catch(err) {
+		console.error(err);
+	}
 }
 
 async function _getScriptLoaderData({config, scripts=[], mode}) {
@@ -78,12 +87,12 @@ async function _getScriptLoaderData({config, scripts=[], mode}) {
 				.map(async (dep)=>{
 					const id = (bolt.isString(dep)?dep:dep.id);
 					const script = {...(await getScript({config, mode, id})), id};
-					return await getLoaderScript(script);
+					return await getLoaderScript(script, mode);
 				})
 			);
 
-			const _script = {...(await getScript({config, mode, id:script.id})), id:script.id};
-			return [...deps, await getLoaderScript(_script)];
+			const _script = {...(await getScript({config, mode, id:script.id, deps:script.deps})), id:script.id};
+			return [...deps, await getLoaderScript(_script, mode)];
 		})
 		.value()
 	);
@@ -109,6 +118,6 @@ const getScriptLoaderData = bolt.memoize2(_getScriptLoaderData, {
 
 module.exports = {
 	scriptServer: {
-		getScriptLoaderData, getScriptDeps, getScript, getModes
+		getScriptLoaderData, getScriptDeps, getScript, getModes, getLoaderScript
 	}
 };

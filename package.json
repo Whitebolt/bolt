@@ -189,6 +189,9 @@
           "ReactBolt.js.map",
           "ReactBolt.min.js.map"
         ],
+        "deps": ["bolt", "react", "react-dom"],
+        "defer": true,
+        "async": true,
         "modes": {
           "development": "ReactBolt.js",
           "production": "ReactBolt.min.js"
@@ -200,6 +203,7 @@
           "ReduxBolt.js.map",
           "ReduxBolt.min.js.map"
         ],
+        "deps": ["bolt","redux"],
         "modes": {
           "development": "ReduxBolt.js",
           "production": "ReduxBolt.min.js"
@@ -214,6 +218,7 @@
       },
       "react-dom": {
         "path": "node_modules/react-dom",
+        "deps": ["react"],
         "modes": {
           "development": "umd/react-dom.development.js",
           "production": "umd/react-dom.production.min.js"
@@ -228,6 +233,7 @@
       },
       "prop-types": {
         "path": "node_modules/prop-types",
+        "deps": ["react"],
         "modes": {
           "development": "prop-types.js",
           "production": "prop-types.min.js"

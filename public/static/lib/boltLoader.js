@@ -1,4 +1,7 @@
 (function(global) {
+	var loaded = {};
+	var onDeps = {};
+
 	function makeArray(ary) {
 		if (Array.isArray(ary)) return ary;
 		if ((ary === null) || (ary === undefined)) return [];
@@ -25,12 +28,38 @@
 
 	}
 
-	function createScriptElement(details, mode) {
+	function createScriptElement(details, onDepsCb) {
 		var script = global.document.createElement("script");
-		script.src = "/scripts/" + mode + "/" + details.id + "/" + details.filename;
+
+		script.src = details.browserPath;
 		if (details.hasOwnProperty("cacheId")) script.src = addQueryParam(script.src, "cacheId", details.cacheId);
-		script.defer = (details.hasOwnProperty("defer") ? details.defer : true);
-		script.async = (details.hasOwnProperty("async") ? details.async : false);
+		script.defer = (details.hasOwnProperty("defer") ? details.defer : false);
+		script.async = (details.hasOwnProperty("async") ? details.async : true);
+
+		function onload() {
+			loaded[details.id] = true;
+			script.removeEventListener("load", onload);
+			console.log("Loaded ["+(Date.now()-details.added)+"ms]", details.id);
+			Object.keys(onDeps).forEach(id=>onDeps[id]());
+			onload = undefined;
+		}
+
+		script.addEventListener("load", onload);
+		if (!!details.deps && !!details.deps.length) {
+			onDeps[details.id] = function() {
+				var ready = true;
+				details.deps.forEach(function(dep) {
+					if (~details.deps.indexOf(dep)) ready = ready && !!loaded[dep];
+				});
+				if (ready && !! onDeps[details.id]) {
+					delete onDeps[details.id];
+					if (!!onDepsCb) onDepsCb(script);
+					onDepsCb = undefined;
+				}
+			}
+		} else {
+			onDepsCb(script);
+		}
 
 		return script;
 	}
@@ -39,10 +68,12 @@
 	var head = global.document.querySelector("head");
 	if (!!head) {
 		makeArray(config.scripts).forEach(function(details) {
-			var script = createScriptElement(details, config.mode);
-
-			console.log("Adding", details.id);
-			head.appendChild(script);
+			loaded[details.id] = false;
+			createScriptElement(details, function(script) {
+				console.log("Adding", details.id);
+				details.added = Date.now();
+				head.appendChild(script);
+			});
 		});
 	}
 })(window);
