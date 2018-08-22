@@ -15,6 +15,8 @@ const getModes = bolt.memoize2(function getModes(mode, modes, allowedModes) {
 		.value();
 }, {cacheParams:2});
 
+const notUrl = path=>(!bolt.consts.isUrl.test(path));
+
 async function getScript({
 	config={},
 	id,
@@ -30,10 +32,8 @@ async function getScript({
 	const length = ((possibleModes == null) ? 0 : possibleModes.length);
 	while(++index < length) {
 		const script = {...possibleModes[index]};
-		const found = await (!!filename ?
-			bolt.isFile(script.resources[filename] || script.path) :
-			bolt.isFile(script.path)
-		);
+		const searchPath = (!!filename ?(script.resources[filename]||script.path):script.path);
+		const found = (notUrl(searchPath)?(await bolt.isFile(searchPath)):true);
 		if (found) {
 			script.deps = bolt.uniq([...bolt.makeArray(script.deps), ...bolt.makeArray(deps)]);
 			return script;
@@ -62,17 +62,32 @@ async function getScriptDeps({
 	return bolt(all).flattenDeep().uniq().value();
 }
 
+function getFileName(path='') {
+	if (!notUrl(path)) return basename(path);
+	return path.split('#').shift().split('?').shift().split('/').pop();
+}
+
 async function getLoaderScript(script, mode) {
 	try {
 		const _script = {
-			filename: basename(script.path),
+			filename: getFileName(script.path),
 			id: script.id,
-			cacheId: parseInt((await bolt.stat(script.path)).mtimeMs, 10),
 			async: (script.hasOwnProperty('async')?script.async:true),
 			defer: (script.hasOwnProperty('defer')?script.defer:false),
 			deps: bolt.makeArray(script.deps)
 		};
-		_script.browserPath = `/scripts/${mode || script.mode}/${script.id}/${_script.filename}`;
+		if (notUrl(script.path)) {
+			_script.cacheId = parseInt((await bolt.stat(script.path)).mtimeMs, 10);
+			_script.browserPath = `/scripts/${mode || script.mode}/${script.id}/${_script.filename}`;
+		} else {
+			_script.browserPath = script.path;
+		}
+		if (!!script.integrity) {
+			_script.integrity = script.integrity;
+			_script.crossorigin = script.crossorigin || "anonymous";
+		} else  if (!!script.crossorigin) {
+			_script.crossorigin = script.crossorigin;
+		}
 		return _script;
 	} catch(err) {
 		console.error(err);

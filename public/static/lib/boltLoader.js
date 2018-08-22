@@ -37,11 +37,21 @@
 		if (details.hasOwnProperty("cacheId")) script.src = addQueryParam(script.src, "cacheId", details.cacheId);
 		script.defer = (details.hasOwnProperty("defer") ? details.defer : false);
 		script.async = (details.hasOwnProperty("async") ? details.async : true);
+		if (!!details.integrity) {
+			script.integrity = details.integrity;
+			script.crossOrigin = details.crossorigin || "anonymous";
+		} else if (!!details.crossorigin) {
+			script.crossOrigin = details.crossorigin;
+		}
 
 		function onload() {
 			loaded[details.id] = true;
 			script.removeEventListener("load", onload);
-			console.log("Loaded ["+(Date.now()-details.added)+"ms]", details.id);
+			if (details.preloading) {
+				console.log("Loaded ["+(Date.now()-details.added)+"ms, Pre-load wait:"+(details.added-details.preloading)+"ms]", details.id);
+			} else {
+				console.log("Loaded ["+(Date.now()-details.added)+"ms]", details.id);
+			}
 			Object.keys(onDeps).forEach(id=>onDeps[id]());
 			onload = undefined;
 		}
@@ -84,7 +94,10 @@
 				preload.rel = "preload";
 				preload.as = "script";
 				preload.href = script.src;
+				if (!!script.crossOrigin) preload.crossOrigin = script.crossOrigin;
+				if (!!script.integrity) preload.integrity = script.integrity;
 				console.log("Pre-loading", details.id);
+				details.preloading = Date.now();
 				head.appendChild(preload);
 			}
 		});

@@ -34,7 +34,8 @@ const consts = {
 	xCasted: /\:\:(.*)/,
 	xDollarDigit: /\$\d+/g,
 	xDoubleQuotes: /\"/g,
-	isBrowser: (function(){try {return !!window;} catch (err) {return false;}})()
+	isBrowser: (function(){try {return !!window;} catch (err) {return false;}})(),
+	isUrl: /^http(?:s|)\:\/\//
 };
 
 module.exports = {

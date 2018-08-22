@@ -210,33 +210,56 @@
         }
       },
       "react": {
-        "path": "node_modules/react",
+        "path": "https://cdnjs.cloudflare.com/ajax/libs/react/16.4.2/umd",
         "modes": {
-          "development": "umd/react.development.js",
-          "production": "umd/react.production.min.js"
+          "development": {
+            "path": "react.development.js",
+            "integrity": "sha256-3XSUHlmFvUZcBr7186Oc9ojYQJOumxpA6NgH3l+bQX8="
+          },
+          "production": {
+            "path": "react.production.min.js",
+            "integrity": "sha256-2EQx5J1ux3sjgPLtDevlo449XNXfvEplcRYWIF6ui8w="
+          }
         }
       },
       "react-dom": {
-        "path": "node_modules/react-dom",
+        "path": "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.4.2/umd",
         "deps": ["react"],
         "modes": {
-          "development": "umd/react-dom.development.js",
-          "production": "umd/react-dom.production.min.js"
+          "development": {
+            "path": "react-dom.development.js",
+            "integrity": "sha256-Ue+9J/XrmC350loaA3GEO5DZu/zhvv/ORcmphEiI6mw="
+          },
+          "production": {
+            "path": "react-dom.production.min.js",
+            "integrity": "sha256-3NNU/yoE0R7VxxapKiw/hkgQzcSMztyclb5RpeVlV7Y="
+          }
         }
       },
       "redux": {
-        "path": "node_modules/redux/dist",
+        "path": "https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.0",
         "modes": {
-          "development": "redux.js",
-          "production": "redux.min.js"
+          "development": {
+            "path": "redux.js",
+            "integrity": "sha256-KLkq+W1kKUA6iR5s5Xa/tdzU0yAmXNu7qIGKR/PBoUE="
+          },
+          "production": {
+            "path": "redux.min.js",
+            "integrity": "sha256-hfNRBJsmJ7BaeBvsxVPdVeDbdEVV/MFNBm4BRLc72OY="
+          }
         }
       },
       "prop-types": {
-        "path": "node_modules/prop-types",
-        "deps": ["react"],
+        "path": "https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.6.2",
         "modes": {
-          "development": "prop-types.js",
-          "production": "prop-types.min.js"
+          "development": {
+            "path":"prop-types.js",
+            "integrity": "sha256-VdYixn/rh8pfCioq5qjv1goBmU/28ktVmFqzHSfeNQM="
+          },
+          "production": {
+            "path":"prop-types.min.js",
+            "integrity": "sha256-NmmDcgvrXeKbOwVBbplNFlX4dj72UBwMTOB9VP9dptU="
+          }
         }
       },
       "bolt-loader": {

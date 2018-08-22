@@ -164,16 +164,25 @@ const _configMergeOverrides = {
 		const current = objValue || {};
 		const root = source.__packagePath || '';
 
+		const notUrl = ({current='', path=''})=>{
+			return ((!bolt.consts.isUrl.test(current)) && (!bolt.consts.isUrl.test(path)))
+		};
+
 		bolt.forIn(srcValue, ({path='', modes={}, deps=[], resources=[]}, id)=>{
 			const serverPath = join(root, path);
 
 			current[id] = current[id] || {};
 			bolt.forIn(modes, (modeDetails, mode)=>{
 				current[id][mode] = (bolt.isString(modeDetails)? {path: modeDetails} : modeDetails);
-				current[id][mode].path = join(serverPath, current[id][mode].path);
-				current[id][mode].mimetype = current[id][mode].mimetype || mime.getType(current[id][mode].path);
-				current[id][mode].deps = deps;
-				current[id][mode].resources = Object.assign({}, ...resources.map(other=>{
+				const _current = current[id][mode];
+				if (notUrl({current:_current.path, path})) {
+					_current.path = join(serverPath, _current.path);
+				} else if (notUrl({current:_current.path})) {
+					_current.path = join(path, _current.path).replace('http:/','http://').replace('https:/','https://');
+				}
+				_current.mimetype = _current.mimetype || mime.getType(_current.path);
+				_current.deps = deps;
+				_current.resources = Object.assign({}, ...resources.map(other=>{
 					return {[basename(other)]:join(serverPath, other)};
 				}))
 			});
