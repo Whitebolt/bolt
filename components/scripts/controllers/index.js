@@ -58,7 +58,7 @@ async function sendFile(filepath, res, req, query) {
 			bolt.readFile.cache.set(compressedPath, [null, compressed]);
 			bolt.writeFile(cachePath, Buffer.concat(compressed), {createDirectories:true})
 		}
-		return bolt.readFile.cache.get(filepath)[1];
+		if (bolt.readFile.cache.has(filepath)) return bolt.readFile.cache.get(filepath)[1];
 	});
 }
 
