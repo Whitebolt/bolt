@@ -35,6 +35,7 @@
 
 		script.src = details.browserPath;
 		if (details.hasOwnProperty("cacheId")) script.src = addQueryParam(script.src, "cacheId", details.cacheId);
+		if (details.hasOwnProperty("noCache")) script.src = addQueryParam(script.src, "noCache", details.noCache);
 		script.defer = (details.hasOwnProperty("defer") ? details.defer : false);
 		script.async = (details.hasOwnProperty("async") ? details.async : true);
 		if (!!details.integrity) {
@@ -89,7 +90,8 @@
 					head.appendChild(script);
 				}
 			});
-			if (!loaded[details.id] && !loading[details.id]) {
+			if (!loaded[details.id] && !loading[details.id] && !script.integrity) {
+				// Chrome cannot use pre-loaded content with integrity set!
 				var preload = global.document.createElement("link");
 				preload.rel = "preload";
 				preload.as = "script";

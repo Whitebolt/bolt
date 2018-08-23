@@ -24,7 +24,8 @@ async function getScript({
 	allowedModes=bolt.get(config, 'modes', []),
 	modes=bolt.get(config, `scriptServe['${id}']`, {}),
 	filename,
-	deps=[]
+	deps=[],
+	noCache=false
 }) {
 	const possibleModes = getModes(mode, modes, allowedModes);
 
@@ -36,6 +37,7 @@ async function getScript({
 		const found = (notUrl(searchPath)?(await bolt.isFile(searchPath)):true);
 		if (found) {
 			script.deps = bolt.uniq([...bolt.makeArray(script.deps), ...bolt.makeArray(deps)]);
+			script.noCache = (script.hasOwnProperty('noCache') ? script.noCache : noCache);
 			return script;
 		}
 	}
@@ -77,7 +79,8 @@ async function getLoaderScript(script, mode) {
 			deps: bolt.makeArray(script.deps)
 		};
 		if (notUrl(script.path)) {
-			_script.cacheId = parseInt((await bolt.stat(script.path)).mtimeMs, 10);
+			_script.noCache = !!script.noCache;
+			if (!_script.noCache) _script.cacheId = parseInt((await bolt.stat(script.path)).mtimeMs, 10);
 			_script.browserPath = `/scripts/${mode || script.mode}/${script.id}/${_script.filename}`;
 		} else {
 			_script.browserPath = script.path;
@@ -106,7 +109,13 @@ async function _getScriptLoaderData({config, scripts=[], mode}) {
 				})
 			);
 
-			const _script = {...(await getScript({config, mode, id:script.id, deps:script.deps})), id:script.id};
+			const _script = {...(await getScript({
+				config,
+				mode,
+				id:script.id,
+				deps:script.deps,
+				noCache: !!script.noCache
+			})), id:script.id};
 			return [...deps, await getLoaderScript(_script, mode)];
 		})
 		.value()

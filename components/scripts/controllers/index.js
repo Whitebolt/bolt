@@ -27,20 +27,22 @@ async function sendFile(filepath, res, req, query) {
 	if (encoding === 'deflate' && !!req.acceptsEncodings(['gzip'])) encoding = req.acceptsEncodings(['gzip', 'identity']);
 	if (encoding !== 'br' && !!req.acceptsEncodings(['br'])) encoding = req.acceptsEncodings(['br', 'identity']);
 
-	if (!!query.cacheId) res.setHeader('Cache-Control', 'max-age=31556926');
+	if (!!query.cacheId && !query.noCache) res.setHeader('Cache-Control', 'max-age=31556926');
 	if ((encoding === 'gzip') || (encoding === 'deflate') || (encoding === 'br')) {
 		res.setHeader('Content-Encoding', encoding);
 		res.removeHeader('Content-Length');
 	}
 
 	const compressedPath = ((encoding === 'identity')?`${filepath}`:((encoding === 'gzip')?`${filepath}.gz`:`${filepath}.${encoding}`));
-	if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
 	const cachePath = join(bolt.getCacheDir(req.app), compressedPath);
-	if ((await bolt.isFile(cachePath)) && (await bolt.isFile(filepath))) {
-		if ((await bolt.stat(cachePath)).mtimeMs > (await bolt.stat(filepath)).mtimeMs) {
-			const [err, content] = await sendCachedFile(cachePath, res, encoding);
-			bolt.readFile.cache.set(compressedPath, [err, content]);
-			return content;
+	if (!query.noCache) {
+		if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
+		if ((await bolt.isFile(cachePath)) && (await bolt.isFile(filepath))) {
+			if ((await bolt.stat(cachePath)).mtimeMs > (await bolt.stat(filepath)).mtimeMs) {
+				const [err, content] = await sendCachedFile(cachePath, res, encoding);
+				bolt.readFile.cache.set(compressedPath, [err, content]);
+				return content;
+			}
 		}
 	}
 
@@ -48,7 +50,7 @@ async function sendFile(filepath, res, req, query) {
 
 	bolt.emit('scriptServe', filepath, encoding);
 	const compressed = [];
-	return awaitStream(bolt.readFile(filepath, {stream:true})
+	return awaitStream(bolt.readFile(filepath, {stream:true, noCache:!!query.noCache})
 		.pipe(encoder).on('data', data=>{if (encoder !== noop) compressed.push(data);})
 		.pipe(res)
 	).then(()=>{
@@ -72,7 +74,13 @@ async function index(values, res, req, config, done, query) {
 		}
 	}
 	const modes = bolt.get(config, `scriptServe['${values.id}']`, {});
-	const script = await bolt.scriptServer.getScript({allowedModes, modes, mode:values.mode, filename:values.filename});
+	const script = await bolt.scriptServer.getScript({
+		allowedModes,
+		modes,
+		mode:values.mode,
+		filename:values.filename,
+		noCache: bolt.toBool(query.noCache)
+	});
 	if (!!script) {
 		if (bolt.has(script, `resources['${values.filename}']`)) {
 			const filepath = bolt.get(script, `resources['${values.filename}']`, script.path);
