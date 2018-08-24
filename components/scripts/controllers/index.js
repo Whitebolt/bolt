@@ -35,7 +35,7 @@ async function sendFile(filepath, res, req, query) {
 
 	const compressedPath = ((encoding === 'identity')?`${filepath}`:((encoding === 'gzip')?`${filepath}.gz`:`${filepath}.${encoding}`));
 	const cachePath = join(bolt.getCacheDir(req.app), compressedPath);
-	if (!query.noCache) {
+	/*if (!query.noCache) {
 		if (bolt.readFile.cache.has(compressedPath)) return sendCachedFile(compressedPath, res, encoding);
 		if ((await bolt.isFile(cachePath)) && (await bolt.isFile(filepath))) {
 			if ((await bolt.stat(cachePath)).mtimeMs > (await bolt.stat(filepath)).mtimeMs) {
@@ -44,14 +44,17 @@ async function sendFile(filepath, res, req, query) {
 				return content;
 			}
 		}
-	}
+	}*/
+
+	// @todo We have turne off compression for the moment as slows it down.  Need to refactor
+	// with WebWorker and saving next to files.
 
 	const encoder = ((encoding === 'gzip')?createGzip():((encoding === 'deflate')?createDeflate():((encoding === 'br') ? createBrotli() : n)));
 
 	bolt.emit('scriptServe', filepath, encoding);
 	const compressed = [];
 	return awaitStream(bolt.readFile(filepath, {stream:true, noCache:!!query.noCache})
-		.pipe(encoder).on('data', data=>{if (encoder !== noop) compressed.push(data);})
+		//.pipe(encoder).on('data', data=>{if (encoder !== noop) compressed.push(data);})
 		.pipe(res)
 	).then(()=>{
 		if (encoder !== noop) {
