@@ -29,8 +29,8 @@ async function sendFile(filepath, res, req, query) {
 
 	if (!!query.cacheId && !query.noCache) res.setHeader('Cache-Control', 'max-age=31556926');
 	if ((encoding === 'gzip') || (encoding === 'deflate') || (encoding === 'br')) {
-		res.setHeader('Content-Encoding', encoding);
-		res.removeHeader('Content-Length');
+		//res.setHeader('Content-Encoding', encoding);
+		//res.removeHeader('Content-Length');
 	}
 
 	const compressedPath = ((encoding === 'identity')?`${filepath}`:((encoding === 'gzip')?`${filepath}.gz`:`${filepath}.${encoding}`));
