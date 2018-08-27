@@ -64,9 +64,9 @@ function _httpRouter(app) {
 		const router = bolt.boltRouter.createRouterObject(req, res);
 		router.res.statusMessage = router.res.body;
 
-		if (!methods.length) next();
-		callMethod({methods, router, next}).then(router=> {
-			if (router && router.res && !router.res.headersSent) next();
+		if (!methods.length) return next();
+		callMethod({methods, router, next}).then(router=>{
+			if (router && router.res && !router.res.headersSent) return next();
 		});
 	};
 }
