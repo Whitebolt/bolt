@@ -86,7 +86,7 @@ function init(app) {
 		hstsMiddleware,
 		ienoopen(),
 		nosniff(),
-		framegardMiddleware,
+		//framegardMiddleware,
 		xssFilter()
 	);
 }
