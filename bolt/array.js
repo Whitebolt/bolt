@@ -167,6 +167,16 @@ function mapReduce(ary, iteree, context=null) {
 	throw 'mapReduce can only work on arrays, maps, objects and sets.'
 }
 
+function rotateArray(array, num) {
+	// @annotation chain
+
+	const _array = [...array];
+	num = (num || 0) % _array.length;
+	if (num < 0) num += array.length;
+	_array.push.apply(_array, _array.splice(0, num));
+	return _array;
+}
+
 module.exports = {
-	makeArray, makeArrays, chainArray, prioritySorter, indexOfEquiv, toObjectMap, mapReduce
+	makeArray, makeArrays, chainArray, prioritySorter, indexOfEquiv, toObjectMap, mapReduce, rotateArray
 };
