@@ -31,6 +31,7 @@ function init(app) {
 		}))
 		.flatten()
 		.filter(dir=>dir)
+		.reverse()
 		.forEach(([mountPath, dirPath])=>{
 			app.use(mountPath, serve(dirPath, {...defaultOptions}));
 			bolt.emit('mountFilesystem', dirPath, mountPath);
