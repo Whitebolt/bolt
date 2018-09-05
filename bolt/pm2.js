@@ -15,7 +15,7 @@ const {
 	start:startApp,
 	disconnect:disconnectApp,
 	connect:connectApp
-	} = promisifyMethods(pm2, ['delete','list','start','disconnect','connect']);
+} = promisifyMethods(pm2, ['delete','list','start','disconnect','connect']);
 
 
 function promisifyMethods(instance, methods, append='') {
@@ -66,7 +66,7 @@ async function _getPm2Instances(name) {
 async function _startInstance(pm2Config, boltConfig) {
 	const [app] = await startApp(pm2Config);
 	const id = app.pm2_env.pm_id;
-	if (boltConfig.debug) process.kill(app.pid, 'SIGUSR1');
+	if (boltConfig.debug && boltConfig.development) process.kill(app.pid, 'SIGUSR1');
 	pm2.sendDataToProcessId(id, {type:'config', data:boltConfig, id, topic:'config'});
 	await disconnectApp();
 	return app;
