@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = bolt.Joi.object().keys({
-  username: bolt.Joi.string().min(4).required(),
-  password: bolt.Joi.string().min(8).required()
+module.exports = schemas=>Joi.object().keys({
+	username: Joi.string().min(4).required(),
+	password: Joi.string().min(8).required()
 });
