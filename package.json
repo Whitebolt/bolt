@@ -286,12 +286,12 @@
       "websockets-express": {
         "path": "node_modules/@simpo/websocket-express/umd",
         "resources": [
-          "websocket-express.development.js.map",
+          "websocket-express.production.js.map",
           "websocket-express.development.min.js.map"
         ],
         "modes": {
           "development": "websocket-express.development.js",
-          "production": "websocket-expressproduction.min.js"
+          "production": "websocket-express.production.min.js"
         }
       }
     },
