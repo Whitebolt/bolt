@@ -27,6 +27,7 @@ const consts = {
 	xIsInt: /^[0-9]+$/,
 	xIsRequireId: /^require\./,
 	xSubstitutions: /\$\{(.*?)\}/g,
+	xEs6SubstitutionsStart: /\$\{/g,
 	xSubstitutionsAt: /@\{(.*?)\}/g,
 	xTemplateIdAt: /\@\{/g,
 	chars: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split(''),
