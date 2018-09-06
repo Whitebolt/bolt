@@ -197,8 +197,7 @@
         "defer": true,
         "async": true,
         "modes": {
-          "development": "ReactBolt.js",
-          "production": "ReactBolt.min.js"
+          "development": "ReactBolt.js"
         }
       },
       "redux-bolt": {
