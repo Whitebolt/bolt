@@ -12,7 +12,7 @@ module.exports = function() {
 		bolt.runGulp('react', app, [
 			`--outputName=${name}`,
 			`--cacheDir=${cacheDir}`,
-			...bolt.objectToArgsArray(requireMap, 'settings.reactBoltMap')
+			...bolt.objectToArgsArray(requireMap, 'reactBoltMap')
 		]);
 
 		clearCache(filesId);

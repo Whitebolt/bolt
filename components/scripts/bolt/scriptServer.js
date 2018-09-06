@@ -36,7 +36,10 @@ async function getScript({
 		const searchPath = (!!filename ?(script.resources[filename]||script.path):script.path);
 		const found = (notUrl(searchPath)?(await bolt.isFile(searchPath)):true);
 		if (found) {
-			script.deps = bolt.uniq([...bolt.makeArray(script.deps), ...bolt.makeArray(deps)]);
+			script.deps = bolt([...bolt.makeArray(script.deps), ...bolt.makeArray(deps)])
+				.uniq()
+				.filter(_id=>(id!==_id)) // Just in-case we had a silly dep that depends on itself
+				.value();
 			script.noCache = (script.hasOwnProperty('noCache') ? script.noCache : noCache);
 			return script;
 		}
@@ -52,9 +55,10 @@ async function getScriptDeps({
 	id,
 	mode='production',
 	allowedModes=bolt.get(config, 'modes', []),
-	modes=bolt.get(config, `scriptServe['${id}']`, {})
+	modes=bolt.get(config, `scriptServe['${id}']`, {}),
+	deps=[]
 }) {
-	const current = await _getDeps({config, mode, id, allowedModes, modes});
+	const current = bolt.uniq([...(await _getDeps({config, mode, id, allowedModes, modes})), ...deps]);
 	const all = await Promise.all(bolt(current)
 		.makeArray()
 		.map(async (id)=>[...(await getScriptDeps({config, mode, id, allowedModes})), id])
@@ -101,13 +105,13 @@ async function _getScriptLoaderData({config, scripts=[], mode}) {
 	const all = await Promise.all(bolt(scripts)
 		.makeArray()
 		.map(async (script)=>{
-			const deps = await Promise.all((await getScriptDeps({config, mode, id:script.id}))
-				.map(async (dep)=>{
-					const id = (bolt.isString(dep)?dep:dep.id);
-					const script = {...(await getScript({config, mode, id})), id};
-					return await getLoaderScript(script, mode);
-				})
-			);
+			const deps = await Promise.all((await getScriptDeps({
+				config, mode, id:script.id, deps:bolt.makeArray(script.deps)
+			})).map(async (dep)=>{
+				const id = (bolt.isString(dep)?dep:dep.id);
+				const script = {...(await getScript({config, mode, id})), id};
+				return await getLoaderScript(script, mode);
+			}));
 
 			const _script = {...(await getScript({
 				config,

@@ -85,7 +85,9 @@ function substituteInObject(obj, originalObj) {
 	_forEachKeys(_obj, key=>{
 		if (bolt.isNull(_obj[key] || bolt.isUndefined(_obj[key]))) return _obj[key];
 		if (bolt.isObject(_obj[key]) || Array.isArray(_obj[key])) _obj[key] = substituteInObject(_obj[key], _originalObj);
-		if (bolt.isString(_obj[key]) && (_obj[key].indexOf('${') !== -1)) _obj[key] = bolt.substituteEs6(_obj[key], originalObj);
+		if (bolt.isString(_obj[key]) && (~_obj[key].indexOf('${'))) {
+			_obj[key] = bolt.substituteEs6(_obj[key], _originalObj);
+		}
 	});
 
 	return ((JSON.stringify(_obj) !== matcher) ? substituteInObject(_obj, _originalObj) : _obj);

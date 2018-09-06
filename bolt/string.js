@@ -6,7 +6,7 @@
  */
 
 const dateFormat = require('dateformat');
-const {xSubstitutions, chars} = bolt.consts || require('./consts');
+const {xSubstitutions, chars, xEs6SubstitutionsStart} = bolt.consts || require('./consts');
 
 /**
  * Replace the last string within a string.
@@ -119,10 +119,10 @@ function substituteCSP(txt, obj=(bolt.isObject(txt)?txt:{}), matcher=xSubstituti
 
 function substituteEs6(txt, obj={}) {
 	try {
-		return (new Function(...[
-			...Object.keys(obj),
-			'return `' + txt + '`;'
-		]))(...Object.keys(obj).map(key=>obj[key]));
+		return (new Function(
+			'config',
+			'return `' + txt.replace(xEs6SubstitutionsStart,'${config.') + '`;'
+		))(obj);
 	} catch (error) {
 		return txt;
 	}
