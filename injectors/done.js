@@ -1,7 +1,7 @@
 'use strict';
 
 function done(component) {
-	return (status=200, message)=> {
+	return (status=(component.res.statusCode || 200), message)=> {
 		component.done = !!status;
 		if (!bolt.isNaN(status)) component.res.statusCode = status;
 		if (!!message) {
