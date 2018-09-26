@@ -131,7 +131,7 @@ function _initIntercept(app, proxyConfig) {
  * @returns {Function}              The request path resolver function.
  */
 function _initSlugger(app, appProxyConfig, config) {
-	let _slugger = require.try(true, app.locals.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
+	let _slugger = require.try(false, app.locals.root.map(root=>root+appProxyConfig.slugger)).then(slugger=>{
 		config.proxyReqPathResolver = slugger(appProxyConfig);
 		return config.proxyReqPathResolver;
 	});
@@ -151,8 +151,8 @@ function _initSlugger(app, appProxyConfig, config) {
  * @returns {Promise.<Object>}      Promise resolving to mutated config object.
  */
 function _initInterceptModule(app, appProxyConfig, config) {
-	return bolt.require.try(true, app.locals.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
-		appProxyConfig.intercepts.push(intercept);
+	return bolt.require.try(false, app.locals.root.map(root=>root+appProxyConfig.intercept)).then(intercept=>{
+		if (!!intercept) appProxyConfig.intercepts.push(intercept);
 		return config;
 	});
 }
@@ -213,11 +213,11 @@ function _proxyRouter(app, appProxyConfig) {
 		limit
 	};
 
-	appProxyConfig.intercepts = bolt.makeArray(appProxyConfig.intercepts || []);
+	appProxyConfig.intercepts = [];//bolt.makeArray(appProxyConfig.intercepts || []);
 
-	if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
+	//if (appProxyConfig.proxyParseForEjs) config.intercepts = appProxyConfig.intercepts.push(_ejsIntercept);
 	if (appProxyConfig.slugger) config.proxyReqPathResolver = _initSlugger(app, appProxyConfig, config);
-	if (appProxyConfig.intercept) _initInterceptModule(app, appProxyConfig, config);
+	//if (appProxyConfig.intercept) _initInterceptModule(app, appProxyConfig, config);
 
 	return proxy(appProxyConfig.forwardPath, config);
 }

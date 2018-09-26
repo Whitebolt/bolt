@@ -24,6 +24,7 @@ function init(app) {
 			maxAge: app.locals.sessionLength || 60 * 60 * 1000,
 			httpOnly: true
 		},
+		rolling: true,
 		store,
 		resave: true,
 		saveUninitialized: true
