@@ -22,8 +22,10 @@ function init(app) {
 		cookie: {
 			secure: true,
 			maxAge: app.locals.sessionLength || 60 * 60 * 1000,
-			httpOnly: true
+			httpOnly: true,
+			...(app.locals.sessionDomain && {domain: app.locals.sessionDomain})
 		},
+		...(app.locals.sessionDomain && {domain: app.locals.sessionDomain}),
 		rolling: true,
 		store,
 		resave: true,
@@ -33,7 +35,8 @@ function init(app) {
 	app.use(cookieParser(app.locals.secret, {
 		httpOnly: true,
 		secure: true,
-		maxAge: app.locals.sessionLength || 60 * 60 * 1000
+		maxAge: app.locals.sessionLength || 60 * 60 * 1000,
+		...(app.locals.sessionDomain && {domain: app.locals.sessionDomain})
 	}));
 
 	app.use(sessionMiddleware, (req, res, next)=>{
