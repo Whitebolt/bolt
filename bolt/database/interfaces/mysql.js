@@ -59,7 +59,6 @@ function zeroLead(value) {
  * @returns {MysqlConnectionConfig}    The mysql connection config object.
  */
 function _getDbConfig(config) {
-
 	return {
 		host:config.server,
 		user:config.username,
